@@ -1,26 +1,27 @@
 # Welcome to the OpenAPI Moonwalk SIG!
 
-The OpenAPI Moonwalk [Special Interest Group](https://learn.openapis.org/glossary.html) (SIG) is working on the next major release of the OpenAPI Specification (OAS), version 4.0, with a goal of [publishing by the end of 2024](https://www.openapis.org/blog/2023/12/06/openapi-moonwalk-2024).
+The OpenAPI Moonwalk [Special Interest Group](https://learn.openapis.org/glossary.html) (SIG) is working on the next major release of the OpenAPI Specification (OAS), version 4.0.
 
 ## Principles
 
-Moonwalk is being developed in accordance with the following principles, which you can read in more detail in the [announcement blog post](https://www.openapis.org/blog/2023/12/06/openapi-moonwalk-2024):
+Moonwalk is being developed in accordance with the following principles, which you can read in more detail in [our 2025 blog post](https://www.openapis.org/blog/2025/02/05/moonwalk-2025-update) (an update to the [2024 post](https://www.openapis.org/blog/2023/12/06/openapi-moonwalk-2024)):
 
-1. **Semantics**:  Semantics provide purpose, whether the consumer is a human or an AI.
-1. **Signatures**:  An API operation is identifiable by its signature, which can be based on any aspect of HTTP mechanics
-1. **Inclusion**: Moonwalk aspires to describe all HTTP-based APIs while remaining neutral regarding any specific design debate
-1. **Separation of Concerns**: Modularization will keep the scope of Moonwalk manageable with loose coupling among concerns such as HTTP interfaces ("API shapes"), deployment configuration, and content schema formats
-1. **Mechanical Upgrading**: An automated upgrade process from 3.x to 4.0 will be developed as part of the Moonwalk effort
+1. **Semantics**: Semantics provide purpose, whether the consumer is a human or an AI.
+2. **Signatures**: An API operation is identifiable by its signature, which can be based on any aspect of HTTP mechanics.
+3. **Inclusion**: Moonwalk aspires to describe all HTTP-based APIs while remaining neutral regarding any specific design debate.
+4. **Foundational Interfaces**: Reduce the complexity for tooling authors by establishing standardized interfaces for parsing API description documents and defining consistent methods for expressing API structural semantics.
+5. **Separation of Concerns**: Modularization will keep the scope of Moonwalk manageable with loose coupling among concerns such as HTTP interfaces ("API shapes"), deployment configuration, and content schema formats.
+6. **Mechanical Upgrading**: An automated upgrade process from 3.x to 4.0 will be developed as part of the Moonwalk effort.
 
 ## Contributing
 
-As of March 2024, we are using the following documents and processes:
+As of March 2025, we are using the following documents and processes:
 
 * [The Initial Moonwalk Proposals](./doc/initial-proposals) launched this effort, and continue to serve as the reference point for our discussions
 * [Discussions](https://github.com/OAI/sig-moonwalk/discussions): All Moonwalk ideas should start as discussions
 * [Architectural Design Records (ADRs)](./doc/architecture) as discussions produce consensus, decisions are recorded as ADRs
 * [Issues](https://github.com/OAI/sig-moonwalk/issues) should ***only*** be used to track actionable work items
-* [Meeting Agendas](https://github.com/OAI/sig-moonwalk/discussions?discussions_q=is%3Aopen+label%3AHousekeeping) focus the discussion in our weekly calls, which are open to all and are often where we decide discussions are ready for ADRs
+* [Meeting Agendas](https://github.com/OAI/sig-moonwalk/discussions?discussions_q=is%3Aopen+label%3AHousekeeping) focus the discussion in our weekly calls, which are open to all
 
 ### Issues and formal documents
 
