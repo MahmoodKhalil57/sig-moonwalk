@@ -1,0 +1,314 @@
+# Decision: frontier #127 — Path/URI templating system: RFC6570 vs WHATWG URLPattern vs own.
+# Candidate-fork resolution (C005). Provenance kept in comments; claims carry the load.
+#
+# Winning frame: RFC6570 PARSEABLE PROFILE — keep the RFC6570 curly-brace {var} SURFACE
+# (3.x-continuity-maximizing) but constrain it by a normative MATCHING PROFILE (a declared
+# injective operator subset usable in path-identity position) PLUS a normative observable-behavior
+# GRAMMAR + a normative REVERSE-PARSE algorithm that RFC6570 itself omits. The two named endpoints
+# each fail one HARD constraint (full RFC6570 fails REQ-1/REQ-2 parseability via its richer
+# operators; WHATWG URLPattern fails the observable-behavior-grammar form + 3.x continuity), so the
+# requirement-satisfying region is the constrained curly-brace subset with a defined reverse algorithm.
+#
+# Adversarial panel (3 verify lenses on each of 4 candidates, mizan-gated):
+#  - RFC6570 PARSEABLE PROFILE: HELD by all three lenses @ 0.62 (parseability HOLDS; expressiveness
+#    HOLDS-WITH-CORRECTION on matrix; standards-alignment HOLDS at lowered ceiling). WINNER.
+#  - FULL RFC6570 (the documented default): REFUTED. parseability 0.30 (FATAL: {var:N} mis-extraction;
+#    {+var}/{#var} greedy-recognizer unsound beyond the adjacency net), expressiveness 0.35 (FATAL:
+#    fiat canonicalization amputates the multi-segment expressiveness it advertises; matrix-inclusion
+#    claim contradicts accepted #105 answer), standards 0.18 (FATAL: "total" precedence contradicted
+#    by its own inherited 0187 bound; imports 100% RFC6570 surface cost, ~0% RFC6570 behavior).
+#  - WHATWG URLPattern (constrained profile): parseability 0.55, expressiveness 0.42, standards 0.18
+#    (FATAL: fabricated cross-pattern precedence URLPattern does not define; ECMAScript-RegExp-coupled
+#    normative semantics ARE handrews' grammar objection, not a fix; dominated by constrained-RFC6570).
+#  - EXTENDED MOONWALK TEMPLATE (EMT, own grammar): 0.40-0.50. Survives as an ARTIFACT-design at LOW
+#    ceiling (originated-section / zero-installed-base risk) but NOT as a selection; its two mandatory
+#    artifacts (normative ABNF + reverse algorithm) are GRAFTED into the winner as requirements.
+#
+# Grafts (surviving cores carried into the winner):
+#  - from EMT: the MANDATORY normative observable-behavior GRAMMAR + normative REVERSE-PARSE algorithm
+#    (the artifact RFC6570 declines and URLPattern buries in pseudocode); answers handrews' #127 c2.
+#  - from URLPattern: the four-part-type literal-vs-variable TAXONOMY (fixed-text | segment-wildcard |
+#    multi-segment-wildcard | opaque-regex-as-not-statically-determinable) — family-agnostic, feeds #16.
+#  - matrix CORRECTION (two adversaries, independently): name-bearing matrix ;key=value is injective +
+#    self-disambiguating (nschejtman #105), so it is MATCH-SAFE, NOT forbidden — recovers a named
+#    inclusion target at zero parseability cost and makes more pairs provably-disjoint for #16.
+#
+# Discards (killed by fatal/major refutations, NOT adopted):
+#  - full-RFC6570 wholesale (the documented default surface stays; the OPERATOR set does not).
+#  - {var:N} prefix in path-identity (irreducibly lossy — RFC6570 2.4.1; breaks REQ-2 round-trip).
+#  - {+var}/{#var} (pass /?# unencoded => undecidable right boundary), {.var} (label), explode {var*}
+#    and unbounded {/var*} in identity (non-injective), arbitrary :id(<regex>) as a MATCHING primitive.
+#  - the charset CONFLATION (full-RFC6570/profile both mis-stated Tier-M charset two ways): FIXED below
+#    by pinning the matching charset to OAS-3.x [^/?#]+ and DROPPING the "strict RFC6570 subset / zero
+#    generator changes" overclaim.
+#  - list/composite-typed simple {var} (comma-joined render collides with a scalar): forbidden in Tier-M.
+#  - "dissolves the ambiguity" rhetoric: reworded to within-template parse-injectivity + cross-template
+#    collision routed to #16's three-valued verdict.
+#
+# Sources: discussions/0127.md (AMorgaut OP, OAS-3.x single-segment path-templating charset L22,
+# path-to-regexp/:name/:id?/* L34-49, handrews c1 "full RFC 6570 support"/"plenty of cases 6570
+# enables" L79, handrews c2 "summarize the grammar ... observable behavior not pseudocode" L84-88,
+# AMorgaut "Chromium-only ~75%" L98 [now STALE: URLPattern Baseline late-2025, Firefox 142/Safari 26]);
+# doc/initial-proposals/README.md L45 (broader URL patterns), L53 (complete URI Templates as pathItem
+# keys; query-in-identity; "may address ... unambiguously correlating URLs"), L172-175 (full uriTemplate
+# syntax; optional+multi-segment; "We still need to address the issue of URL to uriTemplate mapping
+# where there is ambiguity"); RFC6570 (datatracker, verified 2026-06-09): Section 1.4/1.5 reverse-
+# matching disclaimer "regular expression languages are better suited for variable matching", 2.4.1
+# prefix irreversibly lossy, 3.2.2 simple-list comma-join non-injective, 3.2.6 {/var} non-explode stays
+# single-segment (%2F-encodes embedded slash), 3.2.7 matrix {;var} renders the var NAME in output;
+# urlpattern.spec.whatwg.org (tokenize->part-list->compile-to-RegExp->exec; segment wildcard => [^/]+?
+# lazy; full wildcard => .*; regexp part is a first-class matching primitive); discussions/0105.md
+# (nschejtman matrix self-disambiguates L33-50; webron solve-generically/low-frequency L55);
+# discussions/0119.md (handrews {/data*} "ick", arbitrary alternating-name recursion NOT RFC6570-
+# expressible L88-113); discussions/0190.md (hudlow differentiability "love and hate", /users/{name}
+# vs /users/me); discussions/0187.md (precedence table: bidirectional overlap UNDEFINED L96-97);
+# plan/facts/0016-signature-mechanism.bn (ada_work_backward L30-34, matching_vs_correlating L48-51,
+# three_valued_verdict L74, concrete_over_variable RUNTIME-only L45, D3 static-not-mandatory L82-86/116-123,
+# defers_20_and_127 L132); plan/facts/0020-parameter-schema.bn (defers_127_templating L211-215,
+# evaluative_mapping_gated_prerequisite L217-226); plan/MAIN.bn deviation_requires_receipt;
+# mizan_verify_claim(defers_127_templating) 2026-06-09 -> sole-witness, cap 0.85, bcmea-clean.
+
+# ---- INHERITED PRIORS (carried from #16/C003 + #20/C004 + the SIG record) ----
+
+# The binding axis: #16/#20 require the #127 language to work in the RECOGNITION/PARSE direction
+# (URL -> which-operation, and URL -> per-location slot values), the direction RFC6570 self-disclaims.
+claim binding_axis_is_recognition_not_expansion: Bool @>=0.85 = True
+falsified_when binding_axis_is_recognition_not_expansion == False
+
+# RFC6570 is an EXPANSION spec; reverse matching is non-normative and the RFC recommends regex for it
+# (Section 1.4/1.5, verified against datatracker 2026-06-09). The structural cause of the proposal's
+# own named-but-unsolved "URL -> uriTemplate ambiguity".
+claim rfc6570_is_expansion_spec_disclaims_reverse: Bool @>=0.85 = True
+falsified_when rfc6570_is_expansion_spec_disclaims_reverse == False
+
+# The initial proposal's named open problem "URL to uriTemplate mapping where there is ambiguity"
+# (README:175) is binding + unsolved; any #127 resolution MUST address it.
+claim named_url_to_template_ambiguity_is_binding: Bool @>=0.85 = True
+falsified_when named_url_to_template_ambiguity_is_binding == False
+
+# #127 has NO ratified SIG outcome (Ideas discussion, dormant 2024-07-26, 2 handrews comments + 1
+# AMorgaut reply, no vote/ADR/PR; #125 closed as duplicate). Whole resolution is a CANDIDATE, ceiling lowered.
+claim s127_no_ratified_outcome: Bool @>=0.85 = True
+falsified_when s127_no_ratified_outcome == False
+
+# #16/C003 explicitly DEFERRED #127 to be chosen AFTER the ADA exposure shape was fixed; resolving it
+# now is the declared next step and does not contradict C003. (== defers_20_and_127, witnessed in 0016.)
+claim s127_is_in_scope_deferred_dependency: Bool @>=0.85 = True
+falsified_when s127_is_in_scope_deferred_dependency == False
+
+# Three-valued collision verdict is best-effort EXPOSURE (provably-disjoint | provable-collision |
+# not-statically-determinable), NOT a mandatory must-be-statically-detectable gate (#16 D3). The
+# language must ENABLE analysis "where it permits", not GUARANTEE total static decidability.
+claim three_valued_verdict_best_effort_not_gate: Bool @>=0.6 = True
+falsified_when three_valued_verdict_best_effort_not_gate == False
+
+# Concrete-over-variable specificity precedence is inherited RUNTIME-ONLY (mizan cap 0.80), NOT a
+# static-detection primitive and NOT the chosen collision policy; 3.x leaves param-vs-param superset
+# and bidirectional overlap UNDEFINED (0187). #127 reuses it as a runtime tiebreak only.
+claim concrete_over_variable_runtime_only_inherited: Bool @>=0.8 = True
+falsified_when concrete_over_variable_runtime_only_inherited == False
+
+# ---- COMMITTED FRAME-LEVEL DECISION (the #127 templating-system choice) ----
+
+# (Q127) The templating system: RFC6570 curly-brace {var} SURFACE constrained by a normative MATCHING
+# PROFILE (injective operator subset for path-identity) + a normative observable-behavior GRAMMAR +
+# a normative REVERSE-PARSE algorithm. NOT full RFC6570; NOT bare URLPattern; NOT a from-scratch grammar.
+# (Str LABEL carried by the witnessed Bool decomposition below; mizan scores Bool, not Str labels.)
+claim q127_choice_verdict: Str @>=0.62 = "rfc6570-curly-surface-plus-normative-matching-profile-grammar-and-reverse-algorithm"
+falsified_when q127_choice_verdict != "rfc6570-curly-surface-plus-normative-matching-profile-grammar-and-reverse-algorithm"
+
+# OPERATOR TIERING. Tier-MATCH-SAFE (permitted in path-identity, injective): literal text; single-
+# segment {var}; leading single-var {/var}; and name-bearing matrix {;name} (the matrix CORRECTION:
+# ;name=value is fully delimited + self-disambiguating per nschejtman #105, so it is injective, NOT
+# forbidden). Tier-QUERY (query component only, parsed order/repetition-insensitive): form {?k}/{&k}.
+# Tier-FORBIDDEN-in-identity (expansion-only / authoring error in path-identity, or forces the op's
+# verdict to not-statically-determinable + drops it from the static matcher): explode {var*}/{/var*},
+# reserved {+var}, fragment {#var}, label {.var}, lossy prefix {var:N}, arbitrary regex as a matching
+# primitive, AND list/composite-typed or comma-bearing-scalar simple {var} (comma-join collides w/ scalar).
+claim operator_tiering_match_safe_query_forbidden: Str @>=0.62 = "match-safe={literal,single-segment-var,leading-slash-var,name-bearing-matrix} | query-only={form-query} | forbidden-in-identity={explode,reserved,fragment,label,prefix-N,arbitrary-regex,list-typed-var}"
+falsified_when operator_tiering_match_safe_query_forbidden != "match-safe={literal,single-segment-var,leading-slash-var,name-bearing-matrix} | query-only={form-query} | forbidden-in-identity={explode,reserved,fragment,label,prefix-N,arbitrary-regex,list-typed-var}"
+
+# CHARSET PIN (the conflation FIX). Tier-M single-segment {var} matches the OAS-3.x path-templating
+# charset [^/?#]+ (the rule quoted in #127 OP L22), NOT RFC6570's narrower unreserved-set-inverse.
+# CONSEQUENCE honestly recorded: the profile is therefore NOT a strict RFC6570 subset and we do NOT
+# claim "zero changes for existing RFC6570 generators". The {var} SURFACE is inherited; the matching
+# semantics are Candidate-defined over the 3.x charset.
+claim tier_m_charset_is_oas3x_not_strict_rfc6570: Bool @>=0.62 = True
+falsified_when tier_m_charset_is_oas3x_not_strict_rfc6570 == False
+
+# NORMATIVE ARTIFACTS (the EMT graft, made a REQUIREMENT not a separate language). The resolution
+# REQUIRES the Candidate to ship two artifacts RFC6570 and URLPattern each omit for a description spec:
+# (A) an observable-behavior GRAMMAR of the profile (answers handrews #127 c2; not browser pseudocode,
+# not "regex is better for matching"); (B) a normative REVERSE-PARSE algorithm (segment-split on '/',
+# capture per Tier-M segment, parse Tier-Q as an order-insensitive key-set). These exist for the PATH
+# component; the query/header request-grammar is INCOMPLETE until #108 lands (recorded, not overclaimed).
+claim requires_normative_grammar_and_reverse_algorithm: Bool @>=0.62 = True
+falsified_when requires_normative_grammar_and_reverse_algorithm == False
+
+# REQ-1 (parseability-for-matching). A profile-valid template compiles to a segment-aligned
+# deterministic matcher: given a concrete URL, split path on '/', match literal-for-literal with
+# single-segment captures, yielding route-to-zero-or-one. No forbidden operator can enter the path
+# matcher, so no non-injective construct can make "which operation" undecidable. Satisfies #16
+# ada_work_backward_method + matching_vs_correlating_separate.
+claim req1_parseability_for_matching_satisfied: Bool @>=0.62 = True
+falsified_when req1_parseability_for_matching_satisfied == False
+
+# REQ-2 (evaluative URL->slot extraction). The same compiled matcher's capture groups ARE the per-
+# location PATH slots of #20/C004 ({var}->path slot, Tier-Q->query slot). This is the evaluative
+# instance->data-model PARSE #20 gates. The PATH half is closed by construction; the FULL mapping
+# (query-string-is-not-JSON, header model) stays gated on #108/#20 — NOT re-opened, NOT solved here.
+claim req2_evaluative_url_to_slot_path_half_satisfied: Bool @>=0.62 = True
+falsified_when req2_evaluative_url_to_slot_path_half_satisfied == False
+
+# REQ-4 / AMBIGUITY (the named open problem). The historically-conflated problem SPLITS into:
+# (a) PARSE-ambiguity — ELIMINATED by the operator restriction (every path is segment-aligned =>
+# URL->template is a single-valued function; nothing left to be ambiguous about in the path); and
+# (b) operation-COLLISION (two profile-valid templates overlapping on some URLs, e.g. /users/{name}
+# vs /users/me) — EXPOSED via #16's three-valued verdict + concrete-over-variable runtime tiebreak,
+# NOT a parse failure, exactly as #16 leaves collision POLICY open. We do NOT claim to "dissolve"
+# cross-template collision; we route it to #16. This addresses README:175 at its structural root.
+claim ambiguity_split_parse_eliminated_collision_routed_to_16: Bool @>=0.62 = True
+falsified_when ambiguity_split_parse_eliminated_collision_routed_to_16 == False
+
+# FEEDS #16. The segment lattice is the native input to the three-valued verdict: two profile-valid
+# templates compared segment-by-segment => provably-disjoint if any aligned position has incompatible
+# literals (or differing arity, OR a name-bearing matrix token disambiguates); provable-collision if
+# every aligned position is literal-equal or variable-vs-variable; not-statically-determinable only
+# for Tier-Q key-set overlap (#108 unresolved) or an op that opted a forbidden operator into soft-mode.
+# Honors D3 (best-effort, not a gate). The URLPattern four-part-type taxonomy is the literal-vs-variable
+# structure #16 REQ-3 consumes (per-segment EXPOSURE shape itself DEFERRED to #16/#119/#23).
+claim feeds_16_three_valued_verdict_decidable_on_path: Bool @>=0.6 = True
+falsified_when feeds_16_three_valued_verdict_decidable_on_path == False
+
+# CONTINUITY (Principle 6). 3.x path templating is ALREADY a constrained single-segment {var} subset
+# (OP L22 forbids unescaped /?# in values; README:173 "3.x used RFC6570 SERIALIZATION semantics but
+# WITHOUT the syntax"). So Tier-M is a near-identity match for installed 3.x: /pets/{petId} is a
+# profile-valid template with zero rewrite for the dominant single-segment case. This is the lowest-
+# receipt continuity option vs a URLPattern :name surface break. HONEST gap: 3.x style/explode
+# serialization that used the EXPLODE operator does NOT mechanically map (explode is forbidden); that
+# metadata is leaving the path key under #20/C004 anyway.
+claim continuity_3x_identity_on_single_segment_core: Bool @>=0.62 = True
+falsified_when continuity_3x_identity_on_single_segment_core == False
+
+# ---- DEVIATIONS (each carries a receipt + lowered ceiling; pairs with ADR C005) ----
+
+lemma deviation_requires_receipt(contested, receipt)
+  because illah = contested == True
+  proves receipt == True
+
+# Deviation D1-127: DEPART from the documented #127 DEFAULT of FULL RFC6570 (README L53/L172-175;
+# handrews c1 "full RFC 6570 support") by FORBIDDING the richer operators in path-identity position.
+# Receipt: full RFC6570 fails HARD REQ-1/REQ-2 — RFC6570 Section 1.4 self-disclaims reverse matching
+# (verified); its richer operators are the structural cause of README:175's own named-but-unsolved
+# ambiguity; the FULL-RFC6570 candidate was REFUTED on all three verify lenses (0.18-0.35, fatal
+# refutations: {var:N} mis-extraction, {+}/{#} greedy unsoundness, fiat-amputated expressiveness,
+# precedence contradicted by its own 0187 bound). The {var} SURFACE is retained; only the operator
+# set deviates. Lowered ceiling.
+claim d1_127_full_rfc6570_fails_parseability_contested: Bool @>=0.85 = True
+claim d1_127_receipt_present: Bool @>=0.6 = True
+claim d1_127_forbid_richer_operators_in_identity: Bool @>=0.6 = cite deviation_requires_receipt with contested=d1_127_full_rfc6570_fails_parseability_contested, receipt=d1_127_receipt_present
+falsified_when d1_127_forbid_richer_operators_in_identity == False
+
+# Deviation D2-127: ADD normative machinery NOT present in RFC6570 (an observable-behavior grammar +
+# a reverse-parse algorithm + the operator-tiering wellformedness). Receipt: RFC6570 provides NO
+# normative reverse algorithm (Section 1.4, verified) and the proposal named the gap without a
+# mechanism (README:175 "We still need to address"); this IS the mechanism. Candidate-originated,
+# zero SIG witness, single-derivation => lowered ceiling. (The EMT graft, scoped as a requirement.)
+claim d2_127_reverse_machinery_absent_in_rfc6570_contested: Bool @>=0.85 = True
+claim d2_127_receipt_present: Bool @>=0.6 = True
+claim d2_127_add_normative_grammar_and_reverse: Bool @>=0.6 = cite deviation_requires_receipt with contested=d2_127_reverse_machinery_absent_in_rfc6570_contested, receipt=d2_127_receipt_present
+falsified_when d2_127_add_normative_grammar_and_reverse == False
+
+# Deviation D3-127: REDEFINE Tier-Q form-query parse semantics to order/repetition-insensitive
+# (set-membership), diverging from RFC6570's ordered single-pass query EXPANSION. Receipt: REQ-2
+# recognition must accept any key order (a URL query is an order-insensitive bag); RFC6570 expansion
+# is one-directional. Real semantic redefinition, flagged. Whether query lives IN the template at all
+# vs a separate signature.query slot is the #20-adjacent OPEN tension (deferred, not decided here).
+claim d3_127_query_order_mismatch_contested: Bool @>=0.85 = True
+claim d3_127_receipt_present: Bool @>=0.6 = True
+claim d3_127_redefine_query_as_order_insensitive_set: Bool @>=0.6 = cite deviation_requires_receipt with contested=d3_127_query_order_mismatch_contested, receipt=d3_127_receipt_present
+falsified_when d3_127_redefine_query_as_order_insensitive_set == False
+
+# Deviation D4-127 (the matrix CORRECTION; a deviation FROM the going-in profile design, toward the
+# SIG record). The profile design forbade matrix {;var}; two adversaries independently showed name-
+# bearing matrix ;name=value is injective + self-disambiguating (nschejtman #105: the param NAME is
+# serialized into the path, so /pets/;petId= vs /pets/;name= never collide). Receipt: forbidding it
+# REMOVES a named inclusion target AND decidability #16 wants; admitting it to Tier-M recovers both at
+# zero parseability cost. NB: this takes the OPPOSITE side of webron's "solve generically" lean (#105),
+# which is itself unratified; surfaced + receipted, lowered ceiling. (Unbounded matrix {;list*} stays forbidden.)
+claim d4_127_matrix_is_injective_self_disambiguating_contested: Bool @>=0.85 = True
+claim d4_127_receipt_present: Bool @>=0.6 = True
+claim d4_127_admit_name_bearing_matrix_to_match_safe: Bool @>=0.55 = cite deviation_requires_receipt with contested=d4_127_matrix_is_injective_self_disambiguating_contested, receipt=d4_127_receipt_present
+falsified_when d4_127_admit_name_bearing_matrix_to_match_safe == False
+
+# ---- CONSISTENCY WITH #16/C003 + #20/C004 (the binding tripwires) ----
+
+# D1-127 is D1(#16)-SAFE. The reverse-parse matcher is the RECOGNITION half #16 ada_work_backward
+# requires; it is the path-routing matcher, NOT a JSON-Schema-in-the-static-matcher promotion. #16 D1
+# (keep JSON Schema out of the guaranteed static matcher) is NOT contested: the #127 matcher routes on
+# literal-vs-variable segment structure, and JSON-Schema parameter discrimination stays the runtime
+# last-resort D1 demotes it to. The three-valued verdict + concrete-over-variable runtime tiebreak are
+# adopted UNCHANGED from C003; #127 supplies the language that makes the path-component verdict decidable.
+claim d1_127_is_c003_d1_safe: Bool @>=0.6 = True
+falsified_when d1_127_is_c003_d1_safe == False
+
+# #20/C004 consistency. The compiled matcher's capture groups populate the #20 per-location PATH slot
+# (and, if query stays in-template, the query slot). #20's "deepest open technical risk" (the FULL
+# evaluative mapping) is NOT path injectivity (this profile closes that) but query-string-is-not-JSON +
+# the header model — both #108/#20-owned and DEFERRED. #127 closes the PATH half of REQ-2; #20 keeps the rest.
+claim c004_consistency_path_half_closed_rest_deferred: Bool @>=0.6 = True
+falsified_when c004_consistency_path_half_closed_rest_deferred == False
+
+# ---- DEFERRED DEPENDENCIES (do NOT resolve here) ----
+
+# #73 (JSON Schema dialect/version + Relative-JSON-Pointer custom vocabulary) gates cross-TYPE value-
+# equality deps, NOT path parseability. NOTED, not decided here. (Inherited from #20/C004.)
+claim defers_73_dialect: Bool @>=0.85 = True
+falsified_when defers_73_dialect == False
+
+# Per-segment literal-vs-variable EXPOSURE detail (#16 c4 / #119 / #23): the profile guarantees the
+# segment structure is COMPUTABLE; its surfaced per-segment shape + recursive/nested path modeling are
+# left to that slice. NOTED, not decided here.
+claim defers_per_segment_exposure_and_119_23: Bool @>=0.85 = True
+falsified_when defers_per_segment_exposure_and_119_23 == False
+
+# The FULL evaluative mapping for non-path locations (query/header slots) is gated on #108 (RFC9110
+# Section 5.6 / RFC8941 header registry; content-overload vs style:automatic; lowercase-normalize MUST)
+# + query-string-is-not-JSON (repeated keys, always-string, number/boolean hinting). OPEN as of 2026-03.
+# #127 closes the PATH component grammar; the request-grammar is INCOMPLETE until #108 lands. NOTED.
+claim defers_108_query_and_header_evaluative_mapping: Bool @>=0.85 = True
+falsified_when defers_108_query_and_header_evaluative_mapping == False
+
+# The query-PLACEMENT question (query in the uriTemplate per README:53 vs a separate signature.query
+# slot per karenetheridge #100) constrains how much of the URL #127 must parse (path-only vs path+query).
+# Owned by #20/#20-adjacent; surfaced as a #127-relevant tension, NOT decided here.
+claim defers_query_placement_in_template_vs_slot: Bool @>=0.85 = True
+falsified_when defers_query_placement_in_template_vs_slot == False
+
+# ---- BOUNDED-OUT (NOT a hard req; recorded so #127 is not over-constrained) ----
+
+# Arbitrary alternating-name recursive paths (docs/{id}/sections/{id}/...) are provably NOT expressible
+# in RFC6570 (handrews 0119:88-113) and are a known LIMITATION the chosen language is NOT required to
+# solve. The profile inherits this bound UNCHANGED (it is not a regression vs the default). A single
+# trailing catch-all is NOT offered as structured recursion. Depends on #119/#23.
+claim bounded_out_recursive_alternating_paths: Bool @>=0.8 = True
+falsified_when bounded_out_recursive_alternating_paths == False
+
+# Slash-bearing single-value path params (one variable bound to a value containing '/', e.g. an S3-style
+# object key) require the forbidden reserved {+var} and are therefore INEXPRESSIBLE in this profile.
+# This is the concrete, honestly-named expressiveness regression vs full RFC6570 (handrews c1 "plenty
+# of cases 6570 enables"). It is the PRICE of parseability (REQ-1/REQ-2), recorded not hidden.
+claim bounded_out_slash_bearing_single_value: Bool @>=0.8 = True
+falsified_when bounded_out_slash_bearing_single_value == False
+
+# ---- KILLED / NON-ADOPTED (consensus + verify discipline; held OUT of the resolution) ----
+
+# Full-RFC6570-wholesale (refuted, all 3 lenses), bare/un-profiled WHATWG URLPattern (fabricated cross-
+# pattern precedence; ECMAScript-RegExp-coupled normative semantics = the grammar objection; not-portable
+# for non-JS description tooling), arbitrary :id(<regex>) as a matching primitive (regex-intersection
+# footgun #16-c4 warns against), a from-scratch own grammar AS A SELECTION (EMT: zero installed base,
+# originated-section risk; its two artifacts are grafted as requirements, the language is not invented).
+# The "support both + translation notice" option is NOT adopted (lossless only for the trivial
+# {var}<->:name single-segment case; no SIG voice endorsed dual-syntax).
+claim killed_full_rfc6570_bare_urlpattern_own_grammar_dualsyntax: Bool @>=0.8 = True
+falsified_when killed_full_rfc6570_bare_urlpattern_own_grammar_dualsyntax == False

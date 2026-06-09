@@ -5,11 +5,16 @@
 > reconstructed on demand (`daftar query`, burhan over `plan/facts/`), never carried.
 > Mechanism: [C002](../doc/architecture/decisions/C002-recursive-state-mechanism.md). Charter: [C001](../doc/architecture/decisions/C001-candidate-fork-charter.md).
 
-_Last checkpoint: 2026-06-09 — **#16→C003, #20→C004** done; **#127 needs resume** (rate-limited); **council VALIDATED** (C006)._
+_Last checkpoint: 2026-06-09 — **#16→C003, #20→C004, #127→C005** done & committed; council live (C006/C007). Next: #17._
 
-> **⏳ #127 needs resume.** Workflow `wf_dc8e3394-6d2` finished readers + prior-map + 4 design candidates, but **all 12 verify + synthesis were rate-limited** (two big workflows ran concurrently — don't do that). Resume from cache: `Workflow({scriptPath: ".../resolve-frontier-127-templating-system-wf_dc8e3394-6d2.js", resumeFromRunId: "wf_dc8e3394-6d2"})`. Crux = parseability; candidates: full RFC6570 / **parseable RFC6570 profile** / URLPattern / extended-Moonwalk-template; must resolve the named URL→template ambiguity. Then mizan-gate → ADR **C005** → projection → next #17.
->
-> **✓ Council validated** (C006): hudlow @0.78, handrews @0.70, rafalkrupinski @0.70 (blind backtest 0.875–1.0). 4 voices pending resume. Use it on the NEXT Step: predict positions before designing + run "would they object?" as a verify lens. See [plan/council/](./council/).
+## ✓ #127 resolved → C005
+
+Workflow `wf_dc8e3394-6d2` (resumed past a rate limit). **RFC6570 parseable profile:** keep the `{var}` surface (3.x continuity), restrict to an injective operator subset in path-identity position, and *add the two artifacts RFC6570 omits* — a normative observable-behavior grammar (handrews' #127 c2 demand) + a normative reverse-parse algorithm. Full-RFC6570 and bare-URLPattern both refuted; EMT's grammar+algorithm grafted; matrix correction (name-bearing matrix is match-safe). **D1-safe** (routes on segment structure, not JSON-Schema). Resolves the named URL→template ambiguity by splitting parse-ambiguity (eliminated) from collision (routed to #16). Honest cost: slash-bearing path params inexpressible. 4 deviations; verdict @0.62. **First council cross-check** (C006): hudlow strong-align, handrews align-with-one-predicted-objection (expressiveness loss — already surfaced in C005). Evidence: [`0127-templating-system.synthesis.md`](./facts/0127-templating-system.synthesis.md).
+
+## ⏳ Pending workflows (one at a time)
+
+1. **Council resume** — 4 rate-limited voices (earth2marsh, darrelmiller, karenetheridge, arno-di-loreto).
+2. **Usefulness-replay** — validate dispositions + roles (C007) against #16/#20.
 
 ## ✓ #20 resolved → C004
 
@@ -21,22 +26,22 @@ Workflow `wf_bebee5d2-131` (24 agents). ADA-first frame; mizan sole-witness caps
 
 ## Frontier head (next ~5 — full list in [frontier.md](./frontier.md))
 
-1. **#127 / #23 Path templating** — extended URI Template vs RFC6570 vs WHATWG URLPattern. **Now the critical path:** it gates both #16's ADA literal-vs-variable exposure AND #20's query/path instance→data-model mapping into the per-location slots. Do next.
-2. **#17 Merge order & precedence** — response/param resolution across request/path/global levels.
-3. **#83 Responses: array vs map** — structural shape of the response collection.
-4. **#116 Inheritance on paths** — structural reuse across path sublevels.
-5. **#73 JSON Schema dialect + relational vocab** — gates #20's cross-type value-equality (path-ID==body-ID); hard dependency.
+1. **#17 Merge order & precedence** — response/param resolution across request/path/global levels. **Do next.** (First Step to fully use the council A+B+C up front.)
+2. **#83 Responses: array vs map** — structural shape of the response collection.
+3. **#116 Inheritance on paths** — structural reuse across path sublevels.
+4. **#73 JSON Schema dialect + relational vocab** — gates #20's cross-type value-equality (path-ID==body-ID); hard dependency.
+5. **#108 Header model** — RFC9110/8941; gates header-aspect signatures (#16) + #20 header slot + #127 request-grammar completion.
 
 ## Decisions so far
 
-- Frontier resolved: **3** (#59 IRI, #16 signature, #20 parameter-schema) · Deviations recorded: **5** (#16 D1/D2/D3, #20 D1-20/D2-20) · ADRs: C001–C004 (+ `0002-iri-inherited`).
-- Last decision: **#20 parameter-schema → C004** (per-location slots + opt-in cross-cutting; D1-safe runtime-only; verdict @0.55, directional core @0.85).
+- Frontier resolved: **4** (#59 IRI, #16 signature, #20 parameter-schema, #127 templating) · Deviations recorded: **9** (#16 ×3, #20 ×2, #127 ×4) · ADRs: C001–C007 (+ `0002-iri-inherited`).
+- Last decision: **#127 templating → C005** (RFC6570 parseable profile + normative grammar/reverse-algorithm; D1-safe; verdict @0.62).
 
 ## Per-Concern confidence map
 
 | Concern | Prior richness | Sections drafted | Aggregate ceiling |
 |---|---|---|---|
-| API shapes | HIGH (richest discussion energy) | 2 (signature mechanism, parameter schema) | 0.85 directional / **0.5–0.6** on contested shapes (declared-indicator, #20 slots, D1–D3, D1-20/D2-20) |
+| API shapes | HIGH (richest discussion energy) | 3 (signature, parameter schema, templating) | 0.85 directional / **0.5–0.62** on contested shapes (declared-indicator, #20 slots, #127 profile, deviations) |
 | Content schema formats | MEDIUM (SHACL/XSD/JSON-Schema threads) | 0 | — |
 | Deployment configuration | LOW → mostly Originated | 0 | — |
 | Foundational interfaces | LOW → mostly Originated | 0 | — |
@@ -52,7 +57,7 @@ Workflow `wf_bebee5d2-131` (24 agents). ADA-first frame; mizan sole-witness caps
 
 ## Cheapest-next-move
 
-Run `mizan_recommend_next_experiment(plan/)`, else default: resolve **#127 (templating system)** — now the critical path, gating both #16's literal-vs-variable ADA exposure and #20's query/path instance→data-model mapping. Read `github-export/discussions/0127.md` first (extended URI Template vs RFC6570 vs WHATWG URLPattern; darrelmiller's "URI Templates not designed for parsing").
+Run `mizan_recommend_next_experiment(plan/)`, else default: resolve **#17 (merge order & precedence)** — how response/param resolution composes across request/path/global levels (the proposal lets `response` objects live at request, path, or global scope). Read `github-export/discussions/0017.md` first. **This is the first Step to consult the council up front** (A: predict handrews/hudlow; B: pessimist/minimalist on layering complexity; C: hand-author dev on precedence-readability).
 
 ## Index (pointers — load on demand)
 
@@ -61,6 +66,6 @@ Run `mizan_recommend_next_experiment(plan/)`, else default: resolve **#127 (temp
 - Burhan ledger → [plan/facts/](./facts/) · spine claims → [plan/MAIN.bn](./MAIN.bn)
 - Narrative receipts → `daftar query "<topic>" --project=/home/mk/apps/sig-moonwalk`
 - SIG record (priors) → [github-export/](../github-export/) · official ADRs → [doc/architecture/decisions/](../doc/architecture/decisions/)
-- Our ADRs → `doc/architecture/decisions/Cxxx-*.md` ([C003 signature](../doc/architecture/decisions/C003-signature-mechanism.md), [C004 parameter-schema](../doc/architecture/decisions/C004-parameter-schema.md)) · glossary → [CONTEXT.md](../CONTEXT.md)
-- Spec projections → [specification/candidate-v4/](../specification/candidate-v4/) ([signature-mechanism](../specification/candidate-v4/signature-mechanism.md), [parameter-schema](../specification/candidate-v4/parameter-schema.md))
+- Our ADRs → `doc/architecture/decisions/Cxxx-*.md` ([C003](../doc/architecture/decisions/C003-signature-mechanism.md), [C004](../doc/architecture/decisions/C004-parameter-schema.md), [C005 templating](../doc/architecture/decisions/C005-templating-system.md)) · glossary → [CONTEXT.md](../CONTEXT.md)
+- Spec projections → [specification/candidate-v4/](../specification/candidate-v4/) ([signature](../specification/candidate-v4/signature-mechanism.md), [parameter-schema](../specification/candidate-v4/parameter-schema.md), [templating](../specification/candidate-v4/templating-system.md))
 - Council (guides, not prophets) → [plan/council/](./council/) ([calibration](./council/CALIBRATION.md))

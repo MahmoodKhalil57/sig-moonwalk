@@ -13,7 +13,7 @@ push LOW-prior (Originated) questions to the long horizon.
 - RESOLVED #16 — Signature mechanism → **C003** (ADA-first frame; 3 deviations; #20/#127 deferred) → `plan/facts/0016-signature-mechanism.bn`
 - RESOLVED #20 — One `parameterSchema`? → **C004** (per-location slots + opt-in cross-cutting; D1-safe) → `plan/facts/0020-parameter-schema.bn`
 - OPEN #23 — Can we simplify paths further?
-- OPEN #127 — Path templating: URI Template vs WHATWG URLPattern
+- RESOLVED #127 — Path templating → **C005** (RFC6570 parseable profile + normative grammar/reverse-algorithm; D1-safe) → `plan/facts/0127-templating-system.bn`
 - OPEN #17 — Author-defined merge order and precedence
 - OPEN #83 — Responses should be an array, not a map
 - OPEN #116 — Inheritance on paths and sublevels
@@ -77,5 +77,6 @@ push LOW-prior (Originated) questions to the long horizon.
 - RESOLVED #59 — IRI support → Inherited from SIG ADR 0002 → `plan/facts/0002-iri-inherited.bn`
 - RESOLVED #16 — Signature mechanism → Deviation set (C003) → `plan/facts/0016-signature-mechanism.bn`
 - RESOLVED #20 — parameterSchema split → per-location slots + opt-in (C004) → `plan/facts/0020-parameter-schema.bn`
+- RESOLVED #127 — templating → RFC6570 parseable profile (C005) → `plan/facts/0127-templating-system.bn`
 
 > Full discussion text for any `#N` is in [github-export/discussions/](../github-export/discussions/).
