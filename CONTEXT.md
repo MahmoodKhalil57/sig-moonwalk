@@ -61,8 +61,20 @@ The set of *calibrated* Personas (those that passed their blind backtest), consu
 _Avoid_: oracle, panel (reserved for the workflow's adversarial verifiers)
 
 **Backtest**:
-The blind out-of-sample test that validates a Persona: the builder sees only a train slice, the predictor sees only held-out prompts (not answers), a judge scores prediction-vs-reality. Hit-rate sets the ceiling. Calibration lives in `plan/council/CALIBRATION.md`.
+The blind out-of-sample test that validates an *individual* Persona: the builder sees only a train slice, the predictor sees only held-out prompts (not answers), a judge scores prediction-vs-reality. Hit-rate sets the ceiling. Calibration lives in `plan/council/CALIBRATION.md`.
 _Avoid_: evaluation, check
+
+**Disposition**:
+A Class-B council lens (optimist, pessimist, expansionist, contrarian, …) — a reasoning *stance*, not a real person. Predicts no one; carries no predictive ceiling. A generative lens to stress-test a decision ([C007](./doc/architecture/decisions/C007-council-persona-classes.md)).
+_Avoid_: persona (reserve for backtested individuals), prediction
+
+**Role**:
+A Class-C council lens (codegen author, platform architect, security reviewer, AI/LLM consumer, …) — a *synthetic stakeholder* representing who the standard affects. Capped, grounded where evidenced; "who does this help/hurt?", never a real person's view.
+_Avoid_: persona, stakeholder-as-individual
+
+**Usefulness-replay**:
+The validation gate for Dispositions and Roles: replay the lens against resolved Steps and check whether it surfaces considerations that genuinely mattered (true positives) vs noise. The honest analog of the Backtest for non-predictive lenses.
+_Avoid_: backtest (reserve for predictive individual validation)
 
 **The SIG**:
 The official OpenAPI Moonwalk Special Interest Group and its consensus process (discussions → weekly-call consensus → ADRs → eventual formal spec). We are an external contributor building a candidate; we are not the SIG and cannot ratify on its behalf.

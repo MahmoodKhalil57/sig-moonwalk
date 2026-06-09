@@ -1,8 +1,14 @@
-# The council — calibrated SIG-voice personas
+# The council — persona guides (three classes)
 
-Backtested predictive models of recurring Moonwalk voices, used as a **"what would they object to?"** guide when resolving a Step. Mechanism + discipline: [C006](../../doc/architecture/decisions/C006-backtested-persona-council.md). Calibration: [CALIBRATION.md](./CALIBRATION.md).
+Used as a **"what would they object to / who does this hurt?"** guide when resolving a Step. Three classes, each with its own epistemic gate ([C006](../../doc/architecture/decisions/C006-backtested-persona-council.md) + [C007](../../doc/architecture/decisions/C007-council-persona-classes.md)) — never mix them:
 
-## Members (calibrated)
+- **A — Individuals** (real people, *predictively backtested*; ceiling = hit-rate) → below + one file each.
+- **B — Dispositions** (optimist/pessimist/contrarian/… — *lenses, no predictive ceiling*) → [dispositions.md](./dispositions.md).
+- **C — Roles** (codegen author, platform architect, security reviewer, … — *synthetic stakeholders*) → [roles.md](./roles.md).
+
+B and C are validated by **usefulness-replay** (do they catch real considerations on resolved Steps?), not by predicting a person — ⏳ pending. Calibration of A: [CALIBRATION.md](./CALIBRATION.md).
+
+## Class A members (calibrated)
 
 | Voice | Ceiling | One-line |
 |---|---|---|
