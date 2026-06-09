@@ -37,11 +37,11 @@ Triage (`wf_550dd30c-fa6`, 42 isolated agents) → 17 convergent / 24 contested 
 
 - **Council resume** — 4 rate-limited Class-A voices (earth2marsh, darrelmiller, karenetheridge, arno-di-loreto).
 
-## Frontier head — ~12 contested left, in dependency waves (full list in [frontier.md](./frontier.md))
+## Frontier head — ~10 left, dependency waves (full list in [frontier.md](./frontier.md))
 
-- **Wave A — DONE 9/9** (→ C012). **Wave B1 — DONE** (referencing cluster #73/#72/#49/#26 → C013).
-- **Wave B2** (consult C013): **#31/#100** param-interdeps · **#24** relational vocab · **#122** alt-schemas · **#69** auth-coupling. **Do next.**
-- **Wave C** (gated on header model): **#108** → **#163** media-type-params · **#23/#30** paths/resource-orientation · **#56** annotations · **#113** defaults · **#55** servers · **#upgrade** mechanism
+- **Wave A — DONE 9/9** (→ C012). **Wave B — DONE** (B1 referencing → C013; B2 dependents → C014).
+- **Wave C1 — IN FLIGHT** `wf_6906ef33-a70`: #108 header-model · #23/#30 paths-resource · #56 annotations · #113 defaults · #55 servers.
+- **Wave C2** (after C1): **#163** media-type-params (needs #108) · **#upgrade** mechanical 3.x→4.0 (capstone — consults all ADRs).
 
 ## Decisions so far
 
