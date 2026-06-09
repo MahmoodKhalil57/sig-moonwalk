@@ -5,7 +5,7 @@
 > reconstructed on demand (`daftar query`, burhan over `plan/facts/`), never carried.
 > Mechanism: [C002](../doc/architecture/decisions/C002-recursive-state-mechanism.md). Charter: [C001](../doc/architecture/decisions/C001-candidate-fork-charter.md).
 
-_Last checkpoint: 2026-06-09 — **47 resolved** (Wave C1 → C015: header model + 4 more); 9 open. Next: Wave C2 (#163 + #upgrade).
+_Last checkpoint: 2026-06-09 — **FRONTIER DECISION-COMPLETE** (51 resolved, C001–C017 + #upgrade capstone). Next: coherence pass + draft the spec.
 
 ## ✓ C010 Wave-2B1 → C013 (referencing cluster, 4 facets, one panel)
 
@@ -45,7 +45,7 @@ Triage (`wf_550dd30c-fa6`, 42 isolated agents) → 17 convergent / 24 contested 
 
 ## Decisions so far
 
-- Frontier resolved: **47** (Wave C1 → C015) · Deviations: **25** · ADRs: C001–C015 (+ `0002`).
+- Frontier resolved: **51** — all ~56 seeded questions resolved or accounted-for · Deviations: **25+** · ADRs: **C001–C017** (+ `0002`). Surfaced gap: callbacks/webhooks (open).
 - Last: **C010 Wave-1 batch → C011** (17 convergent direct-resolved). Before that: #83/#32 → C009 (+ first live council hit).
 
 ## Per-Concern confidence map

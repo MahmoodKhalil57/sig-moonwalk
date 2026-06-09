@@ -1,0 +1,41 @@
+# Frontier capstone: mechanical 3.x->4.0 upgrade (Principle 6). ORIGINATED synthesis of C003-C016
+# (wf_57153929-d7c: design -> refute-coverage -> finalize). Pairs with ADR C017. Low Originated ceilings.
+
+# Principle 6 resolved as a SPEC FOR A SEMI-AUTOMATED transformer, NOT a claim of full automation.
+claim upgrade_semi_automated_transformer: Bool @>=0.55 = True
+falsified_when upgrade_semi_automated_transformer == False
+
+# A 3.x->4.0 transformer U: 3.x-DOM -> (4.0-DOM, ReviewLedger) — mechanical where the ADRs pin a target,
+# FLAGGING (never silently emitting) where they do not. Stage-0 normalizes 3.0.x -> 2020-12 first.
+claim upgrade_flags_never_silent: Bool @>=0.6 = True
+falsified_when upgrade_flags_never_silent == False
+
+# HONEST coverage (audit-corrected DOWN from the proposal's 70-80%): ~55-70% mechanical-and-lossless for
+# 3.1, ~45-60% for 3.0.x. Structural estimate, not measured; no upgrader built.
+claim upgrade_coverage_55_70_honest: Bool @>=0.5 = True
+falsified_when upgrade_coverage_55_70_honest == False
+
+# Operations->named-requests and responses->named-responses are LOSSY (friendly-name synthesis;
+# operationId is GLOBAL in 3.x but request-name is per-pathItem). Structural backbone is lossless.
+claim upgrade_ops_responses_lossy: Bool @>=0.55 = True
+falsified_when upgrade_ops_responses_lossy == False
+
+# C013-CONSISTENCY FIX (audit caught a near-contradiction): the dialect version pin is NOT hard-committed
+# to 2020-12 — C013 explicitly DEFERRED the version pin; emit it as a slot, do not hard-code.
+claim upgrade_dialect_pin_not_hardcoded: Bool @>=0.6 = True
+falsified_when upgrade_dialect_pin_not_hardcoded == False
+
+# Non-mechanizable / human-review-flagged: style/explode/allowReserved serialization metadata; schema.xml
+# (13x in petstore, ZERO ADR target); parameter.content/Header.content; discriminator.mapping (dropped, C012);
+# multi-environment servers (-> Deployments authoring); deferred reference byte-grammar; query->data-model deserialization.
+claim upgrade_lossy_cases_flagged: Bool @>=0.55 = True
+falsified_when upgrade_lossy_cases_flagged == False
+
+# GAP surfaced by the capstone (honest): callbacks (3.x) and webhooks (3.1) are UNRESOLVED by any ADR and
+# absent from the 4.0 corpus -> a genuine frontier gap, recorded as a NEW open item (not silently dropped).
+claim upgrade_callbacks_webhooks_gap: Bool @>=0.6 = True
+falsified_when upgrade_callbacks_webhooks_gap == False
+
+# This whole resolution is correct AGAINST the candidate ADRs but inherits their full revisability.
+claim upgrade_inherits_candidate_revisability: Bool @>=0.5 = True
+falsified_when upgrade_inherits_candidate_revisability == False
