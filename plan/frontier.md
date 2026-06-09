@@ -32,7 +32,7 @@ push LOW-prior (Originated) questions to the long horizon.
 - RESOLVED(C011-batch) #224 — `patternProperties` in signatures (dynamic transport keys)
 - RESOLVED(C012-waveA) #58 — Improvements for links
 - OPEN #56 — Context property annotations
-- OPEN #49 / #26 — Rename `$ref`; references as JSON pointers not names
+- RESOLVED(C013) #49/#26 — Rename `$ref`; references as JSON pointers not names
 - RESOLVED(C011-batch) #54 — Inline schemas vs client codegen
 - RESOLVED(C011-batch) #42 / #202 — Examples for whole operation; examples encoded as strings
 - OPEN #113 — Schema/parameter default value
@@ -45,7 +45,7 @@ push LOW-prior (Originated) questions to the long horizon.
 - RESOLVED(C011-batch) #120 — SHACL as alternative to JSON Schema
 - OPEN #122 — Implementor feedback on Alternative Schemas draft
 - RESOLVED(C011-batch) #124 — Import datatype declarations from XSD
-- OPEN #73 — Handling JSON Schema referencing in Moonwalk
+- RESOLVED(C013) #73 — Handling JSON Schema referencing in Moonwalk
 - OPEN #163 — Media type parameters (overlaps API shapes)
 
 ## Deployment configuration — LOW prior → Originated (long horizon)
@@ -62,7 +62,7 @@ push LOW-prior (Originated) questions to the long horizon.
 - RESOLVED(C011-batch) #18 — Levels of completeness
 - RESOLVED(C012-waveA) #76 — Organize spec into tiers
 - RESOLVED(C011-batch) #141 — Functional areas
-- OPEN #72 — Imports proposal
+- RESOLVED(C013) #72 — Imports proposal
 - RESOLVED(C011-batch) #128 — Modularity: rich text formatting
 - RESOLVED(C011-batch) #172 — Native rule-suppression mechanism
 - RESOLVED(C012-waveA) #82 — Versioning not always at API granularity

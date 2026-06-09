@@ -1,0 +1,312 @@
+# Decision: the coupled REFERENCING CLUSTER resolved as ONE decision at OpenAPI-v4/Moonwalk
+# CANDIDATE ceilings (Suluk). #73 (JSON Schema dialect/referencing) + #72 (imports) + #49 ($ref
+# divorce) + #26 (pointer-vs-name). Provenance kept in comments; claims carry the load.
+# Writes to plan/facts/0073-referencing-cluster.bn. Head of Wave B (STATE.md L39).
+#
+# ============================ WINNING FRAME (and what was killed) ============================
+#
+# WINNING FRAME = ADOPT-2020-12 + DEFER-THE-GRAMMAR. Three candidates were designed and each got a
+# 3-lens adversarial verify pass (mizan-gated). The COMPOSITE verdict:
+#
+#  - ADOPT-2020-12 (aggressive NORMATIVE-URI-fragment-by-type+name variant): verify ceilings
+#    0.50 / 0.50 / 0.55. The SETTLED FRAME survives intact and correct on EVERY lens; what does NOT
+#    survive is the DISTINGUISHING bet — promoting handrews' '#schemas.<name>' sketch to NORMATIVE-NOW,
+#    a normative MUST disallowing JSON-Pointer fragments, and a hard 2020-12 version-pin. Refuted on:
+#    (a) REGISTER-INVERSION — #73 c3-r1 verbatim is "I SUSPECT we'll have components produce anchors
+#    like #schemas.whatever ALTHOUGH WITH SOME SYNTAX THAT IS PROBABLY A BIT MORE ROBUST... I was
+#    planning to file it later" (0073.md:222) — hypothesis + self-judged-inadequate + explicit deferral,
+#    the weakest base for a MUST; (b) the pointer-disallow MUST BREAKS THE PROPOSAL'S OWN EXAMPLES —
+#    README L84/L97 use `$ref: "#/components/schemas/speaker"` (a JSON-Pointer fragment) as the blessed
+#    v4 form; (c) the synthetic `#schemas.Foo` anchor is NOT a valid 2020-12 plain-name fragment, so it
+#    breaks pure-JSON-Schema interop (handrews himself: "a pure JSON Schema implementation probably
+#    wouldn't like that", 0073.md:219); (d) the 2025-10-29 real-world datapoint (#26 c5, 0026.md:93)
+#    shipped DUAL coexisting mechanisms ("a URI... while ALSO STILL ALLOWING the component name syntax"),
+#    the OPPOSITE of a normative single-mechanism collapse. mizan_verify_claim(the net-new normative
+#    identity claim) = 0 witnesses.
+#  - MINIMAL (reuse-2020-12, decline-imports, tree-position decouple): verify ceilings 0.50/0.55/0.50.
+#    FATALLY refuted on tooling/compat: the proposal's own corpus references components as
+#    `contentSchema: {$ref:'#/components/schemas/X'}` — a `$ref` INSIDE a Schema Object that reaches
+#    the components map by POSITIONAL JSON Pointer. So MINIMAL's tree-position rule MISLABELS the
+#    DOMINANT real reference and its "JSON-Schema $ref never traverses an OpenAPI component INDEX"
+#    confinement claim is FALSE for the most common form in the corpus (README L84,L97; petstore/rpc/
+#    parameterSchema examples). Also declines the #72 imports frame that is handrews' strongest
+#    in-cluster backtest hit (test_003 CORRECT near-verbatim) and re-exposes #49's naive-bundler
+#    complaint. SURVIVES only its DIALECT facet (clean) + the #49 ACCEPT — both grafted below.
+#  - CUSTOM Moonwalk-OWNED dialect (invent-over-adopt): verify ceilings 0.18 / 0.25 / 0.27. mizan_
+#    verify_claim(custom_moonwalk_dialect_invent_over_adopt) = found=FALSE, 0 witnesses; mizan_check_
+#    action_safety BLOCKED (anti-fab gate). Strictly DOMINATED — identity/import/$ref facets IDENTICAL
+#    to adopt, the only novel bet (dialect ownership) is unwitnessed, contradicts the calibrated elder
+#    PAST his own one-vocabulary concession ceiling (handrews "decouple... WITHOUT INVENTING ITS OWN",
+#    council L17), delivers NO decidability the standard $schema slot lacks, and its REQUIRED novel
+#    vocabularies do NOT degrade-to-ignorable (a 2020-12 validator is spec-MANDATED to reject). KILLED
+#    as a resolution; retained only as a catalogued SIG contrast.
+#
+# COMMITTED = the shared FRAME (which all three inherit and no refutation killed) + fix the identity
+# MECHANISM CLASS + the $anchor reconciliation rule, and DEFER the byte-grammar, version-pin,
+# pointer-policy, and inline-restriction-regime as provisional/SHOULD. This is exactly the retreat
+# the verify pass said "recovers a holding decision" — the conservative sibling of the adopt candidate.
+#
+# Sources (verbatim, line-checked 2026-06-09): discussions/0073.md (inline options L133/L147/L163;
+# gregsdennis forward-compat L201 + handrews keyword-agnostic L206; implicit-anchor gregsdennis L217 +
+# handrews ratify-with-modification L222; pointer-disallow lean L224; whole-doc YAML footgun L112),
+# 0072.md (Import Object, self-as-identifier-not-locator), 0049.md (divorce: whitlockjc c1 agree,
+# darrelmiller c2 "limit internal JSON Pointers to the components object" L67, handrews c3 "We agreed
+# to separate import... from semantically type-safe referencing" L102, I/O-decoupled URIs-as-
+# identifiers L57-59/L82), 0026.md (c4 direction-reversal L83; c5 2025-10-29 DUAL-mechanism OAS-3.2
+# outcome + tags-reorder-fragility L93-96), doc/initial-proposals/README.md (L178 divorce DONE;
+# L84/L97 JSON-Pointer-fragment component refs in the blessed example). Binding priors: C009
+# (0083-array-vs-map.bn), C003 (#16), C004 (#20), C005 (#127), C011 (#54), 0002 (#59 IRI).
+# Council guides (HYPOTHESES at ceilings): handrews @0.70 (hit 0.875, test_003 CORRECT on THIS #72),
+# hudlow @0.78, mikekistler @0.45 uncalibrated.
+
+# ==================== STATUS / PROCESS (inherited, high consensus) ====================
+
+# The WHOLE cluster (#73/#72/#49/#26) is OPEN: no SIG vote, no ADR, no maintainer ruling. mizan
+# 2026-06-09 confirms the binding C009 rule + the #73-deferral claims are sole-witnessed at declared
+# ceilings, bcmea-clean. This is a CANDIDATE resolution at ceilings, NOT a ratified SIG outcome.
+claim s73_cluster_open_no_adr: Bool @>=0.85 = True
+falsified_when s73_cluster_open_no_adr == False
+
+# The cluster resolution is therefore a CANDIDATE under a lowered ceiling: it decides JUST the
+# dialect+identity+import FRAME and DEFERS the exact fragment grammar (#32-c10 later filing) and the
+# relational value-equality vocabulary (#24/#100, downstream).
+claim s73_candidate_lowered_ceiling_frame_only: Bool @>=0.85 = True
+falsified_when s73_candidate_lowered_ceiling_frame_only == False
+
+# ==================== THE SETTLED FRAME (survives every verify lens) ====================
+
+# AXIS-1 (#49) — the OpenAPI Reference Object is INDEPENDENT of JSON Schema's $ref keyword. Near-
+# unanimous (README L178 verbatim; whitlockjc c1, darrelmiller c2, handrews all agree). The factoring
+# of the split into (a) open-world IMPORT by URI/IRI and (b) type-safe internal REFERENCE by NAME was
+# AGREED on the 20-Jul-2023 call (handrews #49 c3, 0049.md:102) — programming-language module analogy.
+claim s49_ref_openapi_divorce_settled: Bool @>=0.85 = True
+falsified_when s49_ref_openapi_divorce_settled == False
+
+# DIALECT must be EXPLICITLY DECLARED and STATICALLY/LOCALLY DECIDABLE at the DOM->ADA boundary
+# (C003 #16): a document-level default + STATIC $schema-style override only; never inferred per-node,
+# never resolved by precedence/ordering. Convergent red-line: hudlow static-decidability, codegen
+# DOM->ADA, purist "declared at exactly one level, reuse host-spec $schema/$vocabulary". This is the
+# FRAME-level invariant; the specific VERSION pin stays open (see s73_version_pin_deferred).
+claim s73_dialect_declared_statically_decidable: Bool @>=0.85 = True
+falsified_when s73_dialect_declared_statically_decidable == False
+
+# 2020-12 already supplies a COMPLETE location-independent identity layer ($id/$anchor/$ref/$defs/
+# $schema/$vocabulary); nothing new is needed FOR SCHEMA IDENTITY (C011/#54). The frame REUSES the
+# host-spec dialect hook rather than minting a parallel OAS dialect-selector (purist red-line).
+claim s73_reuse_2020_12_identity_layer_no_parallel_selector: Bool @>=0.85 = True
+falsified_when s73_reuse_2020_12_identity_layer_no_parallel_selector == False
+
+# ==================== #26 — POINTER vs NAME (resolved: BY STABLE NAME, default) ====================
+
+# #26's original 2022 pointer-ALWAYS position was REVERSED to name-default by 2024. handrews #26 c4
+# (0026.md:83): "we're now considering going in the OTHER direction — things should be component
+# NAMES and not JSON Pointers". Binding prior C009 (ref_by_name_never_by_index_or_order @0.70, mizan-
+# verified found=true 2026-06-09, sole-witness 0083-array-vs-map.bn, bcmea-clean) LANDS the cluster
+# here. NON-DEFERRABLE: every downstream fragment grammar MUST resolve by stable name, never by array
+# INDEX, never by map-insertion ORDER. CEILING 0.70 = the C009 cap; this claim does not exceed it.
+claim s26_resolve_by_stable_name_default: Bool @>=0.7 = True
+falsified_when s26_resolve_by_stable_name_default == False
+
+# COMPONENTS stay a dynamic-key MAP — the type+name identification anchor AND the JSON-Pointer/JSON-
+# Schema referencing anchor; O(1) by-name lookup (#/components/responses/NotFound) preserved
+# (C009 components_stay_map @0.85, inherited unchanged).
+claim s26_components_stay_dynamic_key_map: Bool @>=0.85 = True
+falsified_when s26_components_stay_dynamic_key_map == False
+
+# #26 c5 (0026.md:93, 2025-10-29) is the most recent real-world datapoint and it shipped a DUAL
+# coexisting model in OAS 3.2: "Referencing Security Schemes with a URI... was added... while ALSO
+# STILL ALLOWING the component name syntax." So name-default does NOT normatively FORBID a URI/pointer
+# surface co-existing; the by-name rule is the DEFAULT + the codegen-safe primary, not a sole-mechanism
+# MUST. The exact tolerance for JSON-Pointer fragments in OAS-proper is DEFERRED (see s73_pointer_policy).
+claim s26_name_default_does_not_forbid_coexisting_uri_surface: Str @>=0.6 = "dual-coexist-name-primary-pointer-tolerated"
+falsified_when s26_name_default_does_not_forbid_coexisting_uri_surface != "dual-coexist-name-primary-pointer-tolerated"
+
+# ==================== #73 — DIALECT + IDENTITY MECHANISM (the committed pick) ====================
+
+# IDENTITY MECHANISM CLASS (committed at CANDIDATE ceiling, byte-grammar deferred): typed-component-
+# name is PRIMARY. The component MAP KEY is the canonical, SINGLE-VALUED, deterministic identity
+# (C009 by-name + codegen single-valued red-line). That key AUTOMATICALLY produces a location-
+# independent fragment that carries the SECTION (semantic type) + the NAME — the implicit-anchor-from-
+# component-key (gregsdennis #73 c3 PROPOSES, 0073.md:217; handrews RATIFIES-WITH-MODIFICATION, c3-r1
+# 0073.md:222 "components produce anchors like #schemas.whatever... includes the section... and the
+# name"). This is the genuinely TWO-VOICE part. It collapses #32-c10's four mechanisms to ONE primary
+# model (typed-component-name) with $anchor and JSON-Pointer as DERIVED surfaces (purist/codegen "no
+# four co-equal mechanisms" + "single deterministic identity"). CEILING 0.62: two-voice, bounded by
+# C009 @0.70 and the sole-witness/SIG-unratified cluster status; NOT the aggressive NORMATIVE-NOW
+# variant (which the verify pass capped at 0.50 for register-inversion + breaking the proposal's
+# examples). We fix the CLASS, not the spelling.
+claim s73_identity_class_typed_component_name_primary: Str @>=0.62 = "typed-component-name-primary-implicit-section-plus-name-anchor"
+falsified_when s73_identity_class_typed_component_name_primary != "typed-component-name-primary-implicit-section-plus-name-anchor"
+
+# RECONCILIATION RULE (deterministic — codegen single-valued + purist one-model red-lines): for
+# SCHEMAS, the component KEY IS the canonical anchor; a hand-authored $anchor INSIDE a component names
+# an INTRA-schema target and MUST NOT contradict the key (it never re-names the component itself). So
+# there is exactly ONE name for the component (its key), and $anchor only ever names something strictly
+# inside it. The verify pass flagged a LATENT $id/base-URI scoping tension (an authored $id makes the
+# component its own base resource; #54 c2-r2 warns "same anchor in different resources") — the static-
+# validation check that enforces "can NEVER disagree" is itself DEFERRED downstream with the grammar.
+claim s73_anchor_reconciliation_key_is_canonical: Str @>=0.6 = "component-key-canonical-inline-anchor-is-intra-schema-must-not-contradict"
+falsified_when s73_anchor_reconciliation_key_is_canonical != "component-key-canonical-inline-anchor-is-intra-schema-must-not-contradict"
+
+# JSON-Schema $ref is RETAINED but FENCED inside Schema Objects, governed by the declared dialect; the
+# OpenAPI reference is a by-NAME surface (#72 namespace:componentName). The two kinds MUST be parse-
+# time distinguishable by TOKEN-PLUS-SLOT, NOT by tree-position alone (codegen + purist red-line; the
+# MINIMAL tree-position-only split was FATALLY refuted because the proposal's own corpus puts a JSON-
+# Schema $ref into components positionally). This is the #49 divorce taken far enough to be statically
+# checkable while leaving JSON-Schema-internal referencing as JSON Schema's job under the dialect.
+claim s73_jsonschema_ref_fenced_in_schema_objects: Bool @>=0.62 = True
+falsified_when s73_jsonschema_ref_fenced_in_schema_objects == False
+
+# DIALECT/VERSION PIN — DEFERRED. The FRAME must NAME the dialect it resolves against (a declared
+# default + static override), but the SPECIFIC version is OPEN. C011/#54 ASSUMES 2020-12 $anchor
+# suffices — an assumption folded inside C011, never separately witnessed, never SIG-voted. gregsdennis
+# forward-compat hazard (#73 c2, 0073.md:201): the next JSON Schema version removes non-dynamic
+# behavior from $dynamicAnchor, splitting referencing into disjoint static/dynamic systems, so the
+# keyword-set that creates plain-name fragments is version-dependent. handrews' keyword-AGNOSTIC stance
+# (#73 c2-r1, 0073.md:206 "they're just plain name fragments, that's all the imports system cares
+# about") INSULATES the import system from this — but a default-dialect version-pin is NOT insulated.
+# The aggressive hard-pin-2020-12 variant was capped at 0.50; we DEFER the pin (frame names a default +
+# override mechanism without welding to one version), which the council convergence supports.
+claim s73_version_pin_deferred: Bool @>=0.7 = True
+falsified_when s73_version_pin_deferred == False
+
+# JSON-POINTER FRAGMENT POLICY for OAS-proper component refs — DEFERRED (names-over-pointers default,
+# disallow NOT hardened). handrews' lean to disallow (#73 c3-r1, 0073.md:224) is SINGLE-VOICE and
+# EXPLICITLY HEDGED: "I'd actually prefer to disallow JSON Pointer fragments, but there may be reasons
+# to hold on to them." darrelmiller (#49 c2, 0049.md:67) says SCOPE-not-disallow ("limit internal JSON
+# Pointers to the components object"). C009 subq1 records handrews' disallow lean as "a STATED LEAN,
+# not a SIG resolution — RECORDED, NOT ADOPTED." The proposal's OWN blessed example uses pointer
+# fragments (README L84/L97). So a normative disallow-MUST is REFUTED at candidate ceiling; the
+# committed position is names-PRIMARY with pointer tolerance unsettled. CEILING capped LOW accordingly.
+claim s73_pointer_policy_names_primary_disallow_not_hardened: Str @>=0.5 = "names-primary-pointer-disallow-deferred-not-a-must"
+falsified_when s73_pointer_policy_names_primary_disallow_not_hardened != "names-primary-pointer-disallow-deferred-not-a-must"
+
+# INLINE-SCHEMA RESTRICTION REGIME — DEFERRED (the sharpest genuinely-open sub-question). #73 lists
+# three mutually-exclusive options, all single-voice handrews, none seconded (0073.md:133/147/163):
+# (1) require nonempty $id when $ref/$dynamicRef present inline; (2) FORBID those keywords entirely
+# inline (CON L161: "pretty much every non-trivial OAD will need at least two documents" — hand-author
+# RED-LINE forbids this as the ONLY path); (3) hybrid: forbid everywhere except /components/schemas,
+# require $id there if $ref used (handrews' own CON L174: "Rules are more complex"). The implicit-
+# anchor buys back the single-file INBOUND-naming case, but option-3's $id-when-$ref requirement still
+# mints ceremony for the OUTBOUND intra-component $ref. UNRESOLVED; downstream MUST pick one; the
+# hand-author red-line only forbids option-2-as-sole-path. We do NOT pick at candidate ceiling.
+claim s73_inline_restriction_regime_deferred: Str @>=0.5 = "three-options-open-only-option2-as-sole-path-forbidden"
+falsified_when s73_inline_restriction_regime_deferred != "three-options-open-only-option2-as-sole-path-forbidden"
+
+# ==================== #72 — IMPORTS (frame settled, normative-MUST strength thin) ====================
+
+# IMPORTS mechanism FRAME: an Imports Object of {namespace, href} pairs — href an absolute-IRI without
+# fragment, namespace per-document-unique, 'self' reserved + implicit for the current document. Usage
+# '<fieldName>: <namespace>:<componentName>' where componentName MUST name a Components entry under the
+# matching semantic section. I/O-DECOUPLED: implementations MUST accept self-IRI match + retrieval-URL
+# + external-base-IRI but MUST NOT be required to perform I/O; single-file OADs provide none of the
+# three. Credit: Darrel Miller (object+syntax), handrews (resolution). Imports add NO second resolution
+# algorithm — one name->target function at the DOM->ADA boundary resolves local + imported refs alike;
+# import binds LOCATION only, aliasing as pure namespace-prefixing (C003 #16 + purist red-line).
+claim s72_imports_object_namespace_href_frame: Bool @>=0.6 = True
+falsified_when s72_imports_object_namespace_href_frame == False
+
+# IDENTITY vs LOCATION separated: 'self' is an IDENTIFIER not necessarily a locator (#72; handrews #49
+# c1-r1 0049.md:57-59 "treat all URIs as identifiers", c2-r1 0049.md:82 air-gapped). Motivated by
+# air-gapped/security (no fetch on file-processing), OGC layered-publisher stable-URI survival, network-
+# auth (#3270). DIRECTION settled; but the normative-MUST STRENGTH does NOT harden at candidate ceiling
+# — it is single-voice handrews, self-acknowledged as repeatedly dismissed, accepted only by absence-
+# of-objection, no independent council second in-record. handrews #72 was his STRONGEST in-cluster
+# backtest hit (test_003 CORRECT near-verbatim), which is WHY the direction holds; a SIG vote could
+# soften MUST->SHOULD on the three-method mandate. CEILING reflects direction-holds / MUST-thin.
+claim s72_identity_vs_location_self_is_identifier: Str @>=0.6 = "self-is-identifier-direction-holds-must-strength-thin"
+falsified_when s72_identity_vs_location_self_is_identifier != "self-is-identifier-direction-holds-must-strength-thin"
+
+# Hand-author NO-MANDATORY-WRAPPER red-line (extends #20/C004): a single-file hand-author MUST NOT be
+# forced to write an imports: block, a self: IRI, an $id, or a $schema/dialect declaration to make a
+# basic in-document reference work. 'self' is the implicit zero-ceremony namespace; the document-level
+# default dialect lets inline schemas omit $schema. Honored by the FRAME (aligns #72 single-doc-needs-
+# none-of-the-three). NB the inline-restriction-regime (deferred) must preserve a single-file path.
+claim s72_no_mandatory_wrapper_simple_local_ref: Bool @>=0.7 = True
+falsified_when s72_no_mandatory_wrapper_simple_local_ref == False
+
+# STRING-vs-OBJECT polymorphism + whole-document form + must-match-import-manifest: OPEN. The
+# '<namespace>:<componentName>' string sitting where an inline object is expected is flagged by
+# handrews for strictly-typed-language/codegen devs (#72 c1). The whole-doc 'schema: "shared:"'
+# requires quoting or YAML parses it as an object key (0073.md:112) — hand-author footgun red-line (no
+# terse form whose correctness depends on remembering a quote). The must-match-import manifest (#73 c1,
+# 0073.md:183) cannot transitively guarantee completeness (handrews self-concedes "annoying and counter-
+# intuitive"). All three DEFERRED with the grammar.
+claim s72_polymorphism_wholedoc_manifest_deferred: Bool @>=0.6 = True
+falsified_when s72_polymorphism_wholedoc_manifest_deferred == False
+
+# ==================== #49 — $ref KEYWORD (divorce accepted; finish to parse-time-distinct) =========
+
+# The #49 divorce is ACCEPTED (README L178 = DONE), but README L178 is the very sentence MikeRalphson
+# QUOTES to argue it must be FINISHED (0049.md:16): the OpenAPI reference must become PARSE-TIME-
+# DISTINGUISHABLE from JSON-Schema $ref by TOKEN-PLUS-SLOT (name-string in a name-using slot = OpenAPI
+# ref; '$ref' inside a Schema Object = JSON Schema ref), NOT by tree-position alone. whitlockjc (c1) +
+# darrelmiller (c2) + handrews concur on the divorce; the exact token spelling (rename to use/import,
+# vs keep the Reference-Object spelling) is DEFERRED to the fragment-grammar filing. The half-decouple
+# that leaves tools context-sniffing by tree-position is FORBIDDEN (codegen + purist red-line; the
+# MINIMAL tree-position candidate was FATALLY refuted on exactly this).
+claim s49_divorce_finished_to_parse_time_distinct: Str @>=0.62 = "divorce-accepted-must-be-parse-time-distinct-token-plus-slot"
+falsified_when s49_divorce_finished_to_parse_time_distinct != "divorce-accepted-must-be-parse-time-distinct-token-plus-slot"
+
+# ==================== HARD CONSTRAINTS BINDING ALL DOWNSTREAM GRAMMAR (#32-c10, #24/#100) ==========
+
+# Resolve-the-FRAME / defer-the-GRAMMAR is admissible IFF the frame is stated as INVARIANTS the
+# downstream grammar MUST satisfy: (a) identity intrinsic to the TARGET (not the citation site);
+# (b) ONE resolution function at the DOM->ADA boundary for local + imported refs; (c) dialect
+# explicitly declared and shared BEFORE any value-equality is asserted. #24/#100 may NOT later
+# reintroduce index-coupling or silent-dialect value-equality (purist red-lines; C003 #16).
+claim s73_frame_invariants_bind_downstream_grammar: Bool @>=0.62 = True
+falsified_when s73_frame_invariants_bind_downstream_grammar == False
+
+# VALUE-EQUALITY residue (#20/#24/#100) — DEFERRED. Presence-based cross-type deps already work in
+# standard 2020-12 (C004/#20); only VALUE-EQUALITY (canonical PUT path-ID == body-ID) needs a custom
+# Relative-JSON-Pointer vocab, which is non-standard, contested (handrews 90%-case + resist-spec-as-
+# programming-language), single-witness, and DOWNSTREAM (#24/#100). When it lands it MUST stay in the
+# C003-D1 last-resort runtime tier AND resolve by stable name/anchor (not positional pointer), or it
+# reintroduces the index-fragility C009 removed. NOT decided here.
+claim s73_value_equality_vocab_deferred_downstream: Bool @>=0.85 = True
+falsified_when s73_value_equality_vocab_deferred_downstream == False
+
+# PATH recognition (C005/#127) closes INDEPENDENTLY: reverse-parse on the RFC6570 uriTemplate key.
+# #73 dialect gates cross-type VALUE-EQUALITY only, NOT path parseability. The typed-component-name
+# identity does NOT apply to paths (a uriTemplate key is a template string, not a component-name id).
+# No dependency in that direction.
+claim s73_path_recognition_independent_of_dialect: Bool @>=0.85 = True
+falsified_when s73_path_recognition_independent_of_dialect == False
+
+# ==================== COUNCIL SCORECARD (blind predictions vs reality) ====================
+
+# handrews persona predicted (blind, @0.70) holistic 4.0 resolution + identity-vs-location separation +
+# decouple-without-reinventing + nail-imports-early + $anchor-suffices. REALITY (source-verified):
+# MATCHED on the FRAME (the divorce, the import/identity factoring, self-as-identifier, dialect-decouple
+# are all his real positions, near-verbatim on #72/#49). The persona's predicted_stance ALSO leaned
+# "promote nothing premature / defer the fragment grammar" which MATCHED handrews' real explicit deferral
+# ("planning to file it later", 0073.md:222). The CALIBRATION-NOTE risk (his one backtest miss was a
+# stance-INVERSION) FIRED as a useful warning against the aggressive candidate, which inverted his
+# hypothesis-register sketch into a normative MUST. Net: handrews persona = HIT on frame, and its
+# pre-registered inversion-caution correctly flagged the over-normative variant.
+claim council_handrews_persona_hit_on_frame: Bool @>=0.7 = True
+falsified_when council_handrews_persona_hit_on_frame == False
+
+# hudlow persona predicted (blind, @0.78) ENDORSE explicit-dialect + resolve-by-stable-name + static-
+# in-isolation; FORBID implicit/precedence dialect + index/positional refs; be AMBIVALENT (not hostile)
+# on imports/external-resolution and DEFER the exact fragment grammar "for posterity". REALITY: the
+# committed frame does exactly this — declared+static dialect, by-name identity, deferred grammar. No
+# live hudlow record exists in THIS cluster to contradict (he is not an author on #73/#72/#49/#26), so
+# this is a guide-consistency check, not an in-the-wild hit: the frame is congruent with his backtested
+# invariants and his calibration-note tendency (slightly hardening ambivalence into opposition) was
+# honored by keeping imports-ambivalence and grammar-deferral OPEN rather than forced.
+claim council_hudlow_persona_consistent_not_live_hit: Str @>=0.6 = "frame-congruent-with-hudlow-invariants-no-live-cluster-record"
+falsified_when council_hudlow_persona_consistent_not_live_hit != "frame-congruent-with-hudlow-invariants-no-live-cluster-record"
+
+# ==================== DEFERRED DEPENDENCIES (note, do not resolve) ====================
+
+# This FRAME is the HEAD of Wave B (STATE.md L39): it gates #31/#100 (param-interdeps), #24 (relational
+# value-equality vocab), #49/#26 (reference grammar mechanics), #72 (imports formalization). Deferred
+# with explicit homes: the exact fragment byte-grammar (#32-c10 later filing handrews promised — dot vs
+# slash separator, charset, nested-$defs); the dialect/version pin; the JSON-Pointer tolerance; the
+# inline-restriction regime; the string-vs-object polymorphism UX; the whole-document form; the must-
+# match-import manifest; the relational value-equality vocab (#24/#100). The wire shape MUST NOT be
+# hard-committed to a not-yet-designed model (extends C009 deep_referencing_redesign_deferred @0.85).
+claim s73_downstream_grammar_and_vocab_deferred: Bool @>=0.85 = True
+falsified_when s73_downstream_grammar_and_vocab_deferred == False

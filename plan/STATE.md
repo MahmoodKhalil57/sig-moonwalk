@@ -5,7 +5,11 @@
 > reconstructed on demand (`daftar query`, burhan over `plan/facts/`), never carried.
 > Mechanism: [C002](../doc/architecture/decisions/C002-recursive-state-mechanism.md). Charter: [C001](../doc/architecture/decisions/C001-candidate-fork-charter.md).
 
-_Last checkpoint: 2026-06-09 — **32 resolved** (6 panels + #59 + 17 batch + 9 Wave-A); 24 open. Next: #60/61 + Wave B._
+_Last checkpoint: 2026-06-09 — **36 resolved** (+ referencing cluster #73/#72/#49/#26 → C013); 20 open. Next: Wave B2._
+
+## ✓ C010 Wave-2B1 → C013 (referencing cluster, 4 facets, one panel)
+
+Council-integrated panel `wf_b4344a37-dcd` resolved #73/#72/#49/#26 as one: **adopt JSON Schema 2020-12 + defer-the-grammar.** Dialect EXPLICITLY DECLARED + statically/locally decidable at DOM→ADA (@0.85); **typed-component-name is the primary identity** (map key = canonical, by-name-never-index per C009; @0.62); OpenAPI Reference Object INDEPENDENT of JSON-Schema `$ref` (#49, near-unanimous @0.62); **Imports Object** = namespace+href pairs, absolute-IRI no-fragment (#72 @0.6); resolve by-stable-name default (#26 @0.7). 2 deviations (identity-mechanism, json-pointer policy). **2nd live council hit:** handrews persona predicted the holistic frame + the #49 divorce + that he'd *defer the grammar* — matched his real comment verbatim; its pre-registered valence-inversion risk caught the over-normative ADOPT candidate. Deferred: exact fragment byte-grammar, version pin, relational value-equality vocab (#24/#100).
 
 ## ✓ C010 Wave-2A → C012 (8 contested items, compact panels)
 
@@ -33,15 +37,15 @@ Triage (`wf_550dd30c-fa6`, 42 isolated agents) → 17 convergent / 24 contested 
 
 - **Council resume** — 4 rate-limited Class-A voices (earth2marsh, darrelmiller, karenetheridge, arno-di-loreto).
 
-## Frontier head — 16 contested left, in dependency waves (full list in [frontier.md](./frontier.md))
+## Frontier head — ~12 contested left, in dependency waves (full list in [frontier.md](./frontier.md))
 
-- **Wave A — DONE 9/9** (#116/#57/#45/#43/#82/#76/#17b/#58/#60-61 → C012).
-- **Wave B** (chain on #73): **#73** dialect → **#31/#100** param-interdeps · **#24** relational · **#49/#26** references · **#72** imports · **#69** auth-coupling · **#122** alt-schemas
+- **Wave A — DONE 9/9** (→ C012). **Wave B1 — DONE** (referencing cluster #73/#72/#49/#26 → C013).
+- **Wave B2** (consult C013): **#31/#100** param-interdeps · **#24** relational vocab · **#122** alt-schemas · **#69** auth-coupling. **Do next.**
 - **Wave C** (gated on header model): **#108** → **#163** media-type-params · **#23/#30** paths/resource-orientation · **#56** annotations · **#113** defaults · **#55** servers · **#upgrade** mechanism
 
 ## Decisions so far
 
-- Frontier resolved: **31** (6 panels + #59 + 17 batch-C011 + 8 Wave-A-C012) · Deviations: **17** · ADRs: C001–C012 (+ `0002`).
+- Frontier resolved: **36** (6 panels + #59 + 17 batch-C011 + 9 Wave-A-C012 + 4 cluster-C013) · Deviations: **19** · ADRs: C001–C013 (+ `0002`).
 - Last: **C010 Wave-1 batch → C011** (17 convergent direct-resolved). Before that: #83/#32 → C009 (+ first live council hit).
 
 ## Per-Concern confidence map
@@ -77,6 +81,6 @@ Waves 1 (17 convergent) and 2A (8 contested) are done. **Next:**
 - Burhan ledger → [plan/facts/](./facts/) · spine claims → [plan/MAIN.bn](./MAIN.bn)
 - Narrative receipts → `daftar query "<topic>" --project=/home/mk/apps/sig-moonwalk`
 - SIG record (priors) → [github-export/](../github-export/) · official ADRs → [doc/architecture/decisions/](../doc/architecture/decisions/)
-- Our ADRs → `doc/architecture/decisions/Cxxx-*.md` (frontier: [C003](../doc/architecture/decisions/C003-signature-mechanism.md) [C004](../doc/architecture/decisions/C004-parameter-schema.md) [C005](../doc/architecture/decisions/C005-templating-system.md) [C008](../doc/architecture/decisions/C008-merge-out-of-scope.md) [C009](../doc/architecture/decisions/C009-array-vs-map.md) **[C011 batch×17](../doc/architecture/decisions/C011-convergent-batch-1.md) [C012 waveA×8](../doc/architecture/decisions/C012-contested-batch-waveA.md)**; meta C001/C002/C006/C007/C010) · glossary → [CONTEXT.md](../CONTEXT.md)
+- Our ADRs → `doc/architecture/decisions/Cxxx-*.md` (frontier: [C003](../doc/architecture/decisions/C003-signature-mechanism.md) [C004](../doc/architecture/decisions/C004-parameter-schema.md) [C005](../doc/architecture/decisions/C005-templating-system.md) [C008](../doc/architecture/decisions/C008-merge-out-of-scope.md) [C009](../doc/architecture/decisions/C009-array-vs-map.md) **[C011 batch×17](../doc/architecture/decisions/C011-convergent-batch-1.md) [C012 waveA×8](../doc/architecture/decisions/C012-contested-batch-waveA.md) [C013 referencing×4](../doc/architecture/decisions/C013-referencing-cluster.md)**; meta C001/C002/C006/C007/C010) · glossary → [CONTEXT.md](../CONTEXT.md)
 - Spec projections → [specification/candidate-v4/](../specification/candidate-v4/) (signature, parameter-schema, templating, [collections](../specification/candidate-v4/collections-array-vs-map.md))
 - Council (guides, not prophets) → [plan/council/](./council/) ([calibration](./council/CALIBRATION.md))
