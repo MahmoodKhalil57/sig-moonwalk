@@ -19,7 +19,7 @@ mechanism [C002](doc/architecture/decisions/C002-recursive-state-mechanism.md), 
 
 **Before acting, read [`plan/STATE.md`](plan/STATE.md) — the spine.** It is the thin, always-loaded
 digest (frontier head, confidence map, contradictions, cheapest-next-move, index). Everything else is
-*indexed, not carried*: pull detail on demand (`daftar`, burhan over `plan/ledger/`, the
+*indexed, not carried*: pull detail on demand (`daftar`, burhan over `plan/facts/`, the
 `github-export/` SIG record) only for the question in front of you. Do not load the whole ledger.
 
 ## The walk — one decision per Step (from C002)
@@ -27,14 +27,14 @@ digest (frontier head, confidence map, contradictions, cheapest-next-move, index
 1. Read the spine (`plan/STATE.md`).
 2. Pick the next question — `mcp__mizan__mizan_recommend_next_experiment` over `plan/`, else the spine's cheapest-next-move.
 3. Pull just that question's priors — `daftar query`, and read the cited discussion in `github-export/discussions/NNNN.md`.
-4. Resolve to an **Inherited prior** (adopt) or a **Deviation** (with receipt). Write a `plan/ledger/*.bn` claim with its confidence ceiling; emit a `Cxxx` ADR if the decision is hard-to-reverse; fire a `daftar add`.
+4. Resolve to an **Inherited prior** (adopt) or a **Deviation** (with receipt). Write a `plan/facts/*.bn` claim with its confidence ceiling; emit a `Cxxx` ADR if the decision is hard-to-reverse; fire a `daftar add`.
 5. Re-project the affected `specification/` section from the ledger.
 6. Update the spine: advance the frontier, refresh the confidence map, record any new contradiction. Commit.
 
 ## Conventions & gotchas
 
 - **ADR provenance.** Our ADRs are `Cxxx-slug.md` in `doc/architecture/decisions/` with a provenance blockquote. The SIG's are `000x`. Never intermix the numbering; never present a `Cxxx` as a SIG decision.
-- **burhan `.bn`.** Run: `cd ~/apps/adam/tools/burhan && PYTHONPATH=src python3 -m burhan.cli <file>`. Boolean literals are **`True`/`False`** (Python AST), not `true`/`false`. Top-level `assume` only binds `runtime.*` names — keep other provenance in comments. Hunt contradictions with `bin/burhan-converge` / `bin/burhan-perturb` over `plan/ledger/`.
+- **burhan `.bn`.** Run: `cd ~/apps/adam/tools/burhan && PYTHONPATH=src python3 -m burhan.cli <file>`. Boolean literals are **`True`/`False`** (Python AST), not `true`/`false`. Top-level `assume` only binds `runtime.*` names — keep other provenance in comments. Hunt contradictions with `bin/burhan-converge` / `bin/burhan-perturb` over `plan/facts/`.
 - **daftar.** Valid kinds: `note`, `receipt.observation`, `assumption.envelope`, `bias.keep`, `burhan.segment`. Use `burhan.segment` for decision receipts. `add`/`list`/`stats` are reliable; `query` retrieval is currently weak — confirm with `daftar list --project=/home/mk/apps/sig-moonwalk`.
 - **Document is a projection.** `specification/` is regenerated from the ledger, never the source of truth. Decisions live in the ledger + ADRs first.
 

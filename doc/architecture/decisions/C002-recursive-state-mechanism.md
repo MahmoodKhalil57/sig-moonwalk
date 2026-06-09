@@ -19,7 +19,7 @@ Accepted (candidate-fork)
 **State is split into a thin spine and a fat, durable ledger:**
 
 - **Spine** (`plan/STATE.md` + `plan/MAIN.bn`) — loaded at the *start of every step*. ~1 page: the frontier head (next ~5 questions), the last decision, the per-Concern confidence map, active contradictions, the cheapest-next-move, and a **complete index** of pointers into the ledger. Bounded in size forever.
-- **Ledger** (`plan/ledger/*.bn` + daftar receipts) — append-only, grows without limit. Burhan files hold the machine-interpretable justification (claims, ceilings, cite-chains, `falsified_when`); daftar holds the narrative receipt of each decision, retrievable under a token budget.
+- **Ledger** (`plan/facts/*.bn` + daftar receipts) — append-only, grows without limit. Burhan files hold the machine-interpretable justification (claims, ceilings, cite-chains, `falsified_when`); daftar holds the narrative receipt of each decision, retrievable under a token budget.
 
 **The invariant** that satisfies "never lose the main information": *indexed ≠ carried.* The spine always **holds** the small active set and always **indexes** everything else. Detail is reconstructed on demand by querying daftar / running burhan over the ledger — never by carrying it in context.
 
@@ -27,13 +27,13 @@ Accepted (candidate-fork)
 1. Load the spine (`plan/STATE.md`).
 2. Pick the next question via `mizan_recommend_next_experiment` over `plan/`.
 3. Pull just the relevant priors (`daftar query`, read the cited discussion from `github-export/`).
-4. Resolve → Inherited prior **or** Deviation receipt; write a `plan/ledger/*.bn` claim with its confidence ceiling; emit a `Cxxx` ADR if hard-to-reverse; fire a `daftar add`.
+4. Resolve → Inherited prior **or** Deviation receipt; write a `plan/facts/*.bn` claim with its confidence ceiling; emit a `Cxxx` ADR if hard-to-reverse; fire a `daftar add`.
 5. Re-project the affected document section from the ledger.
 6. Update the spine: advance the frontier, refresh the confidence map, record any new contradiction. Checkpoint (commit).
 
 ## Consequences
 
 - Resumption after session death needs only `plan/STATE.md` + the adam-tick's `adam-status.md` — both bounded. The full reasoning is recoverable but not resident.
-- Contradiction-hunting is a first-class move: `burhan-converge` / `burhan-perturb` run over `plan/ledger/` surface conflicts between decisions before they reach the document.
+- Contradiction-hunting is a first-class move: `burhan-converge` / `burhan-perturb` run over `plan/facts/` surface conflicts between decisions before they reach the document.
 - Per-section honesty is enforced: Originated sections carry low burhan ceilings that the confidence map exposes; the document can never silently launder thin invention as settled.
 - Risk: the spine can drift from the ledger if a step skips its update. Mitigation: the spine update is step 6, and a `burhan-snapshot` checkpoint makes drift detectable.

@@ -39,7 +39,7 @@ The set of open design questions (`plan/frontier.md`), seeded from the SIG recor
 _Avoid_: backlog, todo, queue
 
 **Ledger**:
-The durable, append-only decision store (`plan/ledger/*.bn` burhan claims + daftar receipts). The source of truth; grows without limit, loaded on demand.
+The durable, append-only decision store (`plan/facts/*.bn` burhan claims + daftar receipts). The source of truth; grows without limit, loaded on demand.
 _Avoid_: log, history
 
 **Projection**:

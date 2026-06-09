@@ -2,7 +2,7 @@
 
 The walk's work-list, seeded from the **actual SIG record** (52 Ideas + open issues + the
 initial-proposal's named open problems). Each step pops one question, resolves it to an
-Inherited prior or a Deviation (receipt + `plan/ledger/*.bn`), and updates the spine.
+Inherited prior or a Deviation (receipt + `plan/facts/*.bn`), and updates the spine.
 
 Status legend: `OPEN` · `INGESTED` (classified, prior-map written) · `RESOLVED` (ledger entry exists)
 Prior-richness drives ordering: resolve HIGH-prior questions first (highest ceilings, cheapest),
@@ -10,7 +10,7 @@ push LOW-prior (Originated) questions to the long horizon.
 
 ## API shapes — HIGH prior (do first; short→medium horizon)
 
-- OPEN #16 — Signature mechanism for the API _(foundational; gates request-selection)_
+- RESOLVED #16 — Signature mechanism → **C003** (ADA-first frame; 3 deviations; #20/#127 deferred) → `plan/facts/0016-signature-mechanism.bn`
 - OPEN #20 — One `parameterSchema` or one each for URL / headers / body?
 - OPEN #23 — Can we simplify paths further?
 - OPEN #127 — Path templating: URI Template vs WHATWG URLPattern
@@ -74,6 +74,7 @@ push LOW-prior (Originated) questions to the long horizon.
 
 ## Resolved
 
-- RESOLVED #59 — IRI support → Inherited from SIG ADR 0002 → `plan/ledger/0002-iri-inherited.bn`
+- RESOLVED #59 — IRI support → Inherited from SIG ADR 0002 → `plan/facts/0002-iri-inherited.bn`
+- RESOLVED #16 — Signature mechanism → Deviation set (C003) → `plan/facts/0016-signature-mechanism.bn`
 
 > Full discussion text for any `#N` is in [github-export/discussions/](../github-export/discussions/).

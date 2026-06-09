@@ -19,7 +19,7 @@
 
 # FRAME: signature generalizes 3.x path+method into a multi-part tuple over
 # {method, URI-template incl. query, content-type, headers, request-body shape}.
-claim sig_is_multi_aspect_tuple: Bool @>=0.9 = True
+claim sig_is_multi_aspect_tuple: Bool @>=0.85 = True  # mizan sole-witness cap (was 0.9)
 falsified_when sig_is_multi_aspect_tuple == False
 
 # Signatures live at the DOM->ADA abstraction layer; ADA is the load-time/static surface;
@@ -50,7 +50,7 @@ falsified_when matching_vs_correlating_separate == False
 
 # CURRENT STATUS: #16 has no ratified outcome (no ADR, zero spec text, PR #183 OPEN).
 # Therefore the whole resolution is a CANDIDATE under a lowered ceiling.
-claim sig_no_ratified_outcome: Bool @>=0.95 = True
+claim sig_no_ratified_outcome: Bool @>=0.85 = True  # mizan sole-witness cap (was 0.95)
 falsified_when sig_no_ratified_outcome == False
 
 # ---- COMMITTED FRAME-LEVEL DECISIONS (the four #16 sub-questions a-d) ----

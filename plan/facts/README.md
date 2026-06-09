@@ -13,7 +13,7 @@ daftar holds the *narrative* receipt. The spine ([../STATE.md](../STATE.md)) onl
 ## Validate / interpret
 
 ```bash
-cd ~/apps/adam/tools/burhan && PYTHONPATH=src python3 -m burhan.cli /home/mk/apps/sig-moonwalk/plan/ledger/<file>.bn
+cd ~/apps/adam/tools/burhan && PYTHONPATH=src python3 -m burhan.cli /home/mk/apps/sig-moonwalk/plan/facts/<file>.bn
 PYTHONPATH=src python3 bin/burhan-converge   # cross-decision contradiction hunt
 PYTHONPATH=src python3 bin/burhan-perturb     # prior-fix audit
 ```

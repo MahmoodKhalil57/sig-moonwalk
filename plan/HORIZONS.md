@@ -25,7 +25,7 @@ monolithic ([C001](../doc/architecture/decisions/C001-candidate-fork-charter.md)
 
 - [ ] Resolve the remaining **API-shapes** questions (inheritance/recursive paths, interdependencies, discriminator, shorthands, HTTP fields, links, refs, examples, …).
 - [ ] Resolve the **content-schema-format** Concern (JSON Schema dialect/referencing, SHACL/XSD alternatives).
-- [ ] Harden Inherited-prior ceilings with burhan witnesses; run `burhan-converge` / `burhan-perturb` over `plan/ledger/` to surface cross-decision contradictions and fix them.
+- [ ] Harden Inherited-prior ceilings with burhan witnesses; run `burhan-converge` / `burhan-perturb` over `plan/facts/` to surface cross-decision contradictions and fix them.
 - [ ] Document projection covers all high/medium-prior Concerns coherently.
 
 **Exit criterion:** every richly-priored question RESOLVED; document coherent across API-shapes + content-schema; zero unresolved contradictions in the ledger.
