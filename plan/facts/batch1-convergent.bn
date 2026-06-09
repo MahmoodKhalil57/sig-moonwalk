@@ -1,0 +1,66 @@
+# C010 Wave-1 convergent batch — 17 frontier items resolved DIRECTLY (no panel).
+# Each is inherited / out-of-scope / thin-single-voice per Wave-0 triage (wf_550dd30c-fa6),
+# operator-approved 2026-06-09. Pairs with ADR C011. Bool claims (witnessed); disposition + source
+# + dependency in comments. Items whose disposition leans on a CONTESTED neighbor resolve only the
+# self-contained part and FLAG the dependency (not pre-empting the panel).
+
+# --- inherited from our own resolved ADRs ---
+# #119 recursive paths: bounded-out by C005 (forbidden operators preserve path injectivity).
+claim s119_recursive_paths_out_of_scope: Bool @>=0.85 = True
+falsified_when s119_recursive_paths_out_of_scope == False
+# #224 dynamic transport keys: met by C004 per-location slots + patternProperties WITHIN a slot.
+claim s224_patternprops_absorbed_by_c004: Bool @>=0.8 = True
+falsified_when s224_patternprops_absorbed_by_c004 == False
+# #172 rule-suppression: out-of-scope -> linting tooling (handrews scope objection; same class as C008/#17).
+claim s172_rule_suppression_out_of_scope: Bool @>=0.85 = True
+falsified_when s172_rule_suppression_out_of_scope == False
+
+# --- inherited from the SIG record (recent handrews / OAS 3.2 determinations) ---
+# #79 archetype: handrews 2025-10-30 out-of-scope -> companion spec / x-archetype extension.
+claim s79_archetype_out_of_scope: Bool @>=0.8 = True
+falsified_when s79_archetype_out_of_scope == False
+# #209 Set-Cookie: inherit the OAS 3.2 header-registry answer. SELF-CONTAINED stance; full modeling
+# gated on the contested header model (#108) — flagged, not pre-empted.
+claim s209_setcookie_inherit_3x_stance: Bool @>=0.75 = True
+falsified_when s209_setcookie_inherit_3x_stance == False
+# #54 inline-schema-vs-codegen: JSON Schema 2020-12 $anchor already suffices for schema identity.
+claim s54_anchor_suffices: Bool @>=0.85 = True
+falsified_when s54_anchor_suffices == False
+# #124 XSD import: optional-via-extension-registry (non-core); XML text+attr fixed upstream in OAS 3.2.
+claim s124_xsd_optional_extension: Bool @>=0.85 = True
+falsified_when s124_xsd_optional_extension == False
+# #141 functional areas: adopt handrews' seven functional areas as the spec's modular decomposition.
+claim s141_adopt_functional_areas: Bool @>=0.8 = True
+falsified_when s141_adopt_functional_areas == False
+# #128 rich text: configurable rich-text format; defer concrete format defs to extensions; no mandated tables.
+claim s128_configurable_richtext: Bool @>=0.8 = True
+falsified_when s128_configurable_richtext == False
+# #63 consumer-optimized form: accept the `self` field (OAS 3.2 + #72) as complete for authoring/deploy.
+# SELF-CONTAINED on the self-field; bundling-format detail leans on #72 imports (contested) — flagged.
+claim s63_self_field_complete: Bool @>=0.75 = True
+falsified_when s63_self_field_complete == False
+# #42/#202 examples: adopt the #90 example naming-convention recommendation.
+claim s42_202_adopt_90_convention: Bool @>=0.78 = True
+falsified_when s42_202_adopt_90_convention == False
+# #130 use cases: adopt the brainstorm use-case taxonomy (meta-doc, not a feature).
+claim s130_adopt_usecase_taxonomy: Bool @>=0.8 = True
+falsified_when s130_adopt_usecase_taxonomy == False
+# #19 discovery: adopt RFC 8615 /.well-known/openapi; coordinate IETF media-type registration.
+claim s19_wellknown_rfc8615: Bool @>=0.78 = True
+falsified_when s19_wellknown_rfc8615 == False
+
+# --- out-of-scope determinations (decline from core; defer to overlays/extensions/tooling) ---
+# #120 SHACL alternative: out-of-scope of core -> alternative-schema extension mechanism / framework.
+claim s120_shacl_out_of_scope: Bool @>=0.8 = True
+falsified_when s120_shacl_out_of_scope == False
+# #102 retry/timeout: decline from core -> overlays / HTTP-standard resilience (not a core concern).
+claim s102_retry_out_of_scope: Bool @>=0.75 = True
+falsified_when s102_retry_out_of_scope == False
+# #75/#84/#50 security: #75 (deprecate security schemes) already shipped in OAS 3.2; #84 (OAuth scope
+# docs) -> docs/guidance (out-of-scope); #50 (template paths in security) deferred as post-C005 low-priority.
+claim s75_84_50_security_resolved: Bool @>=0.8 = True
+falsified_when s75_84_50_security_resolved == False
+# #18 levels-of-completeness: out-of-scope as a distinct item; conflate with the contested #76 tiers
+# concern (and #90). SELF-CONTAINED dedup; the tier mechanism itself is the #76 panel — flagged.
+claim s18_completeness_conflate_76: Bool @>=0.75 = True
+falsified_when s18_completeness_conflate_76 == False

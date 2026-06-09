@@ -5,7 +5,11 @@
 > reconstructed on demand (`daftar query`, burhan over `plan/facts/`), never carried.
 > Mechanism: [C002](../doc/architecture/decisions/C002-recursive-state-mechanism.md). Charter: [C001](../doc/architecture/decisions/C001-candidate-fork-charter.md).
 
-_Last checkpoint: 2026-06-09 — **6 resolved** (#16,#20,#127,#17,#83/#32,+#59); council live & wild-validated. Next: #116._
+_Last checkpoint: 2026-06-09 — **23 resolved** (6 panels + #59 + **17 in the C010 batch**); 33 open. Next: contested Wave A._
+
+## ✓ C010 Wave-1 batch → C011 (17 convergent items, one wave)
+
+Triage (`wf_550dd30c-fa6`, 42 isolated agents) → 17 convergent / 24 contested / 0 originated; operator-approved. The **17 convergent** resolved directly (inherit / out-of-scope / thin) in one batched ledger [`batch1-convergent.bn`](./facts/batch1-convergent.bn) + [C011](../doc/architecture/decisions/C011-convergent-batch-1.md): #119 #224 #172 #79 #209 #54 #124 #141 #128 #63 #42/202 #130 #19 #120 #102 #75/84/50 #18. **converge backstop clean** (141 claims). 3 items (#209→#108, #63→#72, #18→#76) resolved self-contained part only, dep flagged. First C010 batch — 17 in one wave vs 17 sequential Steps. **24 contested still need panels** (dependency waves below).
 
 ## ✓ #83/#32 resolved → C009 (+ first live council hit)
 
@@ -26,18 +30,16 @@ _Last checkpoint: 2026-06-09 — **6 resolved** (#16,#20,#127,#17,#83/#32,+#59);
 - **Council resume** — 4 rate-limited Class-A voices (earth2marsh, darrelmiller, karenetheridge, arno-di-loreto).
 - **C010 batch demo** — triage + batch the independent frontier tail (the speedup the operator asked for).
 
-## Frontier head (next ~5 — full list in [frontier.md](./frontier.md))
+## Frontier head — 24 contested, in dependency waves (full list in [frontier.md](./frontier.md))
 
-1. **#116 Inheritance on paths** — structural reuse across path sublevels. **Do next** (or fold into the C010 batch). *Note: #83 just fixed collections as maps — inheritance interacts with the path map.*
-2. **#17b Response-level precedence** *(split from #17)* — apiResponses vs pathResponses vs request-level; `parameterSchema` `allOf` composition. The genuine precedence question.
-3. **#73 JSON Schema dialect + relational vocab** — gates #20's cross-type value-equality (path-ID==body-ID); hard dependency.
-4. **#108 Header model** — RFC9110/8941; gates header-aspect signatures (#16) + #20 header slot + #127 request-grammar completion.
-5. **#119 Recursive paths** · **#61 method+path shorthand** · **#57 discriminator** — remaining API-shapes.
+- **Wave A** (deps on resolved ADRs only — batch as parallel panels): **#116** inheritance · **#57** discriminator · **#60/#61** shorthand · **#45** HTTP/2-3 · **#43** rate-limits · **#82** versioning · **#76** tiers · **#17b** precedence · **#58** links
+- **Wave B** (chain on A / each other): **#73** dialect → **#31/#100** param-interdeps · **#24** relational · **#49/#26** references · **#72** imports · **#69** auth-coupling · **#122** alt-schemas
+- **Wave C** (gated on header model): **#108** → **#163** media-type-params · **#23/#30** paths/resource-orientation · **#56** annotations · **#113** defaults · **#55** servers · **#upgrade** mechanism
 
 ## Decisions so far
 
-- Frontier resolved: **6** (#59 IRI, #16, #20, #127, #17, #83/#32) · Deviations recorded: **13** (#16 ×3, #20 ×2, #127 ×4, #83 ×4; #17 inherited) · ADRs: C001–C010 (+ `0002-iri-inherited`).
-- Last decision: **#83/#32 → C009** (collections stay map/struct; identification-first; refs by-name-not-index; first live council hit).
+- Frontier resolved: **23** (6 panels: #16/#20/#127/#17/#83/#32 + #59 + **17 batch C011**) · Deviations: **13** (panels only; batch items inherited/out-of-scope) · ADRs: C001–C011 (+ `0002`).
+- Last: **C010 Wave-1 batch → C011** (17 convergent direct-resolved). Before that: #83/#32 → C009 (+ first live council hit).
 
 ## Per-Concern confidence map
 
@@ -59,7 +61,7 @@ _Last checkpoint: 2026-06-09 — **6 resolved** (#16,#20,#127,#17,#83/#32,+#59);
 
 ## Cheapest-next-move
 
-**Best move now: the C010 batch demo** (operator-requested speedup) — one triage sweep over the ~40 remaining frontier items (convergent→direct like #17, contested→panel, tag dependency edges), then a direct-batch wave of the independent convergent ones, then parallel-panel waves. One workflow at a time. If walking solo instead: **#116 (inheritance on paths)** — read `github-export/discussions/0116.md`; right-size first (check contention before a full workflow).
+**C010 Wave-2: the contested panels.** Wave-1 batch (17 convergent) is done. Next = run **Wave A** (9 contested items with resolved-ADR deps only) as parallel panels — one council-integrated workflow that pipelines them (per-item isolation; no cross-pollution). Then Wave B (after #73), Wave C (after #108). `burhan-converge` backstop after each wave. Re-triage **#17b** (Wave-0 agent returned placeholder). One workflow at a time.
 
 ## Index (pointers — load on demand)
 
@@ -68,6 +70,6 @@ _Last checkpoint: 2026-06-09 — **6 resolved** (#16,#20,#127,#17,#83/#32,+#59);
 - Burhan ledger → [plan/facts/](./facts/) · spine claims → [plan/MAIN.bn](./MAIN.bn)
 - Narrative receipts → `daftar query "<topic>" --project=/home/mk/apps/sig-moonwalk`
 - SIG record (priors) → [github-export/](../github-export/) · official ADRs → [doc/architecture/decisions/](../doc/architecture/decisions/)
-- Our ADRs → `doc/architecture/decisions/Cxxx-*.md` (frontier: [C003](../doc/architecture/decisions/C003-signature-mechanism.md) [C004](../doc/architecture/decisions/C004-parameter-schema.md) [C005](../doc/architecture/decisions/C005-templating-system.md) [C008](../doc/architecture/decisions/C008-merge-out-of-scope.md) [C009 collections](../doc/architecture/decisions/C009-array-vs-map.md); meta C001/C002/C006/C007/C010) · glossary → [CONTEXT.md](../CONTEXT.md)
+- Our ADRs → `doc/architecture/decisions/Cxxx-*.md` (frontier: [C003](../doc/architecture/decisions/C003-signature-mechanism.md) [C004](../doc/architecture/decisions/C004-parameter-schema.md) [C005](../doc/architecture/decisions/C005-templating-system.md) [C008](../doc/architecture/decisions/C008-merge-out-of-scope.md) [C009](../doc/architecture/decisions/C009-array-vs-map.md) **[C011 batch-1×17](../doc/architecture/decisions/C011-convergent-batch-1.md)**; meta C001/C002/C006/C007/C010) · glossary → [CONTEXT.md](../CONTEXT.md)
 - Spec projections → [specification/candidate-v4/](../specification/candidate-v4/) (signature, parameter-schema, templating, [collections](../specification/candidate-v4/collections-array-vs-map.md))
 - Council (guides, not prophets) → [plan/council/](./council/) ([calibration](./council/CALIBRATION.md))
