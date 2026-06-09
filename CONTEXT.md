@@ -46,6 +46,20 @@ _Avoid_: log, history
 The spec document, regenerated from the Ledger rather than hand-maintained. The document is downstream of the decisions, never the reverse.
 _Avoid_: draft, output, build
 
+## The council ([C006](./doc/architecture/decisions/C006-backtested-persona-council.md))
+
+**Persona**:
+A predictive model of a recurring SIG voice, built only from their public statements and carrying a backtest-derived confidence ceiling. A model-guess, never attributed to the real person as fact.
+_Avoid_: profile, the person's name as a fact-source
+
+**Council**:
+The set of *calibrated* Personas (those that passed their blind backtest), consulted as a "what would they object to?" guide — example guides, not prophets. Predictions feed a Step as hypotheses and an adversarial lens; they never substitute for the real record or raise a decision's ceiling.
+_Avoid_: oracle, panel (reserved for the workflow's adversarial verifiers)
+
+**Backtest**:
+The blind out-of-sample test that validates a Persona: the builder sees only a train slice, the predictor sees only held-out prompts (not answers), a judge scores prediction-vs-reality. Hit-rate sets the ceiling. Calibration lives in `plan/council/CALIBRATION.md`.
+_Avoid_: evaluation, check
+
 **The SIG**:
 The official OpenAPI Moonwalk Special Interest Group and its consensus process (discussions → weekly-call consensus → ADRs → eventual formal spec). We are an external contributor building a candidate; we are not the SIG and cannot ratify on its behalf.
 _Avoid_: the project, moonwalk (when meaning the official body)
