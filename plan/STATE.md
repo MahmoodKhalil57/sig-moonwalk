@@ -5,11 +5,11 @@
 > reconstructed on demand (`daftar query`, burhan over `plan/facts/`), never carried.
 > Mechanism: [C002](../doc/architecture/decisions/C002-recursive-state-mechanism.md). Charter: [C001](../doc/architecture/decisions/C001-candidate-fork-charter.md).
 
-_Last checkpoint: 2026-06-09 — **31 resolved** (6 panels + #59 + 17 batch-C011 + 8 Wave-A-C012); 25 open. Next: #60/61 + Wave B._
+_Last checkpoint: 2026-06-09 — **32 resolved** (6 panels + #59 + 17 batch + 9 Wave-A); 24 open. Next: #60/61 + Wave B._
 
 ## ✓ C010 Wave-2A → C012 (8 contested items, compact panels)
 
-Workflow `wf_806e7b7b-df3`: 8 of 9 contested items resolved via compact per-item panels (read-poles → resolve-with-council → adversarial-refute-and-finalize), post-refutation ceilings 0.5–0.74 → [`batch2-waveA.bn`](./facts/batch2-waveA.bn) + [C012](../doc/architecture/decisions/C012-contested-batch-waveA.md): **#116** inheritance (optional `shared` map + override/accumulate algo @0.55) · **#57** discriminator (retain as codegen hint + propertyDependencies @0.6) · **#45** HTTP-versions (version-agnostic @0.74) · **#43** rate-limits (out-of-scope @0.74) · **#82** versioning (permit-don't-mandate @0.74) · **#76** tiers (decline @0.6) · **#17b** precedence (most-specific-wins + allOf-compose @0.62) · **#58** links (scoped baseline @0.5). converge clean (149). **⚠ #60/61 shorthand did NOT finalize — SESSION LIMIT (resets 6:10pm London); still OPEN.**
+Workflow `wf_806e7b7b-df3`: 8 of 9 contested items resolved via compact per-item panels (read-poles → resolve-with-council → adversarial-refute-and-finalize), post-refutation ceilings 0.5–0.74 → [`batch2-waveA.bn`](./facts/batch2-waveA.bn) + [C012](../doc/architecture/decisions/C012-contested-batch-waveA.md): **#116** inheritance (optional `shared` map + override/accumulate algo @0.55) · **#57** discriminator (retain as codegen hint + propertyDependencies @0.6) · **#45** HTTP-versions (version-agnostic @0.74) · **#43** rate-limits (out-of-scope @0.74) · **#82** versioning (permit-don't-mandate @0.74) · **#76** tiers (decline @0.6) · **#17b** precedence (most-specific-wins + allOf-compose @0.62) · **#58** links (scoped baseline @0.5). converge clean (149). #60/61 resolved directly post-limit (permit-desugar @0.6) — **Wave A 9/9**.
 
 ## ✓ C010 Wave-1 batch → C011 (17 convergent items, one wave)
 
@@ -31,12 +31,11 @@ Triage (`wf_550dd30c-fa6`, 42 isolated agents) → 17 convergent / 24 contested 
 
 ## ⏳ Pending (optional · one workflow at a time)
 
-- **#60/61 shorthand** — Wave-A session-limit casualty; OPEN.
 - **Council resume** — 4 rate-limited Class-A voices (earth2marsh, darrelmiller, karenetheridge, arno-di-loreto).
 
 ## Frontier head — 16 contested left, in dependency waves (full list in [frontier.md](./frontier.md))
 
-- **Wave A — DONE** (#116/#57/#45/#43/#82/#76/#17b/#58 → C012); **#60/61 carryover** (session limit).
+- **Wave A — DONE 9/9** (#116/#57/#45/#43/#82/#76/#17b/#58/#60-61 → C012).
 - **Wave B** (chain on #73): **#73** dialect → **#31/#100** param-interdeps · **#24** relational · **#49/#26** references · **#72** imports · **#69** auth-coupling · **#122** alt-schemas
 - **Wave C** (gated on header model): **#108** → **#163** media-type-params · **#23/#30** paths/resource-orientation · **#56** annotations · **#113** defaults · **#55** servers · **#upgrade** mechanism
 
