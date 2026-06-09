@@ -14,6 +14,10 @@ Out-of-sample blind prediction works. On the three voices with adequate test ite
 | [rafalkrupinski](./rafalkrupinski.md) | leave-one-out | 4 | 0.875 | 0.70 | ✅ calibrated (tooling-economics pragmatist) |
 | [mikekistler](./mikekistler.md) | leave-one-out | 1 | 0.50 | 0.45 | ⚠️ built, **uncalibrated** (n=1 too small) |
 
+## In-the-wild confirmation (2026-06-09, Step #83/#32)
+
+The **handrews persona earned a live hit** during the #83 council-integrated Step ([0083 synthesis](../facts/0083-array-vs-map.synthesis.md)). Predicting **blind** (no access to #32), it forecast that handrews would *refuse "array or map," reframe to "how do we identify things in an OAD," and decompose into the sub-axes (names/ordering/reuse/tags), leaning map-by-identity.* His real #32 c10 does exactly that — near-verbatim on the *move and decomposition*. The lone miss (over-firming the map lean vs his non-committal c10) was **pre-registered** by the persona, which told us to discount its own map convergence — and we did; the file-grounded record carried the verdict. This is the first out-of-sample prediction of a real person's reasoning move on a live decision (beyond the lab backtest). Council = guide that pointed us right, not oracle that decided.
+
 ## Caveats (honest)
 
 - **Small samples.** All splits were leave-one-out at n≤4; ceilings are capped accordingly. A larger backtest (temporal split on the high-volume voices) would tighten these — re-runnable as the record grows.

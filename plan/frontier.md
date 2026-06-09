@@ -16,13 +16,13 @@ push LOW-prior (Originated) questions to the long horizon.
 - RESOLVED #127 — Path templating → **C005** (RFC6570 parseable profile + normative grammar/reverse-algorithm; D1-safe) → `plan/facts/0127-templating-system.bn`
 - RESOLVED #17 — *(document merge / multi-file composition)* → **C008** out-of-scope, defer to Overlay Spec + tooling → `plan/facts/0017-merge-scope.bn`
 - OPEN **#17b (split-out)** — Response-level precedence: apiResponses vs pathResponses vs request-level responses; `parameterSchema` `allOf` composition across pathItem+request. *(The real precedence question, conflated with #17 in the original spine; now distinct.)*
-- OPEN #83 — Responses should be an array, not a map
+- RESOLVED #83 / #32 — collections array-vs-map → **C009** keep map/struct (identification-first; refs by-name-not-index; tags flip array→map) → `plan/facts/0083-array-vs-map.bn`
 - OPEN #116 — Inheritance on paths and sublevels
 - OPEN #119 — Allow recursive paths
 - OPEN #30 — Resource-oriented modeling
 - OPEN #31 / #100 — Validation / interdependencies across parameters
 - OPEN #24 — Arithmetic & relational inter-parameter dependencies (readability)
-- OPEN #32 — Objects → arrays
+- RESOLVED #32 — Objects → arrays *(umbrella for #83)* → kept map/struct (C009) → `plan/facts/0083-array-vs-map.bn`
 - OPEN #57 — Replace or remove discriminator
 - OPEN #60 / #61 — Shorthand for requests & responses; `post /foos/{id}` form
 - OPEN #79 — `archetype` field for paths

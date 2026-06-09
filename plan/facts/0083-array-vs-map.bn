@@ -1,0 +1,238 @@
+# Decision: frontier #83 ("Responses should be an array, not a map") -> redirected to the
+# live umbrella #32 ("Consideration for moving from objects to arrays"). Candidate-fork
+# resolution (C009/Suluk). Provenance kept in comments; claims carry the load.
+#
+# WINNING FRAME: IDENTIFICATION-FIRST (handrews c10, discussions/0032.md:413-452, verified
+# verbatim). Array-vs-map FALLS OUT of how an OAD identifies things; decide the identity RULE
+# now (by stable name, never by array index), DEFER the fragment-syntax redesign (#26/#49/#72/#73),
+# then route each user-keyed collection to array-vs-map by its dominant residual axis. The frame
+# earned the highest verify-lens ceilings (0.74/0.70/0.62/0.60). Runner-up KEEP-MAPS holds at
+# @0.62 (its conclusion is the inherited prior) but the verify pass showed its SUPPORTING args
+# (migration-favors-map, folding-readability) are near-a-wash for responses specifically.
+# KILLED: BLANKET-ARRAYS (verify ceilings 0.3-0.52, TWO fatal refutations) — the
+# spec-defined-name-derivation migration mechanism is NON-INJECTIVE on v4's own headline feature
+# (multiple responses per status / multiple requests per method: README:61,66; handrews 0032.md:438),
+# violating its own MUST-unique rule; and its "paths must be arrays because first-match-wins needs
+# key-order" mandate is FABRICATED — the #16/#127 matcher resolves overlap by concrete-over-variable
+# specificity at RUNTIME, never by document/key order (0016:45-46, 0127). HYBRID-OPTIONAL-NAMES
+# killed on the same non-injectivity + the optional-names lean further from the real handrews record.
+#
+# Sources: discussions/0032.md c8 (arno list-readability concession + lost-header-names-in-3.x),
+# c9 (spacether tags-as-map structural collision-prevention), c10 (handrews reframe + 5 sub-qs),
+# :85-89 (kevinswiber conceded downsides incl. collision), :106-134/176-184 (kevinswiber querying),
+# :138-150 (ralfhandl uniqueItemProperties + handrews interop-vocab-not-core), :154-174 (bpedro
+# M1/M2/M3 access table), :199-204 (MikeRalphson ordering=last-one-wins + composite-keys),
+# :220-224 (rattrayalex optional-names + operationId-sparse); discussions/0083.md:14-32 (daniel-white
+# array-for-keyless-$ref-reuse, the literal frontier); discussions/0026.md:91-96 (arno tags-as-object
+# for $ref-to-tag, handrews "no URI option for tags, at least for now"); discussions/0090.md:476-513
+# (flaksp servers-array codegen pain, wants servers->map); doc/initial-proposals/README.md:57-113
+# (v4 map model: friendly-name keys + status-as-field), :178 (Reference arrays for SET reuse);
+# plan/facts/0016 (matcher name-irrelevant + order-independent), 0020 (closed slot vocabulary),
+# 0127 (uriTemplate-is-the-key). mizan: matching_vs_correlating_separate sole-witness cap @0.85
+# bcmea-clean; per_location_slots_eliminate_reserved_names sole-witness cap @0.70 bcmea-clean.
+
+# ==== STATUS / PROCESS (inherited, high consensus) ====
+
+# #25 (arno 2022) and #83 (daniel-white 2024) were BOTH closed by handrews as DUPLICATES and
+# consolidated into #32. #32 is the live umbrella and remains OPEN — c10 leaves it open pending
+# the five sub-questions. No vote, no maintainer ruling, no ADR for either side.
+claim umbrella_32_open_no_adr: Bool @>=0.85 = True
+falsified_when umbrella_32_open_no_adr == False
+
+# The whole #83/#32 resolution is therefore a CANDIDATE under a lowered ceiling (open umbrella +
+# deciding sub-question deferred + thread argument-weight tilts pro-list for responses).
+claim s83_no_ratified_outcome: Bool @>=0.85 = True
+falsified_when s83_no_ratified_outcome == False
+
+# ==== INHERITED DEFAULT (priors-with-ceilings) ====
+
+# The SIG binding DEFAULT is MAP for all four user-keyed collections in scope. initial-proposals
+# README models paths(key 'speakers'), requests(createSpeaker/getSpeakers), responses(created),
+# pathResponses(notFound), apiResponses(serverError) ALL as named maps; arrays appear ONLY for
+# OpenAPI-Reference reuse-of-SETS (README:178). MAP is the inherited prior.
+claim sig_default_is_map_for_open_collections: Bool @>=0.85 = True
+falsified_when sig_default_is_map_for_open_collections == False
+
+# CRITICAL nuance the BLANKET-ARRAYS fatal refutation turned on: the README keys responses by a
+# FRIENDLY NAME (created/notFound) with status demoted to an inner FIELD (status:201), NOT by the
+# status code. So "derive the name from the natural key (status)" is NON-INJECTIVE on v4's own
+# headline feature — multiple responses at the same status with different content-types (README:66)
+# collide on a status-derived name. Any name-derivation must derive from the FRIENDLY name, and any
+# array form must make names MANDATORY-AND-STABLE, not optional-with-status-derivation.
+claim readme_keys_responses_by_friendly_name_status_is_a_field: Bool @>=0.85 = True
+falsified_when readme_keys_responses_by_friendly_name_status_is_a_field == False
+
+# ==== THE FRAME VERDICT (deviation: identification-first routing) ====
+
+# WINNING FRAME. array-vs-map is DOWNSTREAM of the identity model (handrews c10 reframe, verbatim
+# 0032.md:413-452). The container is DERIVED per-collection, not chosen by ergonomics. This is the
+# correct meta-frame and a DEFERRAL device for the deep verdict, NOT itself a container verdict.
+claim winning_frame_is_identification_first: Str @>=0.62 = "identification-first-per-collection-routing"
+falsified_when winning_frame_is_identification_first != "identification-first-per-collection-routing"
+
+# NON-DEFERRABLE MINIMUM decided NOW (codegen + conservative + pragmatist shared red line, and the
+# precondition that makes EITHER container referentially safe): references into user-keyed collections
+# resolve BY STABLE NAME, never by array INDEX and never by map-insertion-ORDER. Under name-based
+# identity an array-of-named-objects and a map-of-named-objects are REFERENTIALLY EQUIVALENT — so
+# whitlockjc's index-fragility objection is downgraded from decisive to conditional, and committing
+# this rule now does NOT pre-commit the wire shape. The fragment SYNTAX (#schemas.Foo type+name,
+# #72 namespace:componentName, whether internal JSON Pointers survive) stays DEFERRED.
+claim ref_by_name_never_by_index_or_order: Bool @>=0.7 = True
+falsified_when ref_by_name_never_by_index_or_order == False
+
+# ==== PER-COLLECTION CONTAINER ROUTING (the committed shape) ====
+
+# PATHS: stay a MAP keyed by the full RFC6570 uriTemplate. C005 HARD — the key IS the load-bearing
+# datum the #127 reverse-parse matcher compiles; a uriTemplate is NOT a component-name charset id
+# (^[a-zA-Z0-9.\-_]+$), so the type+name identity option does not even apply; path identity is the
+# template string. NB the BLANKET-ARRAYS "paths must be arrays for first-match-wins ordering" claim
+# is REFUTED: the matcher resolves overlap by concrete-over-variable specificity at RUNTIME, never
+# by collection order (0016:45-46 concrete_over_variable_precedence RUNTIME-ONLY; 0127 reverse-parse).
+claim paths_stay_map_keyed_by_uritemplate: Bool @>=0.85 = True
+falsified_when paths_stay_map_keyed_by_uritemplate == False
+
+# matcher is ORDER-INDEPENDENT for collision resolution — so no in-scope collection is forced to an
+# array on first-match-wins grounds. The C003 "order-significant => array" caveat is a GUARD against
+# RELYING on non-portable JSON object key-order; the matcher does not rely on key-order, so the guard
+# fires VACUOUSLY and yields no array mandate. (Carry-over: IF the SIG later picks an ORDER-BASED
+# collision policy — collision_resolution_left_open @0.8 in 0016 — THAT collection must become an
+# array. Latent, not active; recorded as a dependency.)
+claim matcher_is_order_independent_no_array_forced: Bool @>=0.8 = True
+falsified_when matcher_is_order_independent_no_array_forced == False
+
+# REQUESTS: stay a NAMED MAP keyed by friendly request name. The #16 matcher keys on the signature
+# TUPLE {method, uri-template incl query, content-type, headers, body-shape} and NEVER consumed the
+# request NAME (matching separable from correlating) — so the container is matcher-irrelevant and the
+# map costs the matcher nothing while supplying free name-uniqueness for codegen symbols.
+claim requests_stay_named_map: Bool @>=0.7 = True
+falsified_when requests_stay_named_map == False
+
+# RESPONSES / pathResponses / apiResponses: stay NAMED MAPS keyed by friendly name, status as a
+# FIELD. This is the collection the thread tilts most pro-list on (the literal #83), so the ceiling
+# is the LOWEST of the container routings — adopted as the inherited default at a deliberately
+# lowered ceiling, NOT hardened. The matcher is name-irrelevant here too; free uniqueness + lower
+# migration churn + lower authoring keystrokes for the hand-authored common case lean map; the
+# reuse-keeps-name + ordering pulls are absorbed below WITHOUT reshaping the container.
+claim responses_stay_named_map_lowered_ceiling: Str @>=0.55 = "map-default-not-hardened"
+falsified_when responses_stay_named_map_lowered_ceiling != "map-default-not-hardened"
+
+# #20 PER-LOCATION SLOTS {query, path, header, cookie, body}: stay a FIXED-KEY STRUCT
+# unconditionally. C004 HARD — closed 5-member vocabulary known at spec-authoring time, NOT
+# user-supplied dynamic keys. Codegen emits one typed field per location with zero runtime
+# name-matching; arrayifying re-imposes location-name uniqueness validation for zero gain and
+# re-opens Position-1's reserved-name collision the #20 win eliminated. The single-body common
+# case stays `body: <schema>` — no list, no wrapper, no invented key.
+claim slots_stay_fixed_struct_unconditional: Bool @>=0.7 = True
+falsified_when slots_stay_fixed_struct_unconditional == False
+
+# COMPONENTS: stay a dynamic-key MAP. kevinswiber EXEMPTS it (0032.md:72-83) to preserve
+# JSON-Pointer / JSON-Schema referencing compatibility; the fixed point under every proposal and
+# the type+name identity anchor. #/components/responses/NotFound stays an O(1) keyed lookup.
+claim components_stay_map_referencing_anchor: Bool @>=0.85 = True
+falsified_when components_stay_map_referencing_anchor == False
+
+# ROOT TAGS: the ONE collection that FLIPS array(3.2)->MAP/object in v4, driven by the identity rule
+# (NOT ergonomics). The 3.x tags-array is where identity is PROVABLY broken: #/tags/1 is meaningless
+# and reorder-fragile (arno 0026:95-96 "root tags should become an object"); tag usage was the one
+# collection given NO URI/$ref option in 3.2 ("at least for now"). DEVIATION at a LOWERED ceiling:
+# c10 sub-q2 (tag charset / multi-purpose tags) is UNRESOLVED, so this commits only "keyed-not-
+# positional for $ref-ability", not the full tag model.
+claim tags_flip_array_to_map_for_ref: Str @>=0.5 = "tags-become-keyed-object-for-referenceability"
+falsified_when tags_flip_array_to_map_for_ref != "tags-become-keyed-object-for-referenceability"
+
+# NET: zero of the four contested OPEN user-keyed collections (paths/requests/responses) become
+# arrays; slots are a struct; components a map; the only container FLIP is tags array->map. The
+# model stays MIXED — as 3.x already is — but the mix is PRINCIPLED and the tags flip REDUCES
+# idiom-divergence (tags joins the keyed majority). Reference-arrays for SET reuse (README:178)
+# remain the one array-shaped affordance, inherited but flagged never-explicitly-ratified.
+claim net_no_open_collection_arrayified_model_stays_mixed: Bool @>=0.62 = True
+falsified_when net_no_open_collection_arrayified_model_stays_mixed == False
+
+# ==== HANDREWS' FIVE SUB-QUESTIONS (c10) — answered just enough ====
+
+# SUB-Q1 (identification model): DECIDE the RULE (by stable name, never by index/order — see
+# ref_by_name_never_by_index_or_order). DEFER the fragment SYNTAX to #26/#49/#72/#73. handrews'
+# personal lean to disallow internal JSON Pointers / limit them to components (0026:27, 0049:67) is
+# a STATED LEAN, not a SIG resolution — recorded, not adopted.
+claim subq1_identity_rule_now_syntax_deferred: Bool @>=0.7 = True
+falsified_when subq1_identity_rule_now_syntax_deferred == False
+
+# SUB-Q2 (how tags fit): tags become keyed (see tags_flip) for $ref-ability; the deeper charset /
+# multi-purpose / namespacing question is a SEPARATE axis, DEFERRED (#67 shipped structured tags in
+# 3.2 as array-of-named-objects; #90 locked).
+claim subq2_tags_keyed_deeper_model_deferred: Bool @>=0.5 = True
+falsified_when subq2_tags_keyed_deeper_model_deferred == False
+
+# SUB-Q3 (mandatory vs optional NAMES): names are EFFECTIVELY MANDATORY-AND-UNIQUE for the open
+# collections, supplied as the MAP KEY (zero extra field, uniqueness free by JSON object semantics).
+# This satisfies codegen (stable symbol), tech-writer (rendered heading/anchor), and structural
+# collision-prevention at once. rattrayalex's optional-names motivation ("operationId is sparse")
+# is honored ONLY for the genuinely-anonymous single-variant case via a BARE/SUGAR form (single
+# request body / single bare response writable with neither a list-dash-and-name nor an invented
+# map key) — NOT by admitting optional anonymous names into the model. The OPTIONAL-names lean is
+# REJECTED for the multi-entry case (it collides on derivation precisely where v4 added expressiveness).
+claim subq3_names_mandatory_via_key_sugar_for_anonymous: Str @>=0.6 = "mandatory-unique-via-key-plus-bare-form-escape-hatch"
+falsified_when subq3_names_mandatory_via_key_sugar_for_anonymous != "mandatory-unique-via-key-plus-bare-form-escape-hatch"
+
+# SUB-Q4 (mandatory vs optional ORDERING, and WHERE it lives): for in-scope collections ordering is
+# NOT semantically load-bearing (matcher is order-independent; refs are by-name). The tech-writer's
+# evidenced presentation-order need (2xx-before-4xx) is absorbed by handrews' OWN c10 map+order-field
+# HYBRID (0032.md:444): an OPTIONAL, absent-by-default, non-negative-integer `order` field on map
+# entries. DOWNGRADED from "recommended affordance" to OPTIONAL/at-a-lowered-ceiling per verify-lens:
+# it is one of three live unratified alternatives (arrays-for-order / map+order-field / delegate-to-
+# tags), a sparse-integer field has under-specified collision/tie-break semantics ("arbitrary order
+# between the ordered blocks") and re-imports some scan/renumber cost. Adopted as a hedge, not hardened.
+claim subq4_optional_order_field_hybrid_lowered_ceiling: Str @>=0.5 = "optional-order-field-on-map-entries-not-positional-semantics"
+falsified_when subq4_optional_order_field_hybrid_lowered_ceiling != "optional-order-field-on-map-entries-not-positional-semantics"
+
+# SUB-Q5 (does REUSE include the name): reuse identity is the COMPONENT NAME and travels with the
+# element via name-based refs (codegen names the symbol from the element; tech-writer renders a
+# consistent label). The GENUINE residual asymmetry the map does NOT fully close: the #83 literal
+# case — a `$ref` entry sitting inline with NO use-site key (0083.md:25-32) — still costs a use-site
+# key under a map. This is the strongest standing pro-array pull (daniel-white/arno/ralfhandl) and
+# the explicit reason the responses ceiling stays LOW and the array door stays OPEN. SET-reuse uses
+# Reference arrays (README:178). Whether different collections want different reuse approaches: OPEN.
+claim subq5_reuse_via_component_name_residual_gap_open: Bool @>=0.55 = True
+falsified_when subq5_reuse_via_component_name_residual_gap_open == False
+
+# ==== WHAT THE VERIFY PASS KILLED (recorded so it is not silently re-adopted) ====
+
+# The spec-defined-NAME-DERIVATION-FROM-NATURAL-KEY migration mechanism is REJECTED: non-injective
+# on multi-status / multi-method (README:61,66; handrews 0032.md:438) -> collides on the cases v4
+# exists to serve, violating any MUST-unique rule. Migration that needs a derived name must derive
+# from the FRIENDLY name (preserved from 3.x description / the v4 map key), not from status/method.
+claim name_derivation_from_natural_key_rejected: Bool @>=0.7 = True
+falsified_when name_derivation_from_natural_key_rejected == False
+
+# The "first-match-wins => paths must be arrays" mandate is REJECTED (matcher is specificity-based,
+# runtime-only, order-independent). The array case for paths loses its only binding-prior support.
+claim first_match_wins_array_mandate_rejected: Bool @>=0.8 = True
+falsified_when first_match_wins_array_mandate_rejected == False
+
+# Maps give structural key-uniqueness FOR FREE (JSON object semantics); arrays must re-impose it as
+# an external MUST that only validators-that-run-the-pass enforce — and handrews declined to bless a
+# core uniqueItemProperties keyword, steering it to an interop EXTENSION vocabulary (0032.md:138-150).
+# So an array move would introduce a NEW invalid-document class the 3.x ecosystem never had. This
+# asymmetry is a real non-referential reason the map default is retained.
+claim map_free_uniqueness_array_needs_external_must: Bool @>=0.8 = True
+falsified_when map_free_uniqueness_array_needs_external_must == False
+
+# ==== DEFERRED DEPENDENCIES (note, do not resolve) ====
+
+# The deep identification/referencing redesign is the gate on the FULL verdict and is DEFERRED:
+# #26 (refs as JSON Pointers vs names), #49 ($ref divorce from JSON Schema $ref), #72 (imports
+# namespace:componentName), #73 (JSON Schema referencing). The wire shape MUST NOT be hard-committed
+# to a not-yet-designed model. Also deferred: collision-policy (0016 collision_resolution_left_open
+# @0.8 — if order-based, the affected collection flips to array); tag charset/multi-purpose model
+# (c10 sub-q2, #67/#90); the named URL->uriTemplate ambiguity (#127, orthogonal to container).
+claim deep_referencing_redesign_deferred: Bool @>=0.85 = True
+falsified_when deep_referencing_redesign_deferred == False
+
+# JSON-Pointer-INTO-a-contained-SCHEMA hazard (verify-pass finding): response/request objects are
+# schema-bearing (contentSchema/parameterSchema), and JSON Schema's own $ref resolves by JSON Pointer
+# (positional). Were these collections ever arrayified, #/.../requests/0/contentSchema/... would
+# traverse an array index — re-importing index-fragility for the nested schema. This is an additional
+# reason to keep them maps now and a constraint on any future array move; reconciliation is gated on
+# #49. (Strengthens components_stay_map and the map default; does not need resolving here.)
+claim json_pointer_into_schema_hazard_under_arrays: Bool @>=0.6 = True
+falsified_when json_pointer_into_schema_hazard_under_arrays == False

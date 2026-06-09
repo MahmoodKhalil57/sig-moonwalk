@@ -5,52 +5,45 @@
 > reconstructed on demand (`daftar query`, burhan over `plan/facts/`), never carried.
 > Mechanism: [C002](../doc/architecture/decisions/C002-recursive-state-mechanism.md). Charter: [C001](../doc/architecture/decisions/C001-candidate-fork-charter.md).
 
-_Last checkpoint: 2026-06-09 — 5 resolved; **#83/#32 in flight** via `wf_72360ada-66c` (council-integrated)._
+_Last checkpoint: 2026-06-09 — **6 resolved** (#16,#20,#127,#17,#83/#32,+#59); council live & wild-validated. Next: #116._
 
-> **⏳ #83/#32 in flight** — user-keyed collections: array vs map. #83 was a dup → real debate is #32 (contested, 10 comments). FIRST council-integrated Step: A-personas (handrews/hudlow/rafalkrupinski) predict BLIND, B/C lenses give red-lines, then readers/prior-map/4-design/12-verify/synthesis. **Live persona test:** handrews has a real position (#32 c10, identification-reframe) → the synthesis scores his blind persona prediction vs reality. On done: mizan-gate → ADR **C009** → projection → next #116. Candidates: blanket-arrays / keep-maps / identification-first / hybrid-optional-names.
+## ✓ #83/#32 resolved → C009 (+ first live council hit)
 
-## ✓ #17 resolved → C008 (out-of-scope) + conflation fix
+**Identification-first** (handrews c10): user-keyed collections stay **map/struct** for the *identity* reason — references resolve **by stable name, never by array index** — not for ergonomics. paths/requests/responses/#20-slots/components stay maps; **root tags flip array→map** (the single container change); optional non-negative order field; names via keys. 4 deviations; verdict @0.5–0.7. **Council scorecard:** the handrews persona predicted his identification-first reframe **blind** and matched his real #32 c10 near-verbatim (valence over-firm, but pre-registered) — **first in-the-wild persona confirmation**. codegen-author's "index-identity is poison" became the committed rule; tech-writer was the sole array voice, so the map default is *not* hardened. Evidence: [`0083-array-vs-map.synthesis.md`](./facts/0083-array-vs-map.synthesis.md).
 
-#17 turned out to be **document-merge / multi-file composition** (Photoshop-layers/manifest), **not** the response-precedence I'd mislabeled. Record converges out-of-scope (darrelmiller, handrews→Overlay, lornajane 2025-10 "out of scope"). **Inherited** that determination: defer to the **Overlay Specification + tooling**; enterprise need acknowledged+routed. **Right-sized — no workflow** (atom-0011; record uncontested). First proportionality call of the walk. The real **response-level precedence** question is split out as **#17b** (OPEN). Council cross-check: handrews/pragmatist/minimalist align, enterprise-integrator principled dissent (and the *marginal* minimalist was genuinely useful here — a scope Step is its turf).
+## ✓ Resolved log (detail in each ADR + `plan/facts/*.synthesis.md`)
 
-## ✓ #127 resolved → C005
+- **#16 → [C003](../doc/architecture/decisions/C003-signature-mechanism.md)** — signature = uniform DOM→ADA multi-aspect matcher; detect-and-tolerate; matching-only. (24 agents)
+- **#20 → [C004](../doc/architecture/decisions/C004-parameter-schema.md)** — per-location slots + opt-in cross-cutting; D1-safe. *Panel overturned the unified-wrapper prediction.* (17)
+- **#127 → [C005](../doc/architecture/decisions/C005-templating-system.md)** — RFC6570 parseable profile + normative grammar/reverse-algorithm; D1-safe. (21)
+- **#17 → [C008](../doc/architecture/decisions/C008-merge-out-of-scope.md)** — document-merge out-of-scope → Overlay Spec. *Right-sized, no workflow; conflation split → #17b.*
+- **#59 → `0002`** — IRI support inherited from SIG ADR 0002.
+- **Council** — A backtested (hudlow .78 / handrews .70 / rafalkrupinski .70), B/C replay-validated (13 useful / 3 marginal / 0 drop), + first wild hit on #83. [plan/council/](./council/)
+- **Meta** — C002 recursive-state · C006/C007 council · **C010 batched execution** (scaling model).
 
-Workflow `wf_dc8e3394-6d2` (resumed past a rate limit). **RFC6570 parseable profile:** keep the `{var}` surface (3.x continuity), restrict to an injective operator subset in path-identity position, and *add the two artifacts RFC6570 omits* — a normative observable-behavior grammar (handrews' #127 c2 demand) + a normative reverse-parse algorithm. Full-RFC6570 and bare-URLPattern both refuted; EMT's grammar+algorithm grafted; matrix correction (name-bearing matrix is match-safe). **D1-safe** (routes on segment structure, not JSON-Schema). Resolves the named URL→template ambiguity by splitting parse-ambiguity (eliminated) from collision (routed to #16). Honest cost: slash-bearing path params inexpressible. 4 deviations; verdict @0.62. **First council cross-check** (C006): hudlow strong-align, handrews align-with-one-predicted-objection (expressiveness loss — already surfaced in C005). Evidence: [`0127-templating-system.synthesis.md`](./facts/0127-templating-system.synthesis.md).
+## ⏳ Pending (optional · one workflow at a time)
 
-## ✓ Council fully live (A backtested, B/C replay-validated)
-
-Class B/C usefulness-replay done (`wf_657443b8-854`): **13 useful, 3 marginal, 0 drop** ([USEFULNESS.md](./council/USEFULNESS.md)). The council (A: hudlow/handrews/rafalkrupinski; B: 6 useful dispositions; C: 7 useful roles) is ready to use up-front on the next Step. Optimist flagged biased-to-refuted-pole.
-
-## ⏳ Pending workflow
-
-1. **Council resume** — 4 rate-limited Class-A voices (earth2marsh, darrelmiller, karenetheridge, arno-di-loreto). Optional; do before leaning harder on Class A.
-
-## ✓ #20 resolved → C004
-
-Workflow `wf_643fa7fa-215` (17 agents, ~1.1M tokens). **The panel overturned the going-in prediction:** handrews' unified `{body,headers,parameters}` wrapper was *refuted as the authoring root* (cookies/trailers unplaced; path+query wrongly merged; default on the wrong axis). Winner = **per-location schema slots (query/path/header/cookie + body) for the common case + an opt-in cross-cutting construct** for the rare cross-type dep; late-record #224 (2026-03) independently converged on those per-location keys. **D1-SAFE** (runtime-only; the unified-vs-separate axis is orthogonal to D1's static-vs-runtime axis). The `in`-dialect candidate was killed (the verifier caught a *miscitation* + body-not-in-namespace). Evidence: [`0020-parameter-schema.synthesis.md`](./facts/0020-parameter-schema.synthesis.md).
-
-## ✓ #16 resolved → C003
-
-Workflow `wf_bebee5d2-131` (24 agents). ADA-first frame; mizan sole-witness caps (0.85) kept over the agent's optimistic self-report; precedence is runtime-only. Evidence: [`0016-signature-mechanism.synthesis.md`](./facts/0016-signature-mechanism.synthesis.md).
+- **Council resume** — 4 rate-limited Class-A voices (earth2marsh, darrelmiller, karenetheridge, arno-di-loreto).
+- **C010 batch demo** — triage + batch the independent frontier tail (the speedup the operator asked for).
 
 ## Frontier head (next ~5 — full list in [frontier.md](./frontier.md))
 
-1. **#83 Responses: array vs map** — structural shape of the response collection. **Do next** (first Step to use the full validated council A+B+C up front).
+1. **#116 Inheritance on paths** — structural reuse across path sublevels. **Do next** (or fold into the C010 batch). *Note: #83 just fixed collections as maps — inheritance interacts with the path map.*
 2. **#17b Response-level precedence** *(split from #17)* — apiResponses vs pathResponses vs request-level; `parameterSchema` `allOf` composition. The genuine precedence question.
-3. **#116 Inheritance on paths** — structural reuse across path sublevels.
-4. **#73 JSON Schema dialect + relational vocab** — gates #20's cross-type value-equality (path-ID==body-ID); hard dependency.
-5. **#108 Header model** — RFC9110/8941; gates header-aspect signatures (#16) + #20 header slot + #127 request-grammar completion.
+3. **#73 JSON Schema dialect + relational vocab** — gates #20's cross-type value-equality (path-ID==body-ID); hard dependency.
+4. **#108 Header model** — RFC9110/8941; gates header-aspect signatures (#16) + #20 header slot + #127 request-grammar completion.
+5. **#119 Recursive paths** · **#61 method+path shorthand** · **#57 discriminator** — remaining API-shapes.
 
 ## Decisions so far
 
-- Frontier resolved: **5** (#59 IRI, #16 signature, #20 parameter-schema, #127 templating, #17 merge/out-of-scope) · Deviations recorded: **9** (#16 ×3, #20 ×2, #127 ×4; #17 none — inherited) · ADRs: C001–C008 (+ `0002-iri-inherited`).
-- Last decision: **#17 → C008** (document-merge out-of-scope, defer to Overlay Spec; inherited prior; right-sized, no workflow).
+- Frontier resolved: **6** (#59 IRI, #16, #20, #127, #17, #83/#32) · Deviations recorded: **13** (#16 ×3, #20 ×2, #127 ×4, #83 ×4; #17 inherited) · ADRs: C001–C010 (+ `0002-iri-inherited`).
+- Last decision: **#83/#32 → C009** (collections stay map/struct; identification-first; refs by-name-not-index; first live council hit).
 
 ## Per-Concern confidence map
 
 | Concern | Prior richness | Sections drafted | Aggregate ceiling |
 |---|---|---|---|
-| API shapes | HIGH (richest discussion energy) | 3 (signature, parameter schema, templating) | 0.85 directional / **0.5–0.62** on contested shapes (declared-indicator, #20 slots, #127 profile, deviations) |
+| API shapes | HIGH (richest discussion energy) | 4 (signature, parameter schema, templating, collections) | 0.85 directional / **0.5–0.62** on contested shapes (declared-indicator, #20 slots, #127 profile, tags-flip, deviations) |
 | Content schema formats | MEDIUM (SHACL/XSD/JSON-Schema threads) | 0 | — |
 | Deployment configuration | LOW → mostly Originated | 0 | — |
 | Foundational interfaces | LOW → mostly Originated | 0 | — |
@@ -66,7 +59,7 @@ Workflow `wf_bebee5d2-131` (24 agents). ADA-first frame; mizan sole-witness caps
 
 ## Cheapest-next-move
 
-Run `mizan_recommend_next_experiment(plan/)`, else default: resolve **#83 (responses: array vs map)** — should the response collection be an array or a status-keyed map? Structural, with real prior energy. Read `github-export/discussions/0083.md` first. **First Step to use the full validated council up front** (A: predict handrews/hudlow/rafalkrupinski; B-useful: expansionist/purist/pessimist/pragmatist/contrarian/conservative; C-useful: codegen-author/platform/tech-writer/hand-author/security/enterprise/ai-llm). **Right-size first** (as #17 showed): check the record's contention level before launching a full workflow.
+**Best move now: the C010 batch demo** (operator-requested speedup) — one triage sweep over the ~40 remaining frontier items (convergent→direct like #17, contested→panel, tag dependency edges), then a direct-batch wave of the independent convergent ones, then parallel-panel waves. One workflow at a time. If walking solo instead: **#116 (inheritance on paths)** — read `github-export/discussions/0116.md`; right-size first (check contention before a full workflow).
 
 ## Index (pointers — load on demand)
 
@@ -75,6 +68,6 @@ Run `mizan_recommend_next_experiment(plan/)`, else default: resolve **#83 (respo
 - Burhan ledger → [plan/facts/](./facts/) · spine claims → [plan/MAIN.bn](./MAIN.bn)
 - Narrative receipts → `daftar query "<topic>" --project=/home/mk/apps/sig-moonwalk`
 - SIG record (priors) → [github-export/](../github-export/) · official ADRs → [doc/architecture/decisions/](../doc/architecture/decisions/)
-- Our ADRs → `doc/architecture/decisions/Cxxx-*.md` ([C003](../doc/architecture/decisions/C003-signature-mechanism.md), [C004](../doc/architecture/decisions/C004-parameter-schema.md), [C005](../doc/architecture/decisions/C005-templating-system.md), [C008 merge-out-of-scope](../doc/architecture/decisions/C008-merge-out-of-scope.md); meta C001/C002/C006/C007) · glossary → [CONTEXT.md](../CONTEXT.md)
-- Spec projections → [specification/candidate-v4/](../specification/candidate-v4/) ([signature](../specification/candidate-v4/signature-mechanism.md), [parameter-schema](../specification/candidate-v4/parameter-schema.md), [templating](../specification/candidate-v4/templating-system.md))
+- Our ADRs → `doc/architecture/decisions/Cxxx-*.md` (frontier: [C003](../doc/architecture/decisions/C003-signature-mechanism.md) [C004](../doc/architecture/decisions/C004-parameter-schema.md) [C005](../doc/architecture/decisions/C005-templating-system.md) [C008](../doc/architecture/decisions/C008-merge-out-of-scope.md) [C009 collections](../doc/architecture/decisions/C009-array-vs-map.md); meta C001/C002/C006/C007/C010) · glossary → [CONTEXT.md](../CONTEXT.md)
+- Spec projections → [specification/candidate-v4/](../specification/candidate-v4/) (signature, parameter-schema, templating, [collections](../specification/candidate-v4/collections-array-vs-map.md))
 - Council (guides, not prophets) → [plan/council/](./council/) ([calibration](./council/CALIBRATION.md))
