@@ -1,0 +1,45 @@
+# C010 Wave-2A contested batch — 8 items via compact per-item panels (wf_806e7b7b-df3).
+# Each: read-poles -> resolve-with-council -> adversarial-refute-and-finalize. Ceilings are
+# post-refutation (honest, lowered where the critique bit). Pairs with ADR C012; rich
+# sub-decisions + council notes are in C012. (#60/61 shorthand did NOT finalize — session limit.)
+
+# #116 inheritance: optional per-level `shared` map, NAME-based map-merge down the keyed spine
+# (path-collection->pathItem->operation; response-level deferred) + explicit normative per-property
+# OVERRIDE-vs-ACCUMULATE algorithm; resolve-before-matcher; wrapper OPTIONAL (C004 honored).
+claim s116_inheritance_resolved: Bool @>=0.55 = True
+falsified_when s116_inheritance_resolved == False
+
+# #57 discriminator: HYBRID — retain a SIMPLIFIED discriminator as optional codegen HINT; validation
+# via JSON-Schema propertyDependencies/if-then-else. Replacement-vocabulary detail DEFERRED to #73.
+claim s57_discriminator_resolved: Bool @>=0.6 = True
+falsified_when s57_discriminator_resolved == False
+
+# #45 newer HTTP versions: SIMPLICITY pole — HTTP semantics are version-agnostic (RFC 9110); no
+# per-version (2/3) description machinery in core.
+claim s45_http_versions_resolved: Bool @>=0.74 = True
+falsified_when s45_http_versions_resolved == False
+
+# #43 rate limits: OUT-OF-SCOPE for core; via standard headers / extensions / overlays.
+claim s43_rate_limits_out_of_scope: Bool @>=0.74 = True
+falsified_when s43_rate_limits_out_of_scope == False
+
+# #82 versioning granularity: PERMIT-DON'T-MANDATE — a description describes one version; decline
+# declarative per-operation version-machinery FOR NOW (door open).
+claim s82_versioning_permit_not_mandate: Bool @>=0.74 = True
+falsified_when s82_versioning_permit_not_mandate == False
+
+# #76 spec tiers: DECLINE normative conformance tiers as core-4.0; rely on functional-areas
+# (#141/C011) + extension vocabularies.
+claim s76_tiers_declined: Bool @>=0.6 = True
+falsified_when s76_tiers_declined == False
+
+# #17b response-level precedence (split from #17): MOST-SPECIFIC-WINS global(apiResponses) ->
+# path(pathResponses) -> request(responses) per status/name; parameterSchema allOf-COMPOSES across
+# pathItem+request (union). Partially upheld after refutation.
+claim s17b_precedence_most_specific_wins: Bool @>=0.62 = True
+falsified_when s17b_precedence_most_specific_wins == False
+
+# #58 links: SCOPED BASELINE — links stay operation-orchestration HINTS referencing a target
+# operation BY NAME (C009 identity); richer hypermedia + resource-coupling DEFERRED to #30.
+claim s58_links_scoped_baseline: Bool @>=0.5 = True
+falsified_when s58_links_scoped_baseline == False
