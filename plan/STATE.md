@@ -61,7 +61,7 @@ Triage (`wf_550dd30c-fa6`, 42 isolated agents) → 17 convergent / 24 contested 
 
 ## Cheapest-next-move
 
-**C010 Wave-2: the contested panels.** Wave-1 batch (17 convergent) is done. Next = run **Wave A** (9 contested items with resolved-ADR deps only) as parallel panels — one council-integrated workflow that pipelines them (per-item isolation; no cross-pollution). Then Wave B (after #73), Wave C (after #108). `burhan-converge` backstop after each wave. Re-triage **#17b** (Wave-0 agent returned placeholder). One workflow at a time.
+**C010 Wave-2A IN FLIGHT** `wf_806e7b7b-df3` (9 contested panels). On done: assemble batch2-waveA.bn + ADR C012, converge, commit, then Wave B.  14  Wave-1 batch (17 convergent) is done. Next = run **Wave A** (9 contested items with resolved-ADR deps only) as parallel panels — one council-integrated workflow that pipelines them (per-item isolation; no cross-pollution). Then Wave B (after #73), Wave C (after #108). `burhan-converge` backstop after each wave. Re-triage **#17b** (Wave-0 agent returned placeholder). One workflow at a time.
 
 ## Index (pointers — load on demand)
 
