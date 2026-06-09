@@ -5,11 +5,11 @@
 > reconstructed on demand (`daftar query`, burhan over `plan/facts/`), never carried.
 > Mechanism: [C002](../doc/architecture/decisions/C002-recursive-state-mechanism.md). Charter: [C001](../doc/architecture/decisions/C001-candidate-fork-charter.md).
 
-_Last checkpoint: 2026-06-09 — **#16 resolved → C003** (mizan-capped, committed). One reconcile item open._
+_Last checkpoint: 2026-06-09 — **#16 resolved → C003** (mizan-capped, committed, workflow-reconciled)._
 
-## ⏳ Reconcile pending (do not lose)
+## ✓ #16 reconciled
 
-Workflow `wf_bebee5d2-131` (the #16 synthesis agent) was still finalizing its structured return when #16 was committed from its on-disk draft. **When it lands:** diff its `decision` return against [ADR C003](../doc/architecture/decisions/C003-signature-mechanism.md) + [`plan/facts/0016-signature-mechanism.bn`](./facts/0016-signature-mechanism.bn); graft any superior nuance, else mark reconciled. No blocker — the substantive resolution is already committed.
+Workflow `wf_bebee5d2-131` completed (24 agents, ~2.0M tokens). Reconciled against C003: **(1)** kept mizan's sole-witness caps (0.85) over the workflow's optimistic 0.9/0.95 — the agent's "no uncapped single-witness claims" self-report was wrong; my direct `mizan_verify_claim` governs. **(2)** Grafted the adversarial-verify fix: concrete-over-variable precedence is now **runtime-only** (not a detection primitive). **(3)** Enriched C003's deferred list (#30, #46/#50, collision-policy, matching-vs-correlating). Full provenance: [`plan/facts/0016-signature-mechanism.synthesis.md`](./facts/0016-signature-mechanism.synthesis.md).
 
 ## Frontier head (next ~5 — full list in [frontier.md](./frontier.md))
 
@@ -36,7 +36,9 @@ Workflow `wf_bebee5d2-131` (the #16 synthesis agent) was still finalizing its st
 
 ## Active contradictions
 
-_None recorded yet._ (Hunt with `burhan-converge` / `burhan-perturb` over `plan/facts/`.)
+- **D1 ↔ #20 tension (monitor):** #16's deviation D1 demotes JSON-Schema discrimination out of the static matcher, siding with the 2025 direction against the only *written* 2022 default (and a live user, Gary/CDMI). If **#20 ratifies JSON-Schema-in-the-matcher**, D1's `falsified_when` fires. Run `burhan-perturb` over `plan/facts/` when #20 resolves.
+
+(General hunt: `burhan-converge` / `burhan-perturb` over `plan/facts/`.)
 
 ## Cheapest-next-move
 

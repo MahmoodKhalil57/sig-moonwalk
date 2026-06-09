@@ -38,8 +38,10 @@ falsified_when ada_work_backward_method == False
 claim static_analysis_is_bounded_desideratum: Bool @>=0.85 = True
 falsified_when static_analysis_is_bounded_desideratum == False
 
-# Concrete-over-variable (specificity) precedence inherited from 3.x, carried forward —
-# but BOUNDED: 3.x leaves param-vs-param superset "?" and bidirectional overlap "undefined" (0187).
+# Concrete-over-variable (specificity) precedence inherited from 3.x, carried forward as
+# RUNTIME RESOLUTION BEHAVIOR ONLY (adversarial-verify fix, wf_bebee5d2-131): NOT a static-
+# detection primitive and NOT the chosen collision policy. BOUNDED: 3.x leaves param-vs-param
+# superset "?" and bidirectional overlap "undefined" (0187).
 claim concrete_over_variable_precedence: Bool @>=0.8 = True
 falsified_when concrete_over_variable_precedence == False
 
