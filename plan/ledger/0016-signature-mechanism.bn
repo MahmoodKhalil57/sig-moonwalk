@@ -1,0 +1,150 @@
+# Decision: frontier #16 — Indicate the signature mechanism for the API.
+# Candidate-fork resolution (C003). Provenance kept in comments; claims carry the load.
+# Winning frame: ADA-first (handrews-aligned), grafted with detect-and-tolerate (#190),
+# the router user-story + four-strategy collision menu (#187), and priority-as-last-resort
+# lean (#186). Runner-up frames (maximalist-MUST, inclusion-as-mandate) were killed by
+# fatal/major refutations and are NOT adopted; their survivable cores are grafted at low ceiling.
+#
+# Sources: discussions/0016.md c4 (handrews ADA reframe, cost cap, concrete-over-variable,
+# JSON-Schema-not-analyzable, literal-vs-variable+per-segment OPEN); 0185.md (hudlow ADA
+# strawperson "grisly", match-in-isolation, collision-invalid vs order); 0186.md (DOM/ADA
+# non-mandatory, priority-as-last-resort); 0187.md (router user-story, 4 collision strategies,
+# precedence-table gaps); 0190.md (hasOverlappingSignatures() detect-and-tolerate, matrix
+# "love and hate", /users/{name} vs /users/me); 0194.md c1 (matching-vs-correlating,
+# header-modeling prerequisite, Gary/CDMI, security-as-motivator one voice); initial-proposals
+# README L51/L63/L170 (multi-aspect frame, staged default, parameterSchema-in-matcher);
+# SIG ADR 0002 (IRI charset); pulls/0183.md (OPEN, two empty reviews).
+
+# ---- INHERITED PRIORS (high consensus; adopted unchanged) ----
+
+# FRAME: signature generalizes 3.x path+method into a multi-part tuple over
+# {method, URI-template incl. query, content-type, headers, request-body shape}.
+claim sig_is_multi_aspect_tuple: Bool @>=0.9 = True
+falsified_when sig_is_multi_aspect_tuple == False
+
+# Signatures live at the DOM->ADA abstraction layer; ADA is the load-time/static surface;
+# both DOM and ADA are NON-MANDATORY for tooling (0186).
+claim sig_lives_at_dom_ada_layer: Bool @>=0.85 = True
+falsified_when sig_lives_at_dom_ada_layer == False
+
+# METHOD: define signatures by what the ADA must EXPOSE to build a request->operation matcher
+# (work backward from the router user-story), and bake in only analysis whose cost is
+# reasonable for the vast majority; do NOT standardize high-cost analysis for rare cases.
+claim ada_work_backward_method: Bool @>=0.85 = True
+falsified_when ada_work_backward_method == False
+
+# Static collision-analysis is a genuine DESIDERATUM under explicit feasibility limits;
+# NOT a guarantee. 3.x templating may not permit it; JSON Schema is not analyzable in general.
+claim static_analysis_is_bounded_desideratum: Bool @>=0.85 = True
+falsified_when static_analysis_is_bounded_desideratum == False
+
+# Concrete-over-variable (specificity) precedence inherited from 3.x, carried forward —
+# but BOUNDED: 3.x leaves param-vs-param superset "?" and bidirectional overlap "undefined" (0187).
+claim concrete_over_variable_precedence: Bool @>=0.8 = True
+falsified_when concrete_over_variable_precedence == False
+
+# MATCHING (route request -> zero-or-one operation) and CORRELATING (request-schema <->
+# response-schema) are two SEPARATE concerns; #16 resolves the MATCHING half only.
+claim matching_vs_correlating_separate: Bool @>=0.85 = True
+falsified_when matching_vs_correlating_separate == False
+
+# CURRENT STATUS: #16 has no ratified outcome (no ADR, zero spec text, PR #183 OPEN).
+# Therefore the whole resolution is a CANDIDATE under a lowered ceiling.
+claim sig_no_ratified_outcome: Bool @>=0.95 = True
+falsified_when sig_no_ratified_outcome == False
+
+# ---- COMMITTED FRAME-LEVEL DECISIONS (the four #16 sub-questions a-d) ----
+
+# (a) DECLARED-vs-IMPLICIT: NO required per-API declared "style" indicator; the mechanism is a
+# uniform/implicit ADA contract. A declared `signature` enumeration (PR #183) is OPTIONAL-at-most,
+# normalized away by the ADA. Verdict overrides earth2marsh's own hedged 2022 stub on an OPEN,
+# never-reconciled question -> the riskiest single claim, lowest ceiling.
+claim declared_indicator_verdict: Str @>=0.5 = "no-uniform-implicit-optional-at-most"
+
+# (b) Which HTTP aspects MAY compose a signature, at the frame level (the menu).
+claim aspect_menu: Str @>=0.85 = "method | uri-template-incl-query | content-type | headers | request-body-shape"
+
+# (d) Signatures live at the DOM->ADA layer (== sig_lives_at_dom_ada_layer above), and the
+# ADA exposes, per operation, a normalized signature view + a three-valued inter-operation
+# collision verdict. Grafted from #190 detect-and-tolerate (hasOverlappingSignatures()).
+claim ada_exposes_three_valued_verdict: Str @>=0.6 = "provably-disjoint | provable-collision | not-statically-determinable"
+
+# (c) Static ambiguity-analysis: DESIDERATUM, detect-and-tolerate, NOT a mandatory validation
+# gate. The 2025-04-15 floated "must be statically detectable" was contested in-note (Etheridge,
+# Andrews) and never ADR'd -> NOT promoted to a MUST. Overlap is SURFACED through the ADA; the
+# policy on what to DO about it (collision-invalid vs precedence vs priority vs strict-mode)
+# is left OPEN. Priority-as-last-resort is the SIG's lean (0186), recorded but not ratified.
+claim static_detection_not_mandatory_gate: Bool @>=0.6 = True
+falsified_when static_detection_not_mandatory_gate == False
+
+claim collision_resolution_left_open: Bool @>=0.8 = True
+falsified_when collision_resolution_left_open == False
+
+# ---- DEVIATIONS (each carries a receipt + lowered ceiling; pairs with ADR C003) ----
+
+# Deviation D1: demote JSON-Schema parameter discrimination from the GUARANTEED static contract
+# to a RUNTIME last-resort tier the ADA flags "schema-dependent / not-statically-collision-checked".
+# Prior = initial-proposal README L170 (oneOf-of-parameterSchemas allOf'd) is the only WRITTEN
+# default; it is contested by handrews (JSON Schema not analyzable) + hudlow (match-in-isolation),
+# and the contest is real (open item). The runtime staged behavior is PRESERVED, not deleted.
+claim d1_jsonschema_default_contested: Bool @>=0.85 = True
+claim d1_receipt_present: Bool @>=0.55 = True
+
+lemma deviation_requires_receipt(contested, receipt)
+  because illah = contested == True
+  proves receipt == True
+
+claim d1_jsonschema_out_of_static_contract: Bool @>=0.55 = cite deviation_requires_receipt with contested=d1_jsonschema_default_contested, receipt=d1_receipt_present
+falsified_when d1_jsonschema_out_of_static_contract == False
+
+# Deviation D2: demote PR #183 declared top-level `signature` array to an OPTIONAL authoring
+# affordance the ADA normalizes (NOT an authoritative/required mechanism). PR #183 is OPEN/unmerged
+# with two empty reviews and 0 comments; its sub-questions (add-only vs override, serverUrl-in-sig,
+# query-in-template-vs-signature.query, default-method-GET, inline-vs-pointer, ordering, flat-vs-
+# hierarchical) are all left UNRESOLVED.
+claim d2_pr183_thin_open: Bool @>=0.85 = True
+claim d2_receipt_present: Bool @>=0.5 = True
+
+claim d2_declared_array_optional_only: Bool @>=0.5 = cite deviation_requires_receipt with contested=d2_pr183_thin_open, receipt=d2_receipt_present
+falsified_when d2_declared_array_optional_only == False
+
+# Deviation D3: adopt collision-analysis only as best-effort ADA EXPOSURE with a three-valued
+# verdict, explicitly NOT the floated hard "must be statically detectable" requirement. The
+# floated rule reads adoptable but was contested in the same note and never became an ADR.
+claim d3_floated_must_contested: Bool @>=0.85 = True
+claim d3_receipt_present: Bool @>=0.6 = True
+
+claim d3_detection_best_effort_not_must: Bool @>=0.6 = cite deviation_requires_receipt with contested=d3_floated_must_contested, receipt=d3_receipt_present
+falsified_when d3_detection_best_effort_not_must == False
+
+# ---- DEFERRED DEPENDENCIES (framing boundary; do NOT resolve here) ----
+
+# #20 (per-location schema split: unified parameterSchema vs per-location schemas) and
+# #127 (concrete templating system: extended-URI-Template vs RFC6570 vs WHATWG URLPattern)
+# are NOTED as dependencies and explicitly left OPEN. The ADA fixes only the SHAPE of the
+# exposure (aspects-participating, literal-vs-variable, collision-verdict); per-segment detail
+# and the templating choice are chosen AFTER ADA exposure is fixed (handrews' ordering, 0016 c4).
+claim defers_20_and_127: Bool @>=0.85 = True
+falsified_when defers_20_and_127 == False
+
+# operationId's fate (captainsafia 0016 c1: do signatures REPLACE operationId?) is left OPEN,
+# exactly as the record leaves it. The declared signature, where used, COEXISTS with operationId.
+claim operationid_fate_open: Bool @>=0.8 = True
+falsified_when operationid_fate_open == False
+
+# Header-based signature aspects depend on the header-modeling prerequisite (#22/#108), which
+# the SIG flagged NOT-yet-delivered (0194 c1). Admitted at the frame, ceiling lowered, marked
+# prerequisite-dependent in the ADA. Content-negotiation / Accept (#204) and media-type params
+# (charset, #163) inherit this exposure.
+claim header_aspects_prerequisite_gated: Bool @>=0.6 = True
+falsified_when header_aspects_prerequisite_gated == False
+
+# ---- KILLED / NON-ADOPTED (consensus discipline; held OUT of the frame) ----
+
+# patternProperties "transport blocks" dynamic keys (#224, one voice + skeptical reply);
+# differentiability-matrix + path-formats (#185/#190, hudlow "love and hate"); resource-type
+# decoupling (#30); declared-mechanism-as-REQUIRED (maximalist + inclusion frames, refuted
+# fatal/major). NOT adopted as frame-level mechanism. Only the dynamic-header-NAME gap
+# (karenetheridge concession) is acknowledged as a genuine-but-unsolved 3.x gap, noted not adopted.
+claim single_voice_machinery_not_adopted: Bool @>=0.8 = True
+falsified_when single_voice_machinery_not_adopted == False

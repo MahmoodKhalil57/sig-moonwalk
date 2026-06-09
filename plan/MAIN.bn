@@ -1,0 +1,27 @@
+# plan/MAIN.bn — burhan spine for the OpenAPI v4.0 Candidate walk.
+# The durable, machine-interpretable top of the recursive state. Claude reads
+# plan/STATE.md (the thin human digest); the substrate reads this.
+
+# effort: candidate-fork (see C001). Top-level `assume` only binds runtime.* names,
+# so provenance is kept in comments; claims below carry the load.
+
+# Completion = whole-document coherence across all Concerns (monolithic scope, C001).
+claim completion_is_monolithic: Bool @>=0.99 = True
+falsified_when completion_is_monolithic == False
+
+# Unit of recursion = one decision per step (decision-centric, C002).
+claim unit_of_recursion: Str @>=0.99 = "decision"
+
+# Frontier seeded from the SIG record (52 Ideas + open issues).
+claim frontier_open_count: Int @>=0.9 = 53
+falsified_when frontier_open_count < 0
+
+# Ledger tallies (update each step).
+claim decisions_resolved: Int @>=0.99 = 2
+claim inherited_priors: Int @>=0.99 = 1
+claim deviations: Int @>=0.99 = 0
+
+# Posture (C001): a Deviation from a prior is sound only if it carries a receipt.
+lemma deviation_requires_receipt(prior)
+  because illah = prior_contested(prior)
+  proves has_receipt(prior)

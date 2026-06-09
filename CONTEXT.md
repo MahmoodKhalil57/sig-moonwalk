@@ -20,6 +20,32 @@ _Avoid_: module, package (they are not independently shipped)
 A part of the Candidate with no strong SIG prior, constructed by burhan from the principles. Carries an inherently low confidence ceiling until independently witnessed; contrast with an Inherited prior. Deployment, upgrade, and foundational-interface areas are mostly Originated.
 _Avoid_: draft, stub (those describe maturity, not provenance)
 
+## The walk (recursive state)
+
+**Walk**:
+The cross-session process of resolving the Frontier to Completion, one decision per Step. Defined by [C002](./doc/architecture/decisions/C002-recursive-state-mechanism.md).
+_Avoid_: process, loop (when ambiguous with the SIG's process)
+
+**Step**:
+One iteration of the Walk: load Spine → pick a question → resolve to Inherited prior or Deviation → write the Ledger + receipt → re-project → update the Spine.
+_Avoid_: task, iteration
+
+**Spine**:
+The thin state loaded at the start of every Step (`plan/STATE.md` + `plan/MAIN.bn`). Holds the active set and a complete index; bounded in size forever. Indexed ≠ carried.
+_Avoid_: state, context, summary
+
+**Frontier**:
+The set of open design questions (`plan/frontier.md`), seeded from the SIG record. The Walk's work-list; a Step pops one.
+_Avoid_: backlog, todo, queue
+
+**Ledger**:
+The durable, append-only decision store (`plan/ledger/*.bn` burhan claims + daftar receipts). The source of truth; grows without limit, loaded on demand.
+_Avoid_: log, history
+
+**Projection**:
+The spec document, regenerated from the Ledger rather than hand-maintained. The document is downstream of the decisions, never the reverse.
+_Avoid_: draft, output, build
+
 **The SIG**:
 The official OpenAPI Moonwalk Special Interest Group and its consensus process (discussions → weekly-call consensus → ADRs → eventual formal spec). We are an external contributor building a candidate; we are not the SIG and cannot ratify on its behalf.
 _Avoid_: the project, moonwalk (when meaning the official body)

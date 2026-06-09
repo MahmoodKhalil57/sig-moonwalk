@@ -1,0 +1,7 @@
+# Inherited prior: IRI support.
+# Adopted UNCHANGED from SIG ADR 0002 (Status: Accepted) — frontier #59.
+# High ceiling: an Accepted ADR backed by strong SIG consensus.
+# Source: SIG ADR 0002 (Status: Accepted).
+
+claim inherit_iri_support: Bool @>=0.95 = True
+falsified_when inherit_iri_support == False
