@@ -5,7 +5,9 @@
 > reconstructed on demand (`daftar query`, burhan over `plan/facts/`), never carried.
 > Mechanism: [C002](../doc/architecture/decisions/C002-recursive-state-mechanism.md). Charter: [C001](../doc/architecture/decisions/C001-candidate-fork-charter.md).
 
-_Last checkpoint: 2026-06-09 — **#16 resolved → C003** (mizan-capped, committed, workflow-reconciled)._
+_Last checkpoint: 2026-06-09 — **#16 resolved → C003** (committed, reconciled); **#20 in flight** via `wf_643fa7fa-215`._
+
+> **⏳ #20 in flight** — workflow resolving the parameterSchema split (unified vs per-location), scoped D1-safe (runtime-only). On completion: mizan-gate, ADR **C004**, projection, daftar, then pop #20 → next #127. Leading answer: handrews' unified HTTP-object `{body, headers, parameters}`. Watch the **D1↔#20** falsifier (below) — if #20 lands JSON-Schema-in-the-matcher, D1 fires.
 
 ## ✓ #16 reconciled
 
