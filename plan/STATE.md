@@ -5,7 +5,7 @@
 > reconstructed on demand (`daftar query`, burhan over `plan/facts/`), never carried.
 > Mechanism: [C002](../doc/architecture/decisions/C002-recursive-state-mechanism.md). Charter: [C001](../doc/architecture/decisions/C001-candidate-fork-charter.md).
 
-_Last checkpoint: 2026-06-09 — **36 resolved** (+ referencing cluster #73/#72/#49/#26 → C013); 20 open. Next: Wave B2._
+_Last checkpoint: 2026-06-09 — **41 resolved** (Wave B complete: +C013 referencing, +C014 dependents); 15 open. Next: Wave C._
 
 ## ✓ C010 Wave-2B1 → C013 (referencing cluster, 4 facets, one panel)
 
@@ -45,7 +45,7 @@ Triage (`wf_550dd30c-fa6`, 42 isolated agents) → 17 convergent / 24 contested 
 
 ## Decisions so far
 
-- Frontier resolved: **36** (6 panels + #59 + 17 batch-C011 + 9 Wave-A-C012 + 4 cluster-C013) · Deviations: **19** · ADRs: C001–C013 (+ `0002`).
+- Frontier resolved: **41** (+#24/#31/#100/#122/#69 → C014; Wave B done) · Deviations: **20** · ADRs: C001–C014 (+ `0002`).
 - Last: **C010 Wave-1 batch → C011** (17 convergent direct-resolved). Before that: #83/#32 → C009 (+ first live council hit).
 
 ## Per-Concern confidence map
@@ -81,6 +81,6 @@ Waves 1 (17 convergent) and 2A (8 contested) are done. **Next:**
 - Burhan ledger → [plan/facts/](./facts/) · spine claims → [plan/MAIN.bn](./MAIN.bn)
 - Narrative receipts → `daftar query "<topic>" --project=/home/mk/apps/sig-moonwalk`
 - SIG record (priors) → [github-export/](../github-export/) · official ADRs → [doc/architecture/decisions/](../doc/architecture/decisions/)
-- Our ADRs → `doc/architecture/decisions/Cxxx-*.md` (frontier: [C003](../doc/architecture/decisions/C003-signature-mechanism.md) [C004](../doc/architecture/decisions/C004-parameter-schema.md) [C005](../doc/architecture/decisions/C005-templating-system.md) [C008](../doc/architecture/decisions/C008-merge-out-of-scope.md) [C009](../doc/architecture/decisions/C009-array-vs-map.md) **[C011 batch×17](../doc/architecture/decisions/C011-convergent-batch-1.md) [C012 waveA×8](../doc/architecture/decisions/C012-contested-batch-waveA.md) [C013 referencing×4](../doc/architecture/decisions/C013-referencing-cluster.md)**; meta C001/C002/C006/C007/C010) · glossary → [CONTEXT.md](../CONTEXT.md)
+- Our ADRs → `doc/architecture/decisions/Cxxx-*.md` (frontier: [C003](../doc/architecture/decisions/C003-signature-mechanism.md) [C004](../doc/architecture/decisions/C004-parameter-schema.md) [C005](../doc/architecture/decisions/C005-templating-system.md) [C008](../doc/architecture/decisions/C008-merge-out-of-scope.md) [C009](../doc/architecture/decisions/C009-array-vs-map.md) **[C011 batch×17](../doc/architecture/decisions/C011-convergent-batch-1.md) [C012 waveA×8](../doc/architecture/decisions/C012-contested-batch-waveA.md) [C013 referencing×4](../doc/architecture/decisions/C013-referencing-cluster.md) [C014 waveB2×5](../doc/architecture/decisions/C014-contested-batch-waveB2.md)**; meta C001/C002/C006/C007/C010) · glossary → [CONTEXT.md](../CONTEXT.md)
 - Spec projections → [specification/candidate-v4/](../specification/candidate-v4/) (signature, parameter-schema, templating, [collections](../specification/candidate-v4/collections-array-vs-map.md))
 - Council (guides, not prophets) → [plan/council/](./council/) ([calibration](./council/CALIBRATION.md))

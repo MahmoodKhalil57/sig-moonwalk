@@ -1,0 +1,23 @@
+# C010 Wave-2B2 contested-dependents batch — 3 items consulting C013 (wf_66a78f4e-eaf).
+# Compact per-item panels (read-poles -> resolve-with-council -> refute-finalize). Pairs with ADR C014.
+# Notable: the #24 refute stage used CALIBRATION.md to catch its own candidate's handrews valence-inversion.
+
+# #24/#31/#100 parameter interdependencies: SAME-location deps via pure JSON Schema 2020-12 (if/then/else,
+# dependentRequired) inside the C004 slot — no DSL, no Moonwalk addition; RELATIONAL/value-equality via a
+# single Moonwalk EXTENSION VOCABULARY (C013-consistent; exact grammar deferred with #73); DSL EXCLUDED from
+# core (optional translating DSL left OPEN, not foreclosed); query-relational GATED on the query->data-model
+# deserialization (#127/#108). @0.58 (capped by the C013 #73 frame ceiling + a runtime-completeness gate deviation).
+claim s24_param_interdeps_resolved: Bool @>=0.58 = True
+falsified_when s24_param_interdeps_resolved == False
+
+# #122 alternative schemas: ADOPT the inherited out-of-scope-of-core route (C011 #120/#124) — alternative
+# schema languages live in an OPT-IN alternative-schema EXTENSION (C013 dialect=2020-12 + extension vocab),
+# not core. Implementor feedback validates the extension approach. @0.74
+claim s122_alt_schemas_extension: Bool @>=0.74 = True
+falsified_when s122_alt_schemas_extension == False
+
+# #69 auth separation: EXTERNALIZE security by default (loose coupling) — security is a separate
+# functional area (#141), operations REFERENCE security requirements BY NAME (C009 by-name identity),
+# not resource-coupled/embedded. Matches the SIG lean to externalize security. @0.68
+claim s69_auth_externalized: Bool @>=0.68 = True
+falsified_when s69_auth_externalized == False

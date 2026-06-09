@@ -20,8 +20,8 @@ push LOW-prior (Originated) questions to the long horizon.
 - RESOLVED(C012-waveA) #116 — Inheritance on paths and sublevels
 - RESOLVED(C011-batch) #119 — Allow recursive paths
 - OPEN #30 — Resource-oriented modeling
-- OPEN #31 / #100 — Validation / interdependencies across parameters
-- OPEN #24 — Arithmetic & relational inter-parameter dependencies (readability)
+- RESOLVED(C014) #31/100 — Validation / interdependencies across parameters
+- RESOLVED(C014) #24 — Arithmetic & relational inter-parameter dependencies (readability)
 - RESOLVED #32 — Objects → arrays *(umbrella for #83)* → kept map/struct (C009) → `plan/facts/0083-array-vs-map.bn`
 - RESOLVED(C012-waveA) #57 — Replace or remove discriminator
 - RESOLVED(C012-waveA) #60/61 / #61 — Shorthand for requests & responses; `post /foos/{id}` form
@@ -43,7 +43,7 @@ push LOW-prior (Originated) questions to the long horizon.
 ## Content schema formats — MEDIUM prior (medium horizon)
 
 - RESOLVED(C011-batch) #120 — SHACL as alternative to JSON Schema
-- OPEN #122 — Implementor feedback on Alternative Schemas draft
+- RESOLVED(C014) #122 — Implementor feedback on Alternative Schemas draft
 - RESOLVED(C011-batch) #124 — Import datatype declarations from XSD
 - RESOLVED(C013) #73 — Handling JSON Schema referencing in Moonwalk
 - OPEN #163 — Media type parameters (overlaps API shapes)
@@ -54,7 +54,7 @@ push LOW-prior (Originated) questions to the long horizon.
 - RESOLVED(C011-batch) #19 — Well-known URI for discovery
 - RESOLVED(C012-waveA) #43 — Rate limits
 - RESOLVED(C011-batch) #102 — Retry policy & timeout per operation
-- OPEN #69 — Separation of concerns: Auth
+- RESOLVED(C014) #69 — Separation of concerns: Auth
 - RESOLVED(C011-batch) #75 / #84 / #50 — Deprecate security schemes; OAuth scope docs; template paths in security
 
 ## Foundational interfaces — LOW prior → Originated (long horizon)
