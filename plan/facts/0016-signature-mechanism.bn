@@ -62,14 +62,17 @@ falsified_when sig_no_ratified_outcome == False
 # normalized away by the ADA. Verdict overrides earth2marsh's own hedged 2022 stub on an OPEN,
 # never-reconciled question -> the riskiest single claim, lowest ceiling.
 claim declared_indicator_verdict: Str @>=0.5 = "no-uniform-implicit-optional-at-most"
+falsified_when declared_indicator_verdict != "no-uniform-implicit-optional-at-most"
 
 # (b) Which HTTP aspects MAY compose a signature, at the frame level (the menu).
 claim aspect_menu: Str @>=0.85 = "method | uri-template-incl-query | content-type | headers | request-body-shape"
+falsified_when aspect_menu != "method | uri-template-incl-query | content-type | headers | request-body-shape"
 
 # (d) Signatures live at the DOM->ADA layer (== sig_lives_at_dom_ada_layer above), and the
 # ADA exposes, per operation, a normalized signature view + a three-valued inter-operation
 # collision verdict. Grafted from #190 detect-and-tolerate (hasOverlappingSignatures()).
 claim ada_exposes_three_valued_verdict: Str @>=0.6 = "provably-disjoint | provable-collision | not-statically-determinable"
+falsified_when ada_exposes_three_valued_verdict != "provably-disjoint | provable-collision | not-statically-determinable"
 
 # (c) Static ambiguity-analysis: DESIDERATUM, detect-and-tolerate, NOT a mandatory validation
 # gate. The 2025-04-15 floated "must be statically detectable" was contested in-note (Etheridge,

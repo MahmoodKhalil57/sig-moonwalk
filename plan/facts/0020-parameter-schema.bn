@@ -1,0 +1,234 @@
+# Decision: frontier #20 — One parameterSchema, or one each for URL params, headers, and body?
+# Candidate-fork resolution (C004). Provenance kept in comments; claims carry the load.
+#
+# Winning frame: PER-LOCATION SCHEMA SLOTS for the common case (query/path/header/cookie/body),
+# each a plain JSON Schema over its own already-typed slice, NO reserved real-param namespace,
+# NO mandatory wrapper — GRAFTED with an OPT-IN cross-cutting dependency construct (handrews'
+# {parameters,headers,body} envelope shape) materialized ONLY where a genuine cross-TYPE
+# dependency is authored. This is the HYBRID candidate's structure, hardened by the late-record
+# concrete design (#224, 2026-03), which independently converged on separate per-location keys
+# (pathParams/headers/query/cookies/body) over pure-data $defs.
+#
+# Runner-up frames and their fate:
+#  - handrews HTTP-OBJECT 3-field wrapper {parameters,headers,body} (Position 3): the leading
+#    UNIFIED mechanism; SURVIVES adversarial verify as DIRECTIONAL (unified-over-separate, runtime,
+#    no-reserved-names) but the EXACT 3-field shape is REFUTED (cookies/trailers unplaced; path+query
+#    merged into one 'parameters' bucket contra karenetheridge #100 c5; absent=>anything default on
+#    the wrong axis vs additionalProperties-within-a-present-region per #224). Its envelope SHAPE is
+#    grafted as the opt-in cross-type target ONLY. Ceilings 0.45/0.42/0.32 across three verify lenses.
+#  - mkistler IN-DIALECT (Position 2): KILLED as a recommended mechanism. Two FATAL refutations
+#    confirmed against source: the "avoids the need to augment JSON Schema" line is mkistler's in
+#    #100 Body L28 (NOT arno's in #22 L28, which is handrews on application/http); mkistler's actual
+#    #100 proposal is a FLAT dotted-key `[<in>.]name` over query/header/path/cookie ONLY — BODY is
+#    NOT in its namespace, so it cannot express the canonical forcing dep (path-ID == body-ID)
+#    without importing a body-in-schema mechanism it claims to avoid. Ceilings 0.14/0.25/0.16.
+#  - FULL per-location separation (Position 4, the title's alternative): REJECTED — no commenter
+#    advocates it; it BLOCKS cross-type deps. Our hybrid is NOT Position 4 (it preserves cross-type
+#    capability via the opt-in construct).
+#
+# Sources: discussions/0020.md (OP reserved-name defect L14, cross-type advantage L16; mkistler
+# 'one schema' + 'in' dialect L24/L26; AML14 'extremely rare but real' + canonical PUT path-ID==body-ID
+# L40; handrews 3-field wrapper L47-49, absent=>anything default L56, generative-vs-evaluative L32-34,
+# application/http hint 'just occurred to me this morning' L34); 0022.md (arno reserved-'header'
+# collision + 'better idea of a dedicated property' L45-47-59, cookies/trailers unplaced L61,
+# request/response header asymmetry L38-43); 0024.md (handrews Relative-JSON-Pointer 'greaterThan:
+# 1/minimumAmount' is SAME-LOCATION L60; relational vocab is non-standard, needs a custom vocabulary,
+# DSL-vs-idiomatic debate); 0100.md (mkistler flat-dotted-key proposal + 'avoids augmenting JSON
+# Schema' L26-28; SIG-meeting reopening 'leave parameters array, JSON schema only for interdeps'
+# L254; Hudlow 'query string is not JSON' repeated-keys/always-string/number-hinting L249-253;
+# handrews disowns mandatory x-www-form-urlencoded L278 + 'exact complexity already exists for
+# payloads' L350-358; karenetheridge query.petType-vs-petType deserialization OPEN L291, wants query
+# grouped at a lower level than path/header/cookie L306); 0108.md (header registry RFC9110§5.6 /
+# RFC8941, content-overload contested by karenetheridge, 'style: automatic' floated, OPEN 2026-03);
+# 0224.md (sebastiandemel patternProperties: SEPARATE pathParams/headers/query/cookies/body keys ->
+# pure-data $defs, lowercase-normalize headers MUST, additionalProperties:true default for
+# headers/cookies, 4-region structure; karenetheridge 'dynamic header NAMES are the genuine gap' c1);
+# initial-proposals README L17-29 (parameterSchema on pathItem AND request; contentSchema separate),
+# L59/L63 (request-selection: method -> content-type -> parameterSchema match), L170 (allOf path+request,
+# oneOf disambiguation); rpc.yaml L13 ('first class headerSchema property' floated), L82-96 (reserved
+# 'body'); dependentParameters.yaml (all 7 dependency shapes as flat top-level all-query props);
+# plan/facts/0016-signature-mechanism.bn L87-100 (D1 binding prior), L124-130 (defers_20_and_127);
+# mizan_verify_claim d1_jsonschema_out_of_static_contract -> recommended cap 0.139 (2026-06-09).
+
+# ---- INHERITED PRIORS (high multi-voice consensus; adopted) ----
+
+# The single point of genuine MULTI-VOICE consensus: do NOT fully separate per-location schemas in a
+# way that blocks cross-location dependencies. The capability to express cross-TYPE deps MUST survive.
+# (Position 4 rejected.) NB: this is consensus on the REQUIREMENT, not on "one root schema".
+claim cross_type_dep_capability_must_survive: Bool @>=0.85 = True
+falsified_when cross_type_dep_capability_must_survive == False
+
+# The DECISIVE reason is cross-TYPE (cross-location) deps, "extremely rare but real", single canonical
+# shape (PUT path-ID == body-ID), ONE research witness (AML14). Rare + thin-witnessed => lowered ceiling.
+claim cross_type_dep_is_forcing_reason: Bool @>=0.7 = True
+falsified_when cross_type_dep_is_forcing_reason == False
+
+# Reserved-name collision ('headers'/'body' as properties of a flat parameterSchema collide with real
+# URL params literally named headers/body) is Position 1's one concrete defect. Raised twice
+# (darrelmiller #20 L14; arno-di-loreto #22 L59). The chosen mechanism MUST NOT reserve real-param namespace.
+claim reserved_name_collision_is_pos1_defect: Bool @>=0.85 = True
+falsified_when reserved_name_collision_is_pos1_defect == False
+
+# Same-LOCATION (intra-query) interdependencies need NO unification — already expressible in OAS 3.0.x
+# / standard JSON Schema (style:form+explode:true+type:object; all 7 dependentParameters.yaml shapes).
+# Therefore unification/cross-cutting is load-bearing ONLY for the cross-TYPE tier. (Narrows the forcing case.)
+claim intra_location_deps_need_no_unification: Bool @>=0.85 = True
+falsified_when intra_location_deps_need_no_unification == False
+
+# #20 is a DECLARED deferred dependency of #16, left OPEN by our own ledger (0016 L124-130).
+# Resolving it now is in-scope and does not contradict C003.
+claim s20_is_in_scope_deferred_dependency: Bool @>=0.85 = True
+falsified_when s20_is_in_scope_deferred_dependency == False
+
+# #20 has NO ratified SIG outcome (no vote, no ADR, no maintainer ruling; the 2022 thread went dormant
+# 2022-10-05; darrelmiller: 'I'm not sure which I prefer', 'we have lots of options'). The whole
+# resolution is a CANDIDATE under a lowered ceiling.
+claim s20_no_ratified_outcome: Bool @>=0.85 = True
+falsified_when s20_no_ratified_outcome == False
+
+# ---- COMMITTED FRAME-LEVEL DECISION ----
+
+# (Q20) The schema-expression shape: PER-LOCATION SLOTS for the common case + an OPT-IN cross-cutting
+# construct for the rare cross-type case. NOT one always-on unified root; NOT full separation.
+# Slot set (names indicative; final spelling deferred to SIG): parameterSchema|query, path, header,
+# cookie (each plain JSON Schema over its location's typed slice) + contentSchema|body + an OPTIONAL
+# crossDependencies construct evaluated over a tooling-materialized {parameters,headers,body} envelope.
+# NB: q20_shape_verdict is a human-readable LABEL. mizan's witness model scores Bool propositions,
+# not Str labels (mizan_verify_claim returns 0 witnesses for it by design) — its @0.55 confidence is
+# CARRIED by the witnessed Bool decomposition below (per_location_slots_eliminate_reserved_names,
+# cross_type_via_optin_construct, three_field_wrapper_as_root_refuted, d1_20_depart_from_unified_root_shape).
+claim q20_shape_verdict: Str @>=0.55 = "per-location-slots-plus-optin-cross-cutting-construct"
+falsified_when q20_shape_verdict != "per-location-slots-plus-optin-cross-cutting-construct"
+
+# Each slot validates an ALREADY-typed per-location slice; the only data-model mapping each needs is the
+# location-local one EVERY proposal needs anyway (query-string->object; #108 header model). No slot
+# reserves a real-parameter namespace, so Position 1's reserved-name defect is STRUCTURALLY eliminated.
+claim per_location_slots_eliminate_reserved_names: Bool @>=0.7 = True
+falsified_when per_location_slots_eliminate_reserved_names == False
+
+# Cross-TYPE deps are PRESERVED via the opt-in cross-cutting construct over a synthetic
+# {parameters,headers,body} envelope (handrews' Position-3 SHAPE, grafted ONLY here, materialized by
+# tooling only when an author writes a cross-type dep). PRESENCE-based cross-type deps (if path X then
+# body Y required) work in standard 2020-12 today. VALUE-EQUALITY cross-type deps (path-ID == body-ID)
+# are NOT standard-vocab-expressible and need a Relative-JSON-Pointer custom vocabulary -> DEFER to #73.
+claim cross_type_via_optin_construct: Bool @>=0.6 = True
+falsified_when cross_type_via_optin_construct == False
+
+# Late-record CONVERGENCE: the most-developed concrete design (#224, 2026-03) independently arrived at
+# SEPARATE per-location keys (pathParams/headers/query/cookies/body) over pure-data $defs — confirming
+# the per-location-slots DIRECTION over handrews' exact 3-field {parameters,headers,body} wrapper, AND
+# the normalization realities (lowercase-headers MUST, additionalProperties:true default for headers/cookies).
+claim late_record_confirms_per_location: Bool @>=0.6 = True
+falsified_when late_record_confirms_per_location == False
+
+# The 3-field {parameters,headers,body} wrapper as the AUTHORING ROOT is REFUTED on three counts:
+# (i) cookies/trailers unplaced (arno #22 L61; #224 makes cookies a first-class region);
+# (ii) path+query merged into one 'parameters' bucket contradicts karenetheridge #100 c5 (query wants a
+# lower/separate level) and cannot distinguish a path id from a query id;
+# (iii) absent=>anything-allowed is the wrong axis — the real default question is additionalProperties
+# WITHIN a present region (#224: MUST default true for headers/cookies so implicit Host/User-Agent/
+# browser-cookies don't falsely reject), which handrews himself abstained on (#20 L56).
+claim three_field_wrapper_as_root_refuted: Bool @>=0.6 = True
+falsified_when three_field_wrapper_as_root_refuted == False
+
+# ---- DEVIATIONS (each carries a receipt + lowered ceiling; pairs with ADR C004) ----
+
+# Deviation D1-20: DEPART from the consensus SHAPE "keep ONE unified root schema" (the single
+# multi-voice point, 0020.md L24/L40) to PER-LOCATION SLOTS. Honored in INTENT (cross-type deps stay
+# expressible via the opt-in construct), deviated in SHAPE. Receipt: (a) AML14's own framing is
+# CONDITIONAL — 'one parameterSchema, IF that is the only way to support these dependencies' (#20 L40)
+# — and it is NOT the only way; (b) the SIG itself REOPENED toward this shape: mikekistler 2024-04-09
+# relayed 'Darrel's suggestion of leaving the parameters array in place and using a JSON schema only to
+# describe the interdependencies' (#100 c3 L254); (c) the per-location slot is multi-source-floated
+# (rpc.yaml L13 'first class headerSchema property'; arno #22 L45-47 'the better idea of a dedicated
+# property'); (d) #224 (2026-03) is a full concrete realization of separate per-location slots.
+# Lowered ceiling: single-voice-REOPENED, never RE-RATIFIED.
+claim d1_20_shape_deviation_contested: Bool @>=0.85 = True
+claim d1_20_receipt_present: Bool @>=0.6 = True
+
+lemma deviation_requires_receipt(contested, receipt)
+  because illah = contested == True
+  proves receipt == True
+
+claim d1_20_depart_from_unified_root_shape: Bool @>=0.55 = cite deviation_requires_receipt with contested=d1_20_shape_deviation_contested, receipt=d1_20_receipt_present
+falsified_when d1_20_depart_from_unified_root_shape == False
+
+# Deviation D2-20: REJECT mkistler IN-DIALECT as a recommended mechanism, and reject the third
+# candidate's "Form 2b zero-dialect-cost composite-key" as fabricated. Receipt: the load-bearing
+# citation is FALSE — 'avoids the need to augment JSON Schema for this purpose' is mkistler in #100
+# Body L28, NOT arno in #22; arno #22 argued the OPPOSITE (a fixed structure / wrapper). mkistler's
+# actual flat-dotted-key model covers query/header/path/cookie only, so it cannot express the
+# path-ID==body-ID forcing case without a body-in-schema mechanism it claims to avoid. Two FATAL
+# adversarial refutations. (This is a non-adoption with a receipt, not a structural deviation.)
+claim d2_20_indialect_miscited_contested: Bool @>=0.85 = True
+claim d2_20_receipt_present: Bool @>=0.6 = True
+
+claim d2_20_reject_indialect_form2b: Bool @>=0.6 = cite deviation_requires_receipt with contested=d2_20_indialect_miscited_contested, receipt=d2_20_receipt_present
+falsified_when d2_20_reject_indialect_form2b == False
+
+# ---- D1 (of #16/C003) RELATIONSHIP — the binding tripwire ----
+
+# The #16/C003 deviation D1 (d1_jsonschema_out_of_static_contract) demotes JSON-Schema parameter
+# discrimination from the GUARANTEED STATIC matcher to a RUNTIME last-resort flagged
+# 'schema-dependent / not-statically-collision-checked'. Our #20 answer is RUNTIME-ONLY: all per-location
+# slots AND the opt-in crossDependencies construct are RUNTIME VALIDATION constructs over an actual
+# request's parsed instance; NONE is compiled into the load-time disambiguation contract. The static
+# matcher stays the exact C003 staged form (method -> content-type -> three-valued detect-and-tolerate).
+# Therefore #20 is D1-SAFE and does NOT fire D1's narrow falsifier. The cross-type VALUE-EQUALITY case
+# is inherently instance-data-dependent (Relative JSON Pointer resolves against the live instance), so it
+# EXEMPLIFIES — and reinforces — the 'not-statically-collision-checked' last-resort D1 contemplates.
+claim q20_is_d1_safe_runtime_only: Bool @>=0.55 = True
+falsified_when q20_is_d1_safe_runtime_only == False
+
+# TRIPWIRE (surfaced, not silently assumed, per binding instruction): the #20/README source frames
+# parameterSchema as a request-SELECTION step (README L63 'used to match'; L170 oneOf-disambiguation).
+# Our resolution scopes ALL slots + the cross-cutting construct to runtime validation and explicitly does
+# NOT mandate compiling any of them (or the synthetic envelope) as the GUARANTEED STATIC matcher. IF a
+# future refinement mandates that compilation as the load-time disambiguation contract, THAT contests D1
+# (a Deviation-on-a-Deviation) and MUST be flagged with its own receipt — it is NOT done here.
+claim q20_static_matcher_tripwire_surfaced: Bool @>=0.7 = True
+falsified_when q20_static_matcher_tripwire_surfaced == False
+
+# CAVEAT: D1 itself is WEAKLY WITNESSED. mizan_verify_claim on d1_jsonschema_out_of_static_contract
+# (2026-06-09) returns recommended cap 0.139 vs declared 0.55, 2 CO-LOCATED L1 witnesses (MAIN.bn +
+# 0016 fact), independence 0.53, bcmea-clean. So "stay out of the static matcher" is a SOFT
+# honor-by-default guardrail honored by construction here, NOT a hard SIG-ratified fact. If the SIG later
+# WANTS schema-in-the-static-matcher, that re-opens #16's D1; it does not silently override it.
+claim d1_is_soft_guardrail_cap_0139: Bool @>=0.85 = True
+falsified_when d1_is_soft_guardrail_cap_0139 == False
+
+# ---- DEFERRED DEPENDENCIES (do NOT resolve here) ----
+
+# #73 — JSON Schema dialect/version + whether to add a custom Relative-JSON-Pointer vocabulary
+# (greaterThan/equals / Loading-Instance-Data, draft-bhutton-json-schema-01 §7.9) for relational/
+# arithmetic/cross-type VALUE-EQUALITY deps. HARD dependency: the canonical forcing case
+# (path-ID==body-ID) is NOT demonstrable without it; the record exhibits NO working cross-LOCATION
+# value-equality schema (0024.md greaterThan is SAME-LOCATION L60). Same dependency under unification OR
+# hybrid — unification buys nothing extra for value-equality.
+claim defers_73_dialect_and_relational_vocab: Bool @>=0.85 = True
+falsified_when defers_73_dialect_and_relational_vocab == False
+
+# #127 — concrete templating system (extended-URI-Template vs RFC6570 vs WHATWG URLPattern). Gates the
+# query/path instance->data-model mapping (parse the URL against the template into the per-location slots).
+# DEFER (co-deferred with #20 in 0016 defers_20_and_127).
+claim defers_127_templating: Bool @>=0.85 = True
+falsified_when defers_127_templating == False
+
+# The EVALUATIVE instance->data-model mapping (map a real HTTP request into the per-location slices) is
+# the deepest open technical risk, gated on TWO unsolved sub-problems: (a) query-string-is-not-JSON
+# (Hudlow #100 L249-253: repeated keys, always-string values, number/boolean type-hinting; handrews
+# disowns mandatory x-www-form-urlencoded #100 L278; Dan's query-parse-suite in-progress); (b) header
+# data model (#108: RFC9110§5.6/RFC8941 registry, content-overload-vs-style:automatic hook contested,
+# OPEN 2026-03; lowercase-normalize MUST per #224). Generative use is trivial; evaluative is the hard
+# half. Marked as a HARD pre-ratification dependency, NOT solved here. NB: per #100 L350-358 this
+# complexity already exists for x-www-form-urlencoded payloads, so it is not novel — but it is unsolved.
+claim evaluative_mapping_gated_prerequisite: Bool @>=0.7 = True
+falsified_when evaluative_mapping_gated_prerequisite == False
+
+# Header schema-expression inherits the open multi-year header-modeling prerequisite (#22/#108, #163
+# media-type-params punted to OAS 3.3) at a LOWERED ceiling. Cookies/trailers placement (arno #22 L61;
+# #224 first-class cookies region) is a sub-mapping noted-not-decided. Request/response header asymmetry
+# (#22 L38-43: request headers = list-with-name; response headers = map-keyed-by-name) is an open
+# modeling question a per-location header slot helps but does not by itself close.
+claim header_slot_prerequisite_gated: Bool @>=0.6 = True
+falsified_when header_slot_prerequisite_gated == False
