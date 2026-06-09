@@ -5,7 +5,7 @@
 > reconstructed on demand (`daftar query`, burhan over `plan/facts/`), never carried.
 > Mechanism: [C002](../doc/architecture/decisions/C002-recursive-state-mechanism.md). Charter: [C001](../doc/architecture/decisions/C001-candidate-fork-charter.md).
 
-_Last checkpoint: 2026-06-09 — **41 resolved** (Wave B complete: +C013 referencing, +C014 dependents); 15 open. Next: Wave C._
+_Last checkpoint: 2026-06-09 — **47 resolved** (Wave C1 → C015: header model + 4 more); 9 open. Next: Wave C2 (#163 + #upgrade).
 
 ## ✓ C010 Wave-2B1 → C013 (referencing cluster, 4 facets, one panel)
 
@@ -40,12 +40,12 @@ Triage (`wf_550dd30c-fa6`, 42 isolated agents) → 17 convergent / 24 contested 
 ## Frontier head — ~10 left, dependency waves (full list in [frontier.md](./frontier.md))
 
 - **Wave A — DONE 9/9** (→ C012). **Wave B — DONE** (B1 referencing → C013; B2 dependents → C014).
-- **Wave C1 — IN FLIGHT** `wf_6906ef33-a70`: #108 header-model · #23/#30 paths-resource · #56 annotations · #113 defaults · #55 servers.
+- **Wave C1 — DONE** (#108 header-model · #23/#30 · #56 · #113 · #55 → C015). #108 unblocks the #16 header-aspect.
 - **Wave C2** (after C1): **#163** media-type-params (needs #108) · **#upgrade** mechanical 3.x→4.0 (capstone — consults all ADRs).
 
 ## Decisions so far
 
-- Frontier resolved: **41** (+#24/#31/#100/#122/#69 → C014; Wave B done) · Deviations: **20** · ADRs: C001–C014 (+ `0002`).
+- Frontier resolved: **47** (Wave C1 → C015) · Deviations: **25** · ADRs: C001–C015 (+ `0002`).
 - Last: **C010 Wave-1 batch → C011** (17 convergent direct-resolved). Before that: #83/#32 → C009 (+ first live council hit).
 
 ## Per-Concern confidence map
@@ -81,6 +81,6 @@ Waves 1 (17 convergent) and 2A (8 contested) are done. **Next:**
 - Burhan ledger → [plan/facts/](./facts/) · spine claims → [plan/MAIN.bn](./MAIN.bn)
 - Narrative receipts → `daftar query "<topic>" --project=/home/mk/apps/sig-moonwalk`
 - SIG record (priors) → [github-export/](../github-export/) · official ADRs → [doc/architecture/decisions/](../doc/architecture/decisions/)
-- Our ADRs → `doc/architecture/decisions/Cxxx-*.md` (frontier: [C003](../doc/architecture/decisions/C003-signature-mechanism.md) [C004](../doc/architecture/decisions/C004-parameter-schema.md) [C005](../doc/architecture/decisions/C005-templating-system.md) [C008](../doc/architecture/decisions/C008-merge-out-of-scope.md) [C009](../doc/architecture/decisions/C009-array-vs-map.md) **[C011 batch×17](../doc/architecture/decisions/C011-convergent-batch-1.md) [C012 waveA×8](../doc/architecture/decisions/C012-contested-batch-waveA.md) [C013 referencing×4](../doc/architecture/decisions/C013-referencing-cluster.md) [C014 waveB2×5](../doc/architecture/decisions/C014-contested-batch-waveB2.md)**; meta C001/C002/C006/C007/C010) · glossary → [CONTEXT.md](../CONTEXT.md)
+- Our ADRs → `doc/architecture/decisions/Cxxx-*.md` (frontier: [C003](../doc/architecture/decisions/C003-signature-mechanism.md) [C004](../doc/architecture/decisions/C004-parameter-schema.md) [C005](../doc/architecture/decisions/C005-templating-system.md) [C008](../doc/architecture/decisions/C008-merge-out-of-scope.md) [C009](../doc/architecture/decisions/C009-array-vs-map.md) **[C011 batch×17](../doc/architecture/decisions/C011-convergent-batch-1.md) [C012 waveA×8](../doc/architecture/decisions/C012-contested-batch-waveA.md) [C013 referencing×4](../doc/architecture/decisions/C013-referencing-cluster.md) [C014 waveB2×5](../doc/architecture/decisions/C014-contested-batch-waveB2.md) [C015 waveC1×6](../doc/architecture/decisions/C015-contested-batch-waveC1.md)**; meta C001/C002/C006/C007/C010) · glossary → [CONTEXT.md](../CONTEXT.md)
 - Spec projections → [specification/candidate-v4/](../specification/candidate-v4/) (signature, parameter-schema, templating, [collections](../specification/candidate-v4/collections-array-vs-map.md))
 - Council (guides, not prophets) → [plan/council/](./council/) ([calibration](./council/CALIBRATION.md))

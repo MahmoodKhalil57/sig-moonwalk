@@ -12,30 +12,30 @@ push LOW-prior (Originated) questions to the long horizon.
 
 - RESOLVED #16 — Signature mechanism → **C003** (ADA-first frame; 3 deviations; #20/#127 deferred) → `plan/facts/0016-signature-mechanism.bn`
 - RESOLVED #20 — One `parameterSchema`? → **C004** (per-location slots + opt-in cross-cutting; D1-safe) → `plan/facts/0020-parameter-schema.bn`
-- OPEN #23 — Can we simplify paths further?
+- RESOLVED(C015) #23 — Can we simplify paths further?
 - RESOLVED #127 — Path templating → **C005** (RFC6570 parseable profile + normative grammar/reverse-algorithm; D1-safe) → `plan/facts/0127-templating-system.bn`
 - RESOLVED #17 — *(document merge / multi-file composition)* → **C008** out-of-scope, defer to Overlay Spec + tooling → `plan/facts/0017-merge-scope.bn`
 - RESOLVED(C012-waveA) **#17b (split-out)** — Response-level precedence: apiResponses vs pathResponses vs request-level responses; `parameterSchema` `allOf` composition across pathItem+request. *(The real precedence question, conflated with #17 in the original spine; now distinct.)*
 - RESOLVED #83 / #32 — collections array-vs-map → **C009** keep map/struct (identification-first; refs by-name-not-index; tags flip array→map) → `plan/facts/0083-array-vs-map.bn`
 - RESOLVED(C012-waveA) #116 — Inheritance on paths and sublevels
 - RESOLVED(C011-batch) #119 — Allow recursive paths
-- OPEN #30 — Resource-oriented modeling
+- RESOLVED(C015) #30 — Resource-oriented modeling
 - RESOLVED(C014) #31/100 — Validation / interdependencies across parameters
 - RESOLVED(C014) #24 — Arithmetic & relational inter-parameter dependencies (readability)
 - RESOLVED #32 — Objects → arrays *(umbrella for #83)* → kept map/struct (C009) → `plan/facts/0083-array-vs-map.bn`
 - RESOLVED(C012-waveA) #57 — Replace or remove discriminator
 - RESOLVED(C012-waveA) #60/61 / #61 — Shorthand for requests & responses; `post /foos/{id}` form
 - RESOLVED(C011-batch) #79 — `archetype` field for paths
-- OPEN #108 — Modeling HTTP fields (headers/trailers)
+- RESOLVED(C015) #108 — Modeling HTTP fields (headers/trailers)
 - OPEN #163 — Media type parameters
 - RESOLVED(C011-batch) #209 — Describing the `Set-Cookie` header
 - RESOLVED(C011-batch) #224 — `patternProperties` in signatures (dynamic transport keys)
 - RESOLVED(C012-waveA) #58 — Improvements for links
-- OPEN #56 — Context property annotations
+- RESOLVED(C015) #56 — Context property annotations
 - RESOLVED(C013) #49/#26 — Rename `$ref`; references as JSON pointers not names
 - RESOLVED(C011-batch) #54 — Inline schemas vs client codegen
 - RESOLVED(C011-batch) #42 / #202 — Examples for whole operation; examples encoded as strings
-- OPEN #113 — Schema/parameter default value
+- RESOLVED(C015) #113 — Schema/parameter default value
 - RESOLVED(C012-waveA) #45 — Newer HTTP versions (2/3)
 - **URL→uriTemplate ambiguity** — initial-proposal's explicit named open problem
 - **Equivalent media types** (`text/json` vs `application/json`) — initial-proposal noted as cumbersome
@@ -50,7 +50,7 @@ push LOW-prior (Originated) questions to the long horizon.
 
 ## Deployment configuration — LOW prior → Originated (long horizon)
 
-- OPEN #55 — Multiple servers across environments
+- RESOLVED(C015) #55 — Multiple servers across environments
 - RESOLVED(C011-batch) #19 — Well-known URI for discovery
 - RESOLVED(C012-waveA) #43 — Rate limits
 - RESOLVED(C011-batch) #102 — Retry policy & timeout per operation

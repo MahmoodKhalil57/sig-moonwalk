@@ -1,0 +1,166 @@
+# Decision: #56 Context property annotations — CANDIDATE ceilings (Suluk). Wave C1 (wf_6906ef33-a70).
+# Pairs with the running ADR for Wave C. Provenance in comments; claims carry the load.
+# Binding priors: C013 (#73, 0073-referencing-cluster.bn — JSON Schema 2020-12 + EXTENSION VOCABULARIES,
+# explicit dialect), C004 (#20, 0020-parameter-schema.bn — all schema is RUNTIME validation not static
+# matching), C014 (#69, batch3-waveB2.bn — externalize/loose-couple; control-keyword sprawl disfavored;
+# extension-vocab is the home for non-core schema semantics; cf #24 relational-vocab, #122 alt-schemas).
+# Council: handrews @0.70 (LIVE record on THIS item — comment 3 + replies 1-4), hudlow @0.78 (lens),
+# roles codegen-author / tech-writer / hand-author-dev, dispositions purist / minimalist.
+#
+# SOURCE (line-checked 2026-06-09): github-export/discussions/0056.md.
+#   darrelmiller (body): proposes 4 property-level boolean keywords (computed, immutable, requiredForCreate,
+#     writeOnly). reply: goal is a COMMON STANDARDIZED set to drive consistent tooling usage; RBAC must
+#     never RELAX type rules (L60-61).
+#   kevin-postman (c1): tooling-consistency DOUBT — "are ALL of them by every vendor going to utilize these
+#     in the same way... Doubtful" (L55). RBAC scope-creep worry (L57).
+#   MikeRalphson (c2): writeOnly ALREADY an annotation in 2020-12 (L67). ralfhandl reply: so is readOnly,
+#     which == `computed` "without the baggage" (L70).
+#   handrews (c3): the PRINCIPLED FRAME. Annotations are how a downstream spec (OAS) builds on JSON Schema's
+#     "instance-driven and context-unaware behavior" (L82). Enumerates 9 HTTP-context cases readOnly/writeOnly
+#     can't express (L84-96). KEY INVARIANT: new annotations "would, like `required`, have to be set on the
+#     OBJECT schema rather than the individual fields... because an annotation can only be applied to an
+#     instance that EXISTS" (L99). TWO-PASS model: (1) JSON Schema validator emits annotations + JSON Pointers;
+#     (2) SEPARATE HTTP-aware code reads them and checks context-sensitive constraints (L103-104,135-137).
+#     `httpConstraints` sketch groups constraints by field at the OBJECT level (L120-133). "annotation
+#     vocabularies are EASY to implement... do not require custom code" (L135). "correctly keep the instance
+#     data concerns and HTTP context concerns SEPARATE" (L137).
+#   handrews (c3-r2): "The one critical thing is that it has to go at the OBJECT level to be used for runtime
+#     validation (via annotation output) of any sort. The current readOnly and writeOnly keywords are
+#     PROBLEMATIC for that reason" (L164). requiredForCreate "cannot express that... because it's dependent
+#     entirely on SERVER STATE, and only incidentally related to HTTP method choice" (L158) — i.e. NOT
+#     client-decidable; useful for SERVER codegen only (darrelmiller c3-r1 L141 concurs).
+#   handrews (c3-r4): "we DON'T particularly need to include httpConstraints in any proposal... one extreme...
+#     maybe a useful advanced mode... or just a conversation starter" (L174). + requiredForCreate "poses
+#     challenges for GENERIC tooling" — POST-disambiguation problem (L176). << this SOFTENS the reading's
+#     "object-level is THE answer"; handrews offers the FRAME, not a committed vocabulary.
+#   gareth-a-jones (c3-r3): wants a MIDDLE GROUND — concise named patterns (Darrel's requiredForCreate) for
+#     common cases; ASKS for "aliasing" (L166-171). ralfhandl (c4): SAP GENERATES THREE schemas (read/create/
+#     update) from model annotations "very similarly named to Darrel's proposal" + a 5th `updateOnly` (L184-191).
+#     << LIVE WITNESS that property-level NAMED patterns have real, shipped utility — so "no witness for
+#     property-level" is FALSE as stated; the witnesses are for named-pattern CONVENIENCE, not for property-
+#     level as the runtime-validation SUBSTRATE.
+#
+# STATUS: OPEN. "Discussion unresolved in SIG (2023-03-30 last update)", no vote/ADR/maintainer ruling.
+# This is a CANDIDATE resolution at ceilings, NOT a ratified SIG outcome.
+claim s56_open_no_adr: Bool @>=0.85 = True
+falsified_when s56_open_no_adr == False
+
+# ==================== THE COMMITTED FRAME ====================
+
+# OBJECT-LEVEL ANNOTATION VOCABULARY is the normative SUBSTRATE for context-dependent property semantics.
+# The constraints that govern create-vs-update-vs-read behaviour are expressed via a Moonwalk OAS ANNOTATION
+# VOCABULARY whose net-new keywords sit on the OBJECT schema (grouping by field), NOT as per-property boolean
+# flags. Three independent witnesses CONVERGE: (a) handrews — annotation can only apply to an instance that
+# EXISTS, so object-level is the only placement usable for runtime/annotation-output validation (0056 L99,
+# L164); (b) C004/#20 — all schema is RUNTIME validation, so the keywords feed validation not static request-
+# selection (removes the embedded-selection motive for property-level flags); (c) hudlow lens — the JSON
+# Schema pass stays STATICALLY decidable in isolation precisely because the HTTP-context resolution is
+# factored OUT into a second pass. CEILING 0.7 = handrews-live-record cap; this is his explicit position on
+# THIS item, not a persona hypothesis, but it is single-elder + SIG-unratified, so does not exceed his ceiling.
+claim s56_object_level_annotation_vocab_substrate: Str @>=0.7 = "object-level-oas-annotation-vocab-is-runtime-validation-substrate"
+falsified_when s56_object_level_annotation_vocab_substrate != "object-level-oas-annotation-vocab-is-runtime-validation-substrate"
+
+# TWO-PASS SEPARATION OF CONCERNS (handrews, 0056 L103-104/135-137): pass 1 = a 2020-12 validator that emits
+# the OAS annotations + JSON Pointers as standard annotation output (unknown-keyword-as-annotation per the
+# 2020-12 recommendation — zero custom code for the schema pass); pass 2 = a SEPARATE HTTP-aware validator
+# that consumes the annotation output (HTTP method, request-vs-response, headers) and enforces the context-
+# sensitive constraints. Instance-data concerns and HTTP-context concerns stay SEPARATE. This is the load-
+# bearing architectural commitment and it is congruent with C013 (extension vocabularies, explicit dialect)
+# AND hudlow static-analyzability (pass 1 is local/static; pass 2 is the admitted runtime tier, C003-D1).
+claim s56_two_pass_http_aware_second_pass: Str @>=0.7 = "pass1-jsonschema-annotations-plus-pointer__pass2-separate-http-aware-validator"
+falsified_when s56_two_pass_http_aware_second_pass != "pass1-jsonschema-annotations-plus-pointer__pass2-separate-http-aware-validator"
+
+# DELIVERY MECHANISM = a C013 EXTENSION VOCABULARY, not core control keywords. The OAS annotation set lives
+# in an explicitly-declared OAS annotation vocabulary under the C013 dialect frame (same home as #24 relational
+# vocab + #122 alt-schemas). Control-keyword sprawl in OAS-proper is DISFAVORED (C014/#69 loose-coupling lean;
+# handrews recurring "define a vocabulary, don't grow the control surface", council L17/L24/L51). CEILING 0.62
+# = inherits the C013 typed-component-name/extension-vocab frame ceiling (s73_identity_class @0.62); this
+# decision does not exceed the frame it rests on.
+claim s56_delivery_is_c013_extension_vocabulary: Str @>=0.62 = "oas-annotation-extension-vocab-under-declared-dialect-not-core-control-keywords"
+falsified_when s56_delivery_is_c013_extension_vocabulary != "oas-annotation-extension-vocab-under-declared-dialect-not-core-control-keywords"
+
+# readOnly / writeOnly are INHERITED from JSON Schema 2020-12 (MikeRalphson c2 L67; ralfhandl L70) — NOT
+# net-new. They remain the simple-case annotations; `computed` is REDUNDANT with `readOnly` and is DROPPED
+# (ralfhandl: readOnly "without the baggage").
+# REFUTATION SPLIT (2026-06-09): the INHERITANCE half (readOnly/writeOnly exist in 2020-12) is DEFINITIONAL
+# and holds @0.85. The `computed`-DROP half rests on ralfhandl's single remark (L70) and ralfhandl is NOT a
+# calibrated council voice — so the drop is the SOFTER half, provisional and adjacent to the deferred
+# keyword-spelling question, NOT independently load-bearing at 0.85. The claim's 0.85 governs the inheritance. The known caveat (handrews L164) that field-level readOnly/
+# writeOnly are "problematic" for annotation-collection is INHERITED, not fixed here: they "mostly work out"
+# in practice; the object-level vocabulary is what handles the cases they cannot. CEILING 0.85 = inherited
+# 2020-12 fact (these keywords exist by definition), bounded to sole-source per task.
+claim s56_readonly_writeonly_inherited_computed_dropped: Bool @>=0.85 = True
+falsified_when s56_readonly_writeonly_inherited_computed_dropped == False
+
+# NAMED-PATTERN CONVENIENCE LAYER is PERMITTED as desugar over the object-level vocabulary, NOT banned, NOT
+# core-normative. requiredForCreate / immutable / updateOnly etc. are recognizable usage patterns with LIVE
+# real-world witnesses (ralfhandl/SAP ships ~these generating 3 schemas, 0056 L184-191; gareth-a-jones asks
+# for "aliasing", L171; darrelmiller's whole proposal). So the reading's "no witness for property-level stays
+# feasible" is OVERSTATED — corrected here. The principled position is: object-level is the SUBSTRATE; named
+# patterns MAY be defined as a higher-level convenience vocabulary that DESUGARS to the object-level form,
+# BUT only for patterns that are client-decidable. requiredForCreate is flagged as SERVER-ONLY (server-state
+# dependent, generic-tooling-hostile, POST-disambiguation problem: handrews L158/L176, darrelmiller L141) —
+# admissible as a SERVER-codegen hint, NOT enforceable in generic client-side validation. This is a DEVIATION
+# from the reading's "no property-level feasible" framing. CEILING 0.55 = multi-witness-permits but mechanism
+# (desugar grammar, which patterns qualify) is genuinely unsettled in the record; gareth's aliasing ask is
+# unanswered; SOLE-SOURCE candidate.
+claim s56_named_patterns_permitted_as_desugar_server_hints_caveated: Str @>=0.5 = "named-patterns-permitted-desugar-over-object-level__requiredForCreate-server-only-not-generic-client"
+falsified_when s56_named_patterns_permitted_as_desugar_server_hints_caveated != "named-patterns-permitted-desugar-over-object-level__requiredForCreate-server-only-not-generic-client"
+# REFUTATION (2026-06-09, committed): ceiling lowered 0.55 -> 0.50. The DIRECTION survives — live
+# witnesses (Ralf/SAP L184-191; gareth L171; Darrel's body) genuinely REFUTE the reading's "no witness
+# for property-level feasible" overstatement, so permitted-not-banned holds. But the FIRMNESS was trimmed:
+# the only calibrated elder (handrews) is NON-COMMITTAL on the named-vs-flexible "balance" (L162) and
+# actively SKEPTICAL of the one concrete named pattern, requiredForCreate, for generic tooling (L176);
+# gareth's aliasing ask is UNANSWERED in the record; the supporting witnesses (Ralf, gareth, Darrel) are
+# all UNCALIBRATED. 0.55 leaned into exactly the hardening the handrews calibration-note warns against
+# (test_001 stance-over-firming). 0.50 = "permitted + witnessed + mechanism-deferred", not "settled".
+
+# RBAC / role-conditioned property visibility is OUT OF SCOPE of this vocabulary (kevin-postman c1 raises it
+# L57; darrelmiller concedes it's a separate challenge and RBAC must NEVER RELAX type rules, L61). Annotations
+# describe create/update/read CONTEXT, not authorization context. Authorization stays EXTERNALIZED (C014/#69
+# s69_auth_externalized @0.68). No role-keyword surface is added here. CEILING 0.68 = inherits the #69 cap.
+claim s56_rbac_out_of_scope_externalized: Bool @>=0.68 = True
+falsified_when s56_rbac_out_of_scope_externalized == False
+
+# ==================== DEFERRED (do not resolve here) ====================
+
+# DEFERRED with explicit homes: (1) the EXACT keyword set + spelling of the object-level vocabulary (handrews'
+# httpConstraints is a "conversation starter", NOT a committed shape — L174; the required/forbidden/unmodified/
+# serverManaged/serverAssigned vs named-pattern balance is open, L162); (2) the named-pattern DESUGAR grammar
+# and the aliasing mechanism gareth asks for (L171, unanswered); (3) the POST collection-vs-item connection
+# problem that requiredForCreate/httpConstraints both hit (handrews L160/L176) — depends on the resource/paths
+# model (#23/#30, same Wave C1); (4) whether the second-pass HTTP-aware validator is itself standardized or
+# left to tooling. The wire shape MUST NOT be hard-committed to httpConstraints or to Darrel's exact four
+# keywords. Inherits C013 s73_downstream_grammar_and_vocab_deferred @0.85.
+claim s56_keyword_set_desugar_grammar_post_problem_deferred: Bool @>=0.85 = True
+falsified_when s56_keyword_set_desugar_grammar_post_problem_deferred == False
+
+# DEPENDENCY NOTE: the create-context cases lean on a coherent collection+item / resource model (#23/#30,
+# in-flight same wave) to define "what is a create". #163 media-type-params + #upgrade are LATER waves. The
+# object-level vocabulary does NOT depend on the #108 header model (annotations are payload-schema concerns);
+# header-context constraints, if ever added, would reference #108 then — not resolved here.
+claim s56_depends_on_resource_model_not_header_model: Str @>=0.7 = "create-context-depends-on-23-30-resource-model__independent-of-108-header-model"
+falsified_when s56_depends_on_resource_model_not_header_model != "create-context-depends-on-23-30-resource-model__independent-of-108-header-model"
+
+# ==================== COUNCIL SCORECARD ====================
+
+# handrews persona predicted (priors_impact, blind @0.70): push for a CLEAN OBJECT-LEVEL annotation vocabulary
+# to avoid special-casing + separate identity/location; signature move "define a content/media type and use
+# annotation vocabulary". REALITY (0056 is a LIVE record, not a backtest): handrews' REAL comment 3 IS exactly
+# this — object-level annotation vocabulary, two-pass, "add an OAI annotation vocabulary rather than pushing
+# upstream" (council L24). HIT on the FRAME. The persona's blindspot/calibration-note (schema-shaped bias;
+# tendency to harden into firmer position) was HONORED by NOT over-committing: handrews HIMSELF softened
+# ("we don't particularly need httpConstraints... conversation starter", L174), so the candidate keeps the
+# vocabulary SHAPE deferred rather than minting httpConstraints normatively — avoiding the C013-style register-
+# inversion (promoting an elder's off-the-cuff sketch to a MUST).
+claim council_handrews_live_hit_on_object_level_frame: Bool @>=0.7 = True
+falsified_when council_handrews_live_hit_on_object_level_frame == False
+
+# hudlow persona (lens @0.78, no live record on #56): static-analyzability + locality. The frame HONORS it —
+# the JSON Schema pass-1 is locally/statically decidable in isolation; the HTTP-context resolution that
+# genuinely CANNOT be local (it needs method/request-vs-response) is factored into a SEPARATE pass, which is
+# the admitted runtime tier (C003-D1), not smuggled into the static matcher. hudlow's documented blindspot
+# (undervaluing legitimately-runtime designs) is the reason this is a CONSISTENCY check, not a veto: context-
+# dependent validation is inherently runtime, and the two-pass split is the cleanest way to keep pass-1 static.
+claim council_hudlow_lens_consistent_two_pass_keeps_pass1_static: Str @>=0.6 = "two-pass-honors-hudlow-static-pass1-runtime-pass2-no-live-record"
+falsified_when council_hudlow_lens_consistent_two_pass_keeps_pass1_static != "two-pass-honors-hudlow-static-pass1-runtime-pass2-no-live-record"

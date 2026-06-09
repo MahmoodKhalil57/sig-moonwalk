@@ -1,0 +1,35 @@
+# C010 Wave-2C1 contested batch — 5 items via compact panels (wf_6906ef33-a70). Pairs with ADR C015.
+
+# #108 header model: registry of header-models (RFC9110 §5.6 | RFC8941 | other-RFC | custom, housed like
+# the media-type registry) + a DEDICATED registry-keyed header-model reference key (e.g. `fieldModel`,
+# value MUST not look like a media-type range) alongside the C004 header slot; `style:automatic` = optional
+# DOM->ADA sugar normalized away. Runtime/evaluative metadata only (D1-safe) -> unblocks the #16 header-aspect
+# (best-effort per D3, not a static gate) over the lowercase-normalized (#224) header slot. Trailers surfaced
+# not hardened. 3 deviations (hook@0.55, style@0.5, trailers@0.42). @0.6
+claim s108_header_model_resolved: Bool @>=0.6 = True
+falsified_when s108_header_model_resolved == False
+
+# #23/#30 paths + resource-orientation: paths+method stay IDENTITY-PRIMARY (settled: C005 parseable
+# segments, C009 name-keyed maps, #119 recursive bounded-out). DEFER resource-oriented DECOUPLING as a core
+# construct (it is in C003's KILLED list — decoupling would collapse the signature axis); resource-orientation
+# is a doc-gen/tooling OVERLAY over existing primitives (path+method, self-identifier #72), not core. @0.74
+claim s23_30_paths_identity_primary: Bool @>=0.74 = True
+falsified_when s23_30_paths_identity_primary == False
+
+# #56 context annotations: OBJECT-level OAS annotation vocabulary delivered as a C013 EXTENSION VOCABULARY
+# under the declared 2020-12 dialect (keywords on the object schema, grouped by field); two-pass validation
+# (2020-12 validator emits annotations + JSON Pointers; a separate HTTP-aware pass enforces context). @0.7
+claim s56_context_annotations_vocab: Bool @>=0.7 = True
+falsified_when s56_context_annotations_vocab == False
+
+# #113 default value: `default` lives at the SCHEMA HOME (Pole 2) — authored inside the per-location JSON
+# Schema 2020-12 slots (C004); NO new OAS-level parameter control keyword in this wave. A parameter-level
+# `default` field is deferred-open (rides the JSON-Schema-upstream missing/defaultProperties proposal). @0.64
+claim s113_default_schema_home: Bool @>=0.64 = True
+falsified_when s113_default_schema_home == False
+
+# #55 servers/environments: decompose into server IDENTITY (a stable by-NAME handle, C009) vs environment
+# URL CONFIGURATION (a DEPLOYMENT-layer responsibility, out-of-core per C008 shape-vs-deployment separation;
+# Deployments Object `location` field). Adopt only the thin by-name shape primitive; defer env URL mapping. @0.74
+claim s55_servers_identity_vs_deployment: Bool @>=0.74 = True
+falsified_when s55_servers_identity_vs_deployment == False
