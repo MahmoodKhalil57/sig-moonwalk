@@ -5,7 +5,9 @@
 > reconstructed on demand (`daftar query`, burhan over `plan/facts/`), never carried.
 > Mechanism: [C002](../doc/architecture/decisions/C002-recursive-state-mechanism.md). Charter: [C001](../doc/architecture/decisions/C001-candidate-fork-charter.md).
 
-_Last checkpoint: 2026-06-09 — **#16→C003, #20→C004, #127→C005, #17→C008** done; council live. Next: #83._
+_Last checkpoint: 2026-06-09 — 5 resolved; **#83/#32 in flight** via `wf_72360ada-66c` (council-integrated)._
+
+> **⏳ #83/#32 in flight** — user-keyed collections: array vs map. #83 was a dup → real debate is #32 (contested, 10 comments). FIRST council-integrated Step: A-personas (handrews/hudlow/rafalkrupinski) predict BLIND, B/C lenses give red-lines, then readers/prior-map/4-design/12-verify/synthesis. **Live persona test:** handrews has a real position (#32 c10, identification-reframe) → the synthesis scores his blind persona prediction vs reality. On done: mizan-gate → ADR **C009** → projection → next #116. Candidates: blanket-arrays / keep-maps / identification-first / hybrid-optional-names.
 
 ## ✓ #17 resolved → C008 (out-of-scope) + conflation fix
 
