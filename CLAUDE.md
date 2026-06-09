@@ -31,6 +31,8 @@ digest (frontier head, confidence map, contradictions, cheapest-next-move, index
 5. Re-project the affected `specification/` section from the ledger.
 6. Update the spine: advance the frontier, refresh the confidence map, record any new contradiction. Commit.
 
+**Scaling (batched Steps, [C010](doc/architecture/decisions/C010-batched-dependency-aware-execution.md)).** To go faster: triage the frontier (convergent → resolve direct like #17; contested → panel), then `pipeline()` *mutually-independent* issues through the stages in **one** workflow. Hard rules: never put two issues in one agent's context (pollution); never batch *dependent* issues blind to each other (serialize them into topological waves); one big workflow at a time; `burhan-converge` after a batch to catch cross-issue conflict. Consult the **council** ([plan/council/](plan/council/)) up front on contested Steps — A predicts (gated by ceiling), B/C are lenses; guides, never ground truth.
+
 ## Conventions & gotchas
 
 - **ADR provenance.** Our ADRs are `Cxxx-slug.md` in `doc/architecture/decisions/` with a provenance blockquote. The SIG's are `000x`. Never intermix the numbering; never present a `Cxxx` as a SIG decision.
