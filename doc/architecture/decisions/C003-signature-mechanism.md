@@ -1,6 +1,6 @@
 # C3. Signature mechanism: a uniform ADA-exposed multi-aspect matcher with bounded, best-effort collision analysis
 
-> **Provenance:** Candidate-fork ADR — a decision of *this fork effort*, not of the OpenAPI Moonwalk SIG. Resolves frontier **#16**. Ledger: [`plan/facts/0016-signature-mechanism.bn`](../../../plan/facts/0016-signature-mechanism.bn).
+> **Provenance:** Candidate-fork ADR — a decision of *this fork effort* (Suluk), not of the OpenAPI Moonwalk SIG. Resolves frontier **#16**. Ledger: [`plan/facts/0016-signature-mechanism.bn`](../../../plan/facts/0016-signature-mechanism.bn).
 
 Date: 2026-06-09
 

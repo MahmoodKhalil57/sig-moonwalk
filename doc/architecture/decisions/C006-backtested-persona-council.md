@@ -1,12 +1,12 @@
 # C6. A backtested persona council — calibrated SIG-voice models as guides, not prophets
 
-> **Provenance:** Candidate-fork ADR — a decision of *this fork effort*, not of the OpenAPI Moonwalk SIG. A methodology/mechanism decision (same class as [C002](./C002-recursive-state-mechanism.md)), not a frontier-question decision. (`C005` is reserved for the in-flight #127 resolution.)
+> **Provenance:** Candidate-fork ADR — a decision of *this fork effort* (Suluk), not of the OpenAPI Moonwalk SIG. A methodology/mechanism decision (same class as [C002](./C002-recursive-state-mechanism.md)), not a frontier-question decision. (`C005` is reserved for the in-flight #127 resolution.)
 
 Date: 2026-06-09
 
 ## Status
 
-Accepted (candidate-fork) — **pending validation.** The mechanism is adopted; whether any given persona is *trusted* depends on its backtest score (recorded in `plan/council/CALIBRATION.md`). A persona that fails its backtest is kept but flagged uncalibrated and excluded from the council.
+Accepted (candidate-fork) — **VALIDATED** (2026-06-09). The blind backtest works: hudlow 1.0, handrews 0.875, rafalkrupinski 0.875 hit-rate out-of-sample (n=4 leave-one-out each), with the judge cross-checking actuals against the real export. Ceilings are honestly capped at ≤0.78 for small `n`. mikekistler is built-but-uncalibrated (n=1); earth2marsh / darrelmiller / karenetheridge / arno-di-loreto are pending a resume (rate-limited). Full results: `plan/council/CALIBRATION.md`. A persona that fails its backtest is kept but flagged uncalibrated and excluded from the council.
 
 ## Context
 

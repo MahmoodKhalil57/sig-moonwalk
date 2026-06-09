@@ -1,8 +1,12 @@
-# OpenAPI v4.0 Candidate (Moonwalk Fork)
+# Suluk — OpenAPI v4.0 Candidate (forked from Moonwalk)
 
-A single-contributor effort, grounded in the Adam substrate suite (burhan / daftar / mizan), to author a complete, internally-consistent **candidate** for OpenAPI Specification v4.0 — honestly labelled as a fork/proposal, not as closure of the official Moonwalk SIG. This glossary is the shared language for that effort; it is a glossary only, not a spec or a plan.
+Suluk is a single-contributor effort, grounded in the Adam substrate suite (burhan / daftar / mizan), to author a complete, internally-consistent **candidate** for OpenAPI Specification v4.0 — honestly labelled as a fork/proposal, not as closure of the official Moonwalk SIG. This glossary is the shared language for that effort; it is a glossary only, not a spec or a plan.
 
 ## Language
+
+**Suluk**:
+The name of this candidate effort (سُلوك, "the walk"; substrate codename `asl-ojs`). The independent, single-contributor v4.0 candidate built here — distinct from the SIG's Moonwalk.
+_Avoid_: Moonwalk (that is the upstream effort, not ours)
 
 **Candidate v4.0**:
 The complete, internally-consistent specification document we author end-to-end. Our artifact, under our control. Distinct from anything the official SIG ratifies.

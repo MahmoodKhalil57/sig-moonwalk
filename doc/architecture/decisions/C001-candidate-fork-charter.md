@@ -2,6 +2,8 @@
 
 > **Provenance:** Candidate-fork ADR — a decision of *this fork effort*, **not** of the OpenAPI Moonwalk SIG. SIG-accepted ADRs are numbered `0001`, `0002`, …; candidate-fork ADRs are numbered `C001`, `C002`, …. "Accepted" below means accepted by the fork, never by the SIG.
 
+This effort is named **Suluk** (سُلوك, "the walk"; substrate codename `asl-ojs`) — preserving the project's own mechanism (the Walk → Step → Spine → Frontier) and its lineage from the OAI "Moonwalk" effort while declaring independence and joining the Adam substrate's Arabic-Islamic naming family (mizan / burhan / daftar / khazina).
+
 Date: 2026-06-09
 
 ## Status

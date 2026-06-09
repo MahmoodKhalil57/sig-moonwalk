@@ -1,38 +1,35 @@
-# Welcome to the OpenAPI Moonwalk SIG!
+# Suluk — an independent OpenAPI v4.0 candidate
 
-The OpenAPI Moonwalk [Special Interest Group](https://learn.openapis.org/glossary.html) (SIG) is working on the next major release of the OpenAPI Specification (OAS), version 4.0.
+**Suluk** (سُلوك, *"the walk / wayfaring"*; substrate codename `asl-ojs`) — a journey traversed one station at a time toward a goal.
 
-## Principles
+## What this is
 
-Moonwalk is being developed in accordance with the following principles, which you can read in more detail in [our 2025 blog post](https://www.openapis.org/blog/2025/02/05/moonwalk-2025-update) (an update to the [2024 post](https://www.openapis.org/blog/2023/12/06/openapi-moonwalk-2024)):
+Suluk is an independent, single-contributor candidate for **OpenAPI Specification v4.0**, forked from the OAI [Moonwalk SIG](https://github.com/OAI/sig-moonwalk) — which we treat strictly as **read-only priors** — and grounded in the Adam substrate suite (**burhan** reasoning · **daftar** memory · **mizan** gates). The document is authored *one decision per Step* via the recursive-state Walk: Walk → Step → Spine → Frontier.
+
+**Honest disclaimer.** Suluk is **not** the OpenAPI Moonwalk SIG, is **unaffiliated** with the OpenAPI Initiative, and **cannot ratify anything** on the SIG's behalf. It is a personal candidate document that adopts the SIG's published work as priors and deviates only by recorded receipt.
+
+## Inherited principles
+
+These six principles come from the Moonwalk effort and are documented in more detail in the OpenAPI Initiative's [2025 blog post](https://www.openapis.org/blog/2025/02/05/moonwalk-2025-update) (an update to the [2024 post](https://www.openapis.org/blog/2023/12/06/openapi-moonwalk-2024)). Suluk **adopts** them as inherited priors:
 
 1. **Semantics**: Semantics provide purpose, whether the consumer is a human or an AI.
 2. **Signatures**: An API operation is identifiable by its signature, which can be based on any aspect of HTTP mechanics.
 3. **Inclusion**: Moonwalk aspires to describe all HTTP-based APIs while remaining neutral regarding any specific design debate.
 4. **Foundational Interfaces**: Reduce the complexity for tooling authors by establishing standardized interfaces for parsing API description documents and defining consistent methods for expressing API structural semantics.
-5. **Separation of Concerns**: Modularization will keep the scope of Moonwalk manageable with loose coupling among concerns such as HTTP interfaces ("API shapes"), deployment configuration, and content schema formats.
-6. **Mechanical Upgrading**: An automated upgrade process from 3.x to 4.0 will be developed as part of the Moonwalk effort.
+5. **Separation of Concerns**: Modularization keeps scope manageable with loose coupling among concerns such as HTTP interfaces ("API shapes"), deployment configuration, and content schema formats.
+6. **Mechanical Upgrading**: An automated upgrade process from 3.x to 4.0 is part of the Moonwalk effort.
 
-## Contributing
+## How the work proceeds
 
-As of March 2025, we are using the following documents and processes:
+Suluk advances by **the Walk** — each Step resolves exactly one question, records its dependencies, writes a `plan/facts/*.bn` claim with a confidence ceiling, emits a `Cxxx` ADR when the decision is hard to reverse, and re-projects the affected `specification/` section from the ledger. The `specification/` document is a *projection*, never the source of truth.
 
-* [The Initial Moonwalk Proposals](./doc/initial-proposals) launched this effort, and continue to serve as the reference point for our discussions
-* [Discussions](https://github.com/OAI/sig-moonwalk/discussions): All Moonwalk ideas should start as discussions
-* [Architectural Design Records (ADRs)](./doc/architecture) as discussions produce consensus, decisions are recorded as ADRs
-* [Issues](https://github.com/OAI/sig-moonwalk/issues) should ***only*** be used to track actionable work items
-* [Meeting Agendas](https://github.com/OAI/sig-moonwalk/discussions?discussions_q=is%3Aopen+label%3AHousekeeping) focus the discussion in our weekly calls, which are open to all
+- **Spine** (always-loaded digest): [plan/STATE.md](plan/STATE.md)
+- **Charter**: [C001 — candidate fork charter](doc/architecture/decisions/C001-candidate-fork-charter.md)
+- **Mechanism**: [C002 — recursive-state mechanism](doc/architecture/decisions/C002-recursive-state-mechanism.md)
+- **Glossary**: [CONTEXT.md](CONTEXT.md)
 
-### Issues and formal documents
+## Relationship to the upstream SIG
 
-We are not yet at the point of writing a formal specification, so there are very few reasons to file issues at this stage.
+The official OpenAPI Moonwalk SIG's record is preserved here as **read-only priors** under [github-export/](github-export/) (mirrored discussions and ADRs). Suluk's working discipline is **adopt-by-default, deviate-by-receipt**: a SIG prior is never silently overruled — a Deviation requires a claim, a cite-chain, a stated reason the prior is insufficient, and a lowered confidence ceiling.
 
-We will begin writing a formal document once enough decisions have been made through ADRs that a coherent document can be structured.
-
-### Writing ADRs
-
-Before writing an ADR to submit as a PR, please make sure that there is sufficient agreement to move ahead either in the discussion or by getting a decision in the weekly call.
-
-A good ADR decides _just enough_ of a topic to allow moving on to the next decision.  As discussions tend to be rather sprawling, it might take several ADRs to resolve everything needed to close a discussion.
-
-Feedback on ADR PRs should be about whether the ADR captures the decision and all related concerns from the discussion.  Details will likely be refined in the PR process, but if the direction of the decision is still being challenged, it is best to close the PR (or declare the ADR "rejected" before merging) and return to the GitHub discussion to re-build consensus.
+We **never** PR or push upstream; the upstream is read-only. The canonical sources are the OAI SIG's [discussions](https://github.com/OAI/sig-moonwalk/discussions) and [repository](https://github.com/OAI/sig-moonwalk).

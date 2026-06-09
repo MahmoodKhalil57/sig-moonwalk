@@ -1,15 +1,14 @@
 {
-  "name": "oas-moonwalk",
+  "name": "suluk",
   "version": "0.0.1",
-  "description": "OpenAPI Specification 4.0 Moonwalk",
+  "description": "Suluk — an independent OpenAPI Specification v4.0 candidate, forked from the OAI Moonwalk SIG and grounded in the Adam substrate",
   "author": {
-    "name": "OpenAPI Initiative TSC",
-    "email": "tsc@openapis.org",
-    "url": "https://openapis.org/"
+    "name": "MahmoodKhalil57",
+    "url": "https://github.com/MahmoodKhalil57/sig-moonwalk"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/OAI/OpenAPI-Specification.git"
+    "url": "https://github.com/MahmoodKhalil57/sig-moonwalk.git"
   },
   "license": "Apache-2.0",
   "readmeFilename": "README.md",
@@ -24,7 +23,9 @@
     "OpenAPI",
     "OAS",
     "Swagger",
-    "API"
+    "API",
+    "Suluk",
+    "Moonwalk"
   ],
   "scripts": {
     "build": "pwsh scripts/Generate.ps1"

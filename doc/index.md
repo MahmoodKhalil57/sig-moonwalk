@@ -1,6 +1,6 @@
-# Moonwalk
+# Suluk
 
-The OpenAPI Moonwalk [Special Interest Group](https://learn.openapis.org/glossary.html) (SIG) is working on the next major release of the OpenAPI Specification (OAS), version 4.0, with a goal of [publishing by the end of 2024](https://www.openapis.org/blog/2023/12/06/openapi-moonwalk-2024).
+Suluk (سُلوك, "the walk") is an independent, single-contributor candidate for OpenAPI Specification v4.0, forked from the OAI Moonwalk SIG (treated as read-only priors). See the [CONTEXT.md](../CONTEXT.md) glossary for terms and provenance.
 
-
-[Editors Draft](moonwalk.html)
+- [Suluk candidate sections](../specification/candidate-v4/)
+- [Inherited Moonwalk editors draft](moonwalk.html) (upstream proposal — a prior)

@@ -1,6 +1,6 @@
 # C2. Recursive-state mechanism: a decision-centric walk with a thin spine over a burhan/daftar ledger
 
-> **Provenance:** Candidate-fork ADR — a decision of *this fork effort*, not of the OpenAPI Moonwalk SIG.
+> **Provenance:** Candidate-fork ADR — a decision of *this fork effort* (Suluk), not of the OpenAPI Moonwalk SIG.
 
 Date: 2026-06-09
 

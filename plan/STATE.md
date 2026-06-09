@@ -5,9 +5,11 @@
 > reconstructed on demand (`daftar query`, burhan over `plan/facts/`), never carried.
 > Mechanism: [C002](../doc/architecture/decisions/C002-recursive-state-mechanism.md). Charter: [C001](../doc/architecture/decisions/C001-candidate-fork-charter.md).
 
-_Last checkpoint: 2026-06-09 — **#16→C003, #20→C004** resolved & committed; **#127 in flight** via `wf_dc8e3394-6d2`._
+_Last checkpoint: 2026-06-09 — **#16→C003, #20→C004** done; **#127 needs resume** (rate-limited); **council VALIDATED** (C006)._
 
-> **⏳ #127 in flight** — workflow resolving the templating system. Crux = parseability (RFC6570 is expansion-designed, not parse-designed; our matcher #16 + evaluative extraction #20 both need parsing). Candidates: full RFC6570 / **parseable RFC6570 profile** / WHATWG URLPattern / extended-Moonwalk-template. On completion: mizan-gate, ADR **C005**, projection, daftar, then pop #127 → next #17. Must resolve the named URL→template ambiguity problem.
+> **⏳ #127 needs resume.** Workflow `wf_dc8e3394-6d2` finished readers + prior-map + 4 design candidates, but **all 12 verify + synthesis were rate-limited** (two big workflows ran concurrently — don't do that). Resume from cache: `Workflow({scriptPath: ".../resolve-frontier-127-templating-system-wf_dc8e3394-6d2.js", resumeFromRunId: "wf_dc8e3394-6d2"})`. Crux = parseability; candidates: full RFC6570 / **parseable RFC6570 profile** / URLPattern / extended-Moonwalk-template; must resolve the named URL→template ambiguity. Then mizan-gate → ADR **C005** → projection → next #17.
+>
+> **✓ Council validated** (C006): hudlow @0.78, handrews @0.70, rafalkrupinski @0.70 (blind backtest 0.875–1.0). 4 voices pending resume. Use it on the NEXT Step: predict positions before designing + run "would they object?" as a verify lens. See [plan/council/](./council/).
 
 ## ✓ #20 resolved → C004
 
@@ -61,3 +63,4 @@ Run `mizan_recommend_next_experiment(plan/)`, else default: resolve **#127 (temp
 - SIG record (priors) → [github-export/](../github-export/) · official ADRs → [doc/architecture/decisions/](../doc/architecture/decisions/)
 - Our ADRs → `doc/architecture/decisions/Cxxx-*.md` ([C003 signature](../doc/architecture/decisions/C003-signature-mechanism.md), [C004 parameter-schema](../doc/architecture/decisions/C004-parameter-schema.md)) · glossary → [CONTEXT.md](../CONTEXT.md)
 - Spec projections → [specification/candidate-v4/](../specification/candidate-v4/) ([signature-mechanism](../specification/candidate-v4/signature-mechanism.md), [parameter-schema](../specification/candidate-v4/parameter-schema.md))
+- Council (guides, not prophets) → [plan/council/](./council/) ([calibration](./council/CALIBRATION.md))

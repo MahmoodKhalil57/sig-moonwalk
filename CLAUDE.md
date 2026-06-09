@@ -1,4 +1,4 @@
-# Claude instructions — OpenAPI v4.0 Candidate (Moonwalk fork)
+# Claude instructions — Suluk (OpenAPI v4.0 candidate, forked from Moonwalk)
 
 > Inherited context: Bun defaults from `~/apps/CLAUDE.md` and the Adam substrate from
 > `~/.claude/CLAUDE.md` already apply here — this file does **not** repeat them. It is the
@@ -6,8 +6,8 @@
 
 ## What this repo actually is
 
-This is a clone of **OAI/sig-moonwalk** (the OpenAPI v4.0 "Moonwalk" SIG), repurposed as a
-**single-contributor candidate-v4.0 fork**. We are **not** the SIG and cannot ratify anything;
+**Suluk** is a clone of **OAI/sig-moonwalk** (the OpenAPI v4.0 "Moonwalk" SIG), repurposed as a
+**single-contributor candidate-v4.0 fork** (substrate codename `asl-ojs`). We are **not** the SIG and cannot ratify anything;
 we author our own complete *candidate* document, grounded in burhan/daftar/mizan. `origin` points
 at `MahmoodKhalil57/sig-moonwalk` (our fork) — the official OAI repo is **read-only priors**.
 

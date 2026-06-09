@@ -1,6 +1,6 @@
 # C4. Frontier #20: per-location schema slots + an opt-in cross-cutting dependency construct
 
-> **Provenance:** Candidate-fork ADR — a decision of *this fork effort*, not of the OpenAPI Moonwalk SIG. Resolves frontier **#20**. Ledger: [`plan/facts/0020-parameter-schema.bn`](../../../plan/facts/0020-parameter-schema.bn) · evidence: [`0020-parameter-schema.synthesis.md`](../../../plan/facts/0020-parameter-schema.synthesis.md). Synthesized by workflow `wf_643fa7fa-215` (17 agents); ceilings are mizan-gated.
+> **Provenance:** Candidate-fork ADR — a decision of *this fork effort* (Suluk), not of the OpenAPI Moonwalk SIG. Resolves frontier **#20**. Ledger: [`plan/facts/0020-parameter-schema.bn`](../../../plan/facts/0020-parameter-schema.bn) · evidence: [`0020-parameter-schema.synthesis.md`](../../../plan/facts/0020-parameter-schema.synthesis.md). Synthesized by workflow `wf_643fa7fa-215` (17 agents); ceilings are mizan-gated.
 
 Date: 2026-06-09
 
