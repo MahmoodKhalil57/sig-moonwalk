@@ -24,7 +24,7 @@ push LOW-prior (Originated) questions to the long horizon.
 - OPEN #24 — Arithmetic & relational inter-parameter dependencies (readability)
 - RESOLVED #32 — Objects → arrays *(umbrella for #83)* → kept map/struct (C009) → `plan/facts/0083-array-vs-map.bn`
 - RESOLVED(C012-waveA) #57 — Replace or remove discriminator
-- OPEN #60 / #61 — Shorthand for requests & responses; `post /foos/{id}` form
+- RESOLVED(C012-waveA) #60/61 / #61 — Shorthand for requests & responses; `post /foos/{id}` form
 - RESOLVED(C011-batch) #79 — `archetype` field for paths
 - OPEN #108 — Modeling HTTP fields (headers/trailers)
 - OPEN #163 — Media type parameters

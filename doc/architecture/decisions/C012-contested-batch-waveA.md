@@ -6,7 +6,7 @@ Date: 2026-06-09
 
 ## Status
 
-Accepted (candidate-fork) at **post-refutation** ceilings (0.5–0.74). Each item got an adversarial refute pass that lowered ceilings where it bit; the council was consulted as a guide. **#60/61 (shorthand) did NOT finalize** (session limit) and stays OPEN. burhan-converge clean (149 claims).
+Accepted (candidate-fork) at **post-refutation** ceilings (0.5–0.74). Each item got an adversarial refute pass that lowered ceilings where it bit; the council was consulted as a guide. #60/61 (shorthand) was resolved DIRECTLY post-session-limit (permit optional sugar, desugared at the DOM->ADA boundary; @0.6) — Wave A is 9/9. burhan-converge clean (149 claims).
 
 ## Decisions (8)
 
@@ -38,4 +38,4 @@ Accepted (candidate-fork) at **post-refutation** ceilings (0.5–0.74). Each ite
 - 8 contested items resolved in one pipelined wave at honest, refutation-hardened ceilings; rich sub-decisions are in the workflow output, distilled here.
 - Deferrals recorded: #57→#73 (replacement vocabulary), #58→#30 (resource-coupling), #116 response-level inheritance, #82 declarative version-machinery (door open).
 - #116's optional-`shared` wrapper explicitly honors C004's no-mandatory-wrapper holding (the adjacent #20 panel had overturned a *mandatory* unified wrapper).
-- **#60/61 shorthand** remains OPEN (session-limit casualty) — re-run or resolve next.
+- **#60/61 shorthand** resolved directly (permit-desugar @0.6); Wave A complete.

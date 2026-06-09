@@ -43,3 +43,13 @@ falsified_when s17b_precedence_most_specific_wins == False
 # operation BY NAME (C009 identity); richer hypermedia + resource-coupling DEFERRED to #30.
 claim s58_links_scoped_baseline: Bool @>=0.5 = True
 falsified_when s58_links_scoped_baseline == False
+
+# #60/#61 shorthand (resolved directly post-session-limit; thin record, 0 comments, single voice
+# rattrayalex 2023): PERMIT optional authoring sugar, DESUGARED at the DOM->ADA boundary so TOOLING
+# sees the canonical form (dissolves the author's own "annoying to consume from tooling" objection).
+# #60: singular `request:`/`response:` == `requests:{default:...}` / `responses:{default:...}` (default
+# = the C009 map key for the singleton). #61: a leading "<method> " token in the path key
+# ("post /speakers") desugars to method:post, STRIPPED BEFORE the C005 uriTemplate is parsed.
+# Permit-don't-mandate; resource-grouping motivation relates to #30 (deferred).
+claim s60_61_shorthand_permit_desugar: Bool @>=0.6 = True
+falsified_when s60_61_shorthand_permit_desugar == False

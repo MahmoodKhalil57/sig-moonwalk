@@ -13,11 +13,11 @@ falsified_when completion_is_monolithic == False
 claim unit_of_recursion: Str @>=0.99 = "decision"
 
 # Frontier seeded from the SIG record (52 Ideas + open issues).
-claim frontier_open_count: Int @>=0.9 = 25
+claim frontier_open_count: Int @>=0.9 = 24
 falsified_when frontier_open_count < 0
 
 # Ledger tallies (update each step).
-claim decisions_resolved: Int @>=0.99 = 31
+claim decisions_resolved: Int @>=0.99 = 32
 claim inherited_priors: Int @>=0.99 = 1
 claim deviations: Int @>=0.99 = 17
 
