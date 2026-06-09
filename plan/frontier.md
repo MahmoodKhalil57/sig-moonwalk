@@ -27,7 +27,7 @@ push LOW-prior (Originated) questions to the long horizon.
 - RESOLVED(C012-waveA) #60/61 / #61 — Shorthand for requests & responses; `post /foos/{id}` form
 - RESOLVED(C011-batch) #79 — `archetype` field for paths
 - RESOLVED(C015) #108 — Modeling HTTP fields (headers/trailers)
-- OPEN #163 — Media type parameters
+- RESOLVED(C016) #163 — Media type parameters
 - RESOLVED(C011-batch) #209 — Describing the `Set-Cookie` header
 - RESOLVED(C011-batch) #224 — `patternProperties` in signatures (dynamic transport keys)
 - RESOLVED(C012-waveA) #58 — Improvements for links
@@ -37,8 +37,8 @@ push LOW-prior (Originated) questions to the long horizon.
 - RESOLVED(C011-batch) #42 / #202 — Examples for whole operation; examples encoded as strings
 - RESOLVED(C015) #113 — Schema/parameter default value
 - RESOLVED(C012-waveA) #45 — Newer HTTP versions (2/3)
-- **URL→uriTemplate ambiguity** — initial-proposal's explicit named open problem
-- **Equivalent media types** (`text/json` vs `application/json`) — initial-proposal noted as cumbersome
+- RESOLVED(C016) **URL→uriTemplate ambiguity** (by C005) — initial-proposal's explicit named open problem
+- RESOLVED(C016) **Equivalent media types** (content-list) (`text/json` vs `application/json`) — initial-proposal noted as cumbersome
 
 ## Content schema formats — MEDIUM prior (medium horizon)
 
@@ -46,7 +46,7 @@ push LOW-prior (Originated) questions to the long horizon.
 - RESOLVED(C014) #122 — Implementor feedback on Alternative Schemas draft
 - RESOLVED(C011-batch) #124 — Import datatype declarations from XSD
 - RESOLVED(C013) #73 — Handling JSON Schema referencing in Moonwalk
-- OPEN #163 — Media type parameters (overlaps API shapes)
+- RESOLVED(C016) #163 — Media type parameters (overlaps API shapes)
 
 ## Deployment configuration — LOW prior → Originated (long horizon)
 

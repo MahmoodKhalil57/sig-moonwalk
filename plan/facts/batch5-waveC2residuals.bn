@@ -1,0 +1,19 @@
+# C010 Wave-2C2 residuals — resolved DIRECTLY (thin/convergent post-#108). Pairs with ADR C016.
+
+# #163 media-type parameters (charset etc., RFC6838): expressed via the CONTENT/media-type model using
+# the SAME registry approach #108 established for header field-models; inherit the OAS 3.3 direction
+# (handrews 0163 c1: "on the list for 3.3", points to #108). Defer the exact mechanism to the content model. @0.7
+claim s163_media_type_params_via_content_model: Bool @>=0.7 = True
+falsified_when s163_media_type_params_via_content_model == False
+
+# Residual (initial-proposal named open problem) URL->uriTemplate AMBIGUITY: RESOLVED by C005 — the parseable
+# profile forbids non-injective operators in path-identity so URL->template is single-valued; the named
+# problem is dissolved. Inherited from C005. @0.78
+claim res_url_template_ambiguity_resolved_by_c005: Bool @>=0.78 = True
+falsified_when res_url_template_ambiguity_resolved_by_c005 == False
+
+# Residual EQUIVALENT MEDIA TYPES (text/json vs application/json; initial proposal noted cumbersome):
+# addressable by the C004 content model allowing a request/response to list multiple equivalent contentType
+# values (or a media-type range), rather than duplicating the request object. Low-priority affordance. @0.6
+claim res_equivalent_media_types_via_list: Bool @>=0.6 = True
+falsified_when res_equivalent_media_types_via_list == False
