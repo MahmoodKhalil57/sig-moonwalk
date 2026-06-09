@@ -1,0 +1,22 @@
+# Pull Requests
+
+- [PR #27 Align OpenAPI 3 example with Moonwalk example](./0027.md) — MERGED
+- [PR #28 Typos in parameterSchema.yaml](./0028.md) — MERGED
+- [PR #35 Consistent type of contentSchema](./0035.md) — MERGED
+- [PR #39 Fix typos and normalize YAML formatting in `petstore.yaml`](./0039.md) — MERGED
+- [PR #62 Update Reuse.md](./0062.md) — MERGED
+- [PR #71 Issue template & config to point people filing issues to discussions](./0071.md) — MERGED
+- [PR #85 Set up Architectural Decision Records (ADRs)](./0085.md) — MERGED
+- [PR #86 Add ADR for using IRIs](./0086.md) — MERGED
+- [PR #89 (possibly controversial) document processes and organize repo for ADR-centric work](./0089.md) — MERGED
+- [PR #101 Broken link - Typo](./0101.md) — MERGED
+- [PR #132 PR to set up infra for publishing a respec version of moonwalk](./0132.md) — MERGED
+- [PR #135 Set up node for respec and invoke it accordingly](./0135.md) — MERGED
+- [PR #136 Removed content from spec as per meeting decision](./0136.md) — MERGED
+- [PR #137 Use local npm install in build](./0137.md) — MERGED
+- [PR #138 Try quoting to fix mysterious yaml error](./0138.md) — MERGED
+- [PR #140 Mimic current OpenAPI spec layout](./0140.md) — MERGED
+- [PR #174 Added example of query parameter versioning](./0174.md) — OPEN
+- [PR #182 Clean up principles](./0182.md) — MERGED
+- [PR #183 Added preliminary design for resource model](./0183.md) — OPEN
+- [PR #212 Create draft REST proposal](./0212.md) — OPEN

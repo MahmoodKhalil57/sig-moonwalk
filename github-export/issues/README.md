@@ -1,0 +1,24 @@
+# Issues
+
+- [#11 Readme before filing issues!](./0011.md) — OPEN
+- [#40 Create a project for managing the issues](./0040.md) — OPEN
+- [#51 Limit characters that can be used in Tags to be the same as component names](./0051.md) — CLOSED
+- [#52 Change Tags to be a map instead of list](./0052.md) — CLOSED
+- [#53 Support variables in the security related URLs](./0053.md) — CLOSED
+- [#68 Enable closing discussions on this repo (for openapi-maintainers)?](./0068.md) — CLOSED
+- [#70 Update to latest RFCs where applicable](./0070.md) — CLOSED
+- [#74 Deprecate security schemes](./0074.md) — CLOSED
+- [#77 [Feature] Add 'archetype' field for paths](./0077.md) — CLOSED
+- [#92 Write ADR for identity vs location](./0092.md) — CLOSED
+- [#93 Close issues that should be discussions](./0093.md) — CLOSED
+- [#95 Set up a maintainers team for the Moonwalk SIG.](./0095.md) — OPEN
+- [#97 Add moonwalk to list of SIGs](./0097.md) — CLOSED
+- [#98 Support for parameter interdependencies](./0098.md) — CLOSED
+- [#112 Schema/Parameter default value](./0112.md) — CLOSED
+- [#115  Structural improvements: inheritance on paths and its sublevels](./0115.md) — CLOSED
+- [#117 Allow recursive paths](./0117.md) — CLOSED
+- [#118 Support SHACL schema as alternative to json-schema](./0118.md) — CLOSED
+- [#121 Implementors Feedback on current Alternative Schemas Draft Proposal](./0121.md) — CLOSED
+- [#123 Ability to import datatype declarations from XSD files](./0123.md) — CLOSED
+- [#125 Open API Path Templating vs WHATWG URL Pattern](./0125.md) — CLOSED
+- [#131 Can the Data Types section be replaced by a reference to the format registry?](./0131.md) — OPEN

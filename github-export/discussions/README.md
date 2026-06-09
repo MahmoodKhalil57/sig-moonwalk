@@ -1,0 +1,168 @@
+# Discussions
+
+- [#211 Define "primary key" for objects](./0211.md) — :speech_balloon: General
+- [#116 Structural improvements: inheritance on paths and its sublevels](./0116.md) — :bulb: Ideas
+- [#119 Allow recursive paths](./0119.md) — :bulb: Ideas
+- [#208 Question: How to define reusable headers that can be used in both request and response](./0208.md) — :speech_balloon: General
+- [#120 Support SHACL schema as alternative to json-schema](./0120.md) — :bulb: Ideas
+- [#122 Implementors Feedback on current Alternative Schemas Draft Proposal](./0122.md) — :bulb: Ideas
+- [#105 Duplicated paths with matrix parameters](./0105.md) — :pray: Q&A
+- [#104 Is there a way to alias & deprecate a method to avoid a breaking change?](./0104.md) — :pray: Q&A
+- [#90 Big thoughts for 4.0](./0090.md) — :speech_balloon: General
+- [#91 Big thoughts for 4.0](./0091.md) — :speech_balloon: General
+- [#124 Ability to import datatype declarations from XSD files](./0124.md) — :bulb: Ideas
+- [#21 List of OAS v3 issues addressed by this proposal](./0021.md) — :speech_balloon: General
+- [#20 One parameterSchema or one each for URL Parameters, headers and body?](./0020.md) — :bulb: Ideas
+- [#22 How to handle response headers?](./0022.md) — :speech_balloon: General
+- [#10 Welcome to Moonwalk!](./0010.md) — :mega: Announcements
+- [#13 What principles can we define to help identify priorities?](./0013.md) — :speech_balloon: General
+- [#14 Where else might the descriptive-ness of the spec be reduced?](./0014.md) — :speech_balloon: General
+- [#16 Indicate the signature mechanism for the API](./0016.md) — :bulb: Ideas
+- [#17 Allow authors to define the merge order and precedence](./0017.md) — :bulb: Ideas
+- [#18 Consider establishing levels of completeness](./0018.md) — :bulb: Ideas
+- [#19 Establish a well-known URI for discovery](./0019.md) — :bulb: Ideas
+- [#23 Can we simplify paths further?](./0023.md) — :bulb: Ideas
+- [#24 Arithmetic and relational inter-parameter dependencies and readability concerns](./0024.md) — :bulb: Ideas
+- [#25 Map vs list in responses (and in general)](./0025.md) — :speech_balloon: General
+- [#26 A reference to something should always be a JSON pointer and not a name (security scheme example)](./0026.md) — :bulb: Ideas
+- [#30 Resource oriented](./0030.md) — :bulb: Ideas
+- [#31 Support for validation across parameters](./0031.md) — :bulb: Ideas
+- [#32 Consideration for moving from objects to arrays.](./0032.md) — :bulb: Ideas
+- [#34 responses vs apiResponses vs pathResponses](./0034.md) — :speech_balloon: General
+- [#36 Specification (and extension) design guidelines](./0036.md) — :speech_balloon: General
+- [#38 Converting OASv3 to moonwalk](./0038.md) — :raised_hands: Show and tell
+- [#41 Challenges with Request object only mapping to one content type](./0041.md) — :speech_balloon: General
+- [#42 Allow 'examples' for the whole operation](./0042.md) — :bulb: Ideas
+- [#43 Add support for defining rate limits](./0043.md) — :bulb: Ideas
+- [#44 Matching responses](./0044.md) — :pray: Q&A
+- [#45 Add support for newer HTTP versions (2/3)](./0045.md) — :bulb: Ideas
+- [#46 What could be fixed in Security in Moonwalk?](./0046.md) — :speech_balloon: General
+- [#47 Learning from "competing" formats](./0047.md) — :speech_balloon: General
+- [#48 Relicense under Apache-2.0](./0048.md) — :speech_balloon: General
+- [#49 Rename referenceObject / $ref property](./0049.md) — :bulb: Ideas
+- [#50 Template paths in security schemas](./0050.md) — :bulb: Ideas
+- [#54 Inline schemas with no ids present problems for client code generation](./0054.md) — :bulb: Ideas
+- [#55 Allow defining multiple servers across multiple environments](./0055.md) — :bulb: Ideas
+- [#56 Context property annotations](./0056.md) — :bulb: Ideas
+- [#57 Replace or remove discriminator](./0057.md) — :bulb: Ideas
+- [#58 Improvements for links in v4](./0058.md) — :bulb: Ideas
+- [#59 IRI support](./0059.md) — :bulb: Ideas
+- [#60 Singular shorthand for requests & responses](./0060.md) — :bulb: Ideas
+- [#61 Consider shorthand for encoding method with path, eg; `post /foos/{id}`](./0061.md) — :bulb: Ideas
+- [#79 Add 'archetype' field for paths](./0079.md) — :bulb: Ideas
+- [#113 Schema/Parameter default value](./0113.md) — :bulb: Ideas
+- [#63 Proposal: a consumer-optimized form of OpenAPI descriptions](./0063.md) — :bulb: Ideas
+- [#64 Moonwalk 2024](./0064.md) — :mega: Announcements
+- [#65 Acutal JSON schema or Open Api JSON schema](./0065.md) — :pray: Q&A
+- [#66 Deployments independent of API descriptions](./0066.md) — :speech_balloon: General
+- [#67 Better tags](./0067.md) — :speech_balloon: General
+- [#69 Separation of concerns: Auth](./0069.md) — :bulb: Ideas
+- [#127 Open API Path Templating vs WHATWG URL Pattern](./0127.md) — :bulb: Ideas
+- [#72 Imports proposal](./0072.md) — :bulb: Ideas
+- [#73 Handling JSON Schema referencing in Moonwalk](./0073.md) — :bulb: Ideas
+- [#75 Deprecate security schemes](./0075.md) — :bulb: Ideas
+- [#76 Organize the specification into tiers](./0076.md) — :bulb: Ideas
+- [#80 Should path parameters be implicitly required in the parameterSchema JsonSchema?](./0080.md) — :speech_balloon: General
+- [#81 Variable-type (object vs array vs string) syntax elements in Moonwalk](./0081.md) — :speech_balloon: General
+- [#82 Versioning is not always at the API granularity](./0082.md) — :bulb: Ideas
+- [#83 Responses should be an array, not a map](./0083.md) — :bulb: Ideas
+- [#84 Improve OAuth scope documentation](./0084.md) — :bulb: Ideas
+- [#87 Meeting: March 5th, 2024 agenda](./0087.md) — :mega: Announcements
+- [#88 Meeting: March 19th, 2024 agenda](./0088.md) — :mega: Announcements
+- [#94 Meeting: March 26th, 2024 agenda](./0094.md) — :mega: Announcements
+- [#96 Meeting: April 2, 2024 agenda](./0096.md) — :mega: Announcements
+- [#100 Support for parameter interdependencies](./0100.md) — :bulb: Ideas
+- [#99 Meeting: April 9, 2024 agenda](./0099.md) — :mega: Announcements
+- [#102 Supporting Retry Policy and Timeout configuration for each Operation](./0102.md) — :bulb: Ideas
+- [#103 Meeting: April 16, 2024 agenda](./0103.md) — :mega: Announcements
+- [#106 Meeting: April 23, 2024 agenda](./0106.md) — :mega: Announcements
+- [#107 Meeting: April 30, 2024 agenda](./0107.md) — :mega: Announcements
+- [#108 Modeling HTTP fields (headers/trailers)](./0108.md) — :bulb: Ideas
+- [#109 Meeting: May 7, 2024 agenda](./0109.md) — :mega: Announcements
+- [#110 Meeting: May 14, 2024 agenda](./0110.md) — :mega: Announcements
+- [#111 Meeting: May 21, 2024 agenda](./0111.md) — :mega: Announcements
+- [#114 Meeting: May 28, 2024 agenda](./0114.md) — :mega: Announcements
+- [#128 Modularity: Rich text formatting](./0128.md) — :bulb: Ideas
+- [#129 Meeting: June 4, 2024 agenda](./0129.md) — :mega: Announcements
+- [#130 Use cases for OpenAPI](./0130.md) — :bulb: Ideas
+- [#133 Meeting: June 11, 2024 agenda](./0133.md) — :mega: Announcements
+- [#134 Meeting: June 18, 2024 agenda](./0134.md) — :mega: Announcements
+- [#139 Meeting: June 25, 2024 agenda](./0139.md) — :mega: Announcements
+- [#141 Functional Areas](./0141.md) — :bulb: Ideas
+- [#142 Meeting: July 2, 2024 agenda](./0142.md) — :mega: Announcements
+- [#143 Meeting: July 9, 2024 agenda](./0143.md) — :mega: Announcements
+- [#144 Meeting: July 16, 2024 agenda](./0144.md) — :mega: Announcements
+- [#145 Meeting: July 23, 2024 agenda](./0145.md) — :mega: Announcements
+- [#146 Meeting: July 30, 2024 agenda](./0146.md) — :mega: Announcements
+- [#147 Meeting: August 6th, 2024 agenda](./0147.md) — :mega: Announcements
+- [#148 Meeting: August 13th, 2024 agenda](./0148.md) — :mega: Announcements
+- [#149 Meeting: August 20th, 2024 agenda](./0149.md) — :mega: Announcements
+- [#150 Meeting: August 27th, 2024](./0150.md) — :mega: Announcements
+- [#151 Meeting: September 3rd, 2024](./0151.md) — :mega: Announcements
+- [#152 Meeting: September 10th, 2024](./0152.md) — :mega: Announcements
+- [#153 Meeting: September 17th, 2024](./0153.md) — :mega: Announcements
+- [#154 Meeting: September 24th, 2024](./0154.md) — :mega: Announcements
+- [#155 Meeting: October 1st, 2024](./0155.md) — :mega: Announcements
+- [#156 Meeting: October 8th, 2024](./0156.md) — :mega: Announcements
+- [#157 Meeting: October 15th, 2024](./0157.md) — :mega: Announcements
+- [#158 Meeting: October 22nd, 2024](./0158.md) — :mega: Announcements
+- [#159 Meeting: October 29, 2024](./0159.md) — :mega: Announcements
+- [#160 Meeting: November 12th, 2024](./0160.md) — :mega: Announcements
+- [#161 Meeting: November 19th, 2024](./0161.md) — :mega: Announcements
+- [#162 Meeting: December 3nd, 2024](./0162.md) — :mega: Announcements
+- [#163 How to deal with media type parameters?](./0163.md) — :bulb: Ideas
+- [#164 Meeting: December 10th, 2024](./0164.md) — :mega: Announcements
+- [#165 Meeting: December 17th, 2024](./0165.md) — :mega: Announcements
+- [#166 Meeting: January 7th, 2025](./0166.md) — :mega: Announcements
+- [#167 Meeting: January 14th, 2025](./0167.md) — :mega: Announcements
+- [#168 Meeting: January 21st, 2025](./0168.md) — :mega: Announcements
+- [#169 Meeting: January 28th, 2025](./0169.md) — :mega: Announcements
+- [#170 Meeting: February 4th, 2025](./0170.md) — :mega: Announcements
+- [#171 Meeting: February 11th, 2025](./0171.md) — :mega: Announcements
+- [#172 Proposal: Native Rule Suppression Mechanism in OpenAPI](./0172.md) — :bulb: Ideas
+- [#173 Meeting: February 18th, 2025](./0173.md) — :mega: Announcements
+- [#175 Meeting: February 25th, 2025](./0175.md) — :mega: Announcements
+- [#176 Meeting: March 4th, 2025](./0176.md) — :mega: Announcements
+- [#177 Meeting: March 11th, 2025](./0177.md) — :mega: Announcements
+- [#178 Meeting: March 18th, 2025](./0178.md) — :mega: Announcements
+- [#179 Meeting: March 25th, 2025](./0179.md) — :mega: Announcements
+- [#180 Meeting: April 1st, 2025](./0180.md) — :mega: Announcements
+- [#181 Meeting: April 8th, 2025](./0181.md) — :mega: Announcements
+- [#184 Meeting: April 15th, 2025](./0184.md) — :mega: Announcements
+- [#185 Meeting: April 22nd, 2025](./0185.md) — :mega: Announcements
+- [#186 Meeting: April 29th, 2025](./0186.md) — :mega: Announcements
+- [#187 Meeting: May 6th, 2025](./0187.md) — :mega: Announcements
+- [#188 Meeting: May 13th, 2025](./0188.md) — :mega: Announcements
+- [#189 Meeting: May 27th, 2025](./0189.md) — :mega: Announcements
+- [#190 Meeting: May 20th, 2025](./0190.md) — :mega: Announcements
+- [#191 Meeting: June 3rd, 2025](./0191.md) — :mega: Announcements
+- [#192 Meeting: June 10th, 2025](./0192.md) — :mega: Announcements
+- [#193 Meeting: June 17th, 2025](./0193.md) — :mega: Announcements
+- [#194 Meeting: June 24th, 2025](./0194.md) — :mega: Announcements
+- [#195 CANCELLED meeting: July 1st, 2025](./0195.md) — :mega: Announcements
+- [#196 Meeting: July 8th, 2025](./0196.md) — :mega: Announcements
+- [#197 Meeting: July 15th, 2025](./0197.md) — :mega: Announcements
+- [#198 Meeting: July 22nd, 2025](./0198.md) — :mega: Announcements
+- [#199 [Canceled] Meeting: July 29th, 2025](./0199.md) — :mega: Announcements
+- [#200 Canceled: August 5th/12th, 2025](./0200.md) — :mega: Announcements
+- [#201 Meeting: August 19th, 2025](./0201.md) — :mega: Announcements
+- [#202 Proposal: Allow/Recommend/Force that JSON/Yaml examples be encoded as a string](./0202.md) — :bulb: Ideas
+- [#203 Meeting: August 26th, 2025](./0203.md) — :mega: Announcements
+- [#204 Set an Accept header in the HTTP request](./0204.md) — :speech_balloon: General
+- [#205 Meeting: October 14th, 2025](./0205.md) — :mega: Announcements
+- [#206 Meeting: October 21st, 2025](./0206.md) — :speech_balloon: General
+- [#207 Meeting: October 21st, 2025](./0207.md) — :mega: Announcements
+- [#209 Allow describing the Set-Cookie header](./0209.md) — :bulb: Ideas
+- [#210 Meeting: November 4th, 2025](./0210.md) — :mega: Announcements
+- [#213 Meeting: November 18th, 2025](./0213.md) — :mega: Announcements
+- [#214 No Meeting: November 25, 2025](./0214.md) — :mega: Announcements
+- [#215 Meeting: December 2nd, 2025](./0215.md) — :mega: Announcements
+- [#216 Meeting: December 9th, 2025](./0216.md) — :mega: Announcements
+- [#217 Meeting: January 13th, 2026](./0217.md) — :mega: Announcements
+- [#218 Meeting: January 20th, 2026](./0218.md) — :mega: Announcements
+- [#219 Moonwalk 2026](./0219.md) — :speech_balloon: General
+- [#220 Meeting: February 3rd, 2026](./0220.md) — :mega: Announcements
+- [#221 Meeting: February 10th, 2026](./0221.md) — :mega: Announcements
+- [#222 Meeting: February 24th, 2026](./0222.md) — :mega: Announcements
+- [#223 Meetings Paused](./0223.md) — :mega: Announcements
+- [#224 Support for patternProperties in Signatures solves dynamic Transport Keys](./0224.md) — :bulb: Ideas
