@@ -13,8 +13,8 @@ Workflow `wf_dc8e3394-6d2` (resumed past a rate limit). **RFC6570 parseable prof
 
 ## ⏳ Pending workflows (one at a time)
 
-1. **Council resume** — 4 rate-limited voices (earth2marsh, darrelmiller, karenetheridge, arno-di-loreto).
-2. **Usefulness-replay** — validate dispositions + roles (C007) against #16/#20.
+1. **Usefulness-replay** — IN FLIGHT `wf_657443b8-854`: validating 8 dispositions + 8 roles (C007) blind against #16/#20. On done: write useful|marginal|drop verdicts into roster files + C007 status.
+2. **Council resume** — 4 rate-limited voices (earth2marsh, darrelmiller, karenetheridge, arno-di-loreto).
 
 ## ✓ #20 resolved → C004
 
