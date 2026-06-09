@@ -5,7 +5,9 @@
 > reconstructed on demand (`daftar query`, burhan over `plan/facts/`), never carried.
 > Mechanism: [C002](../doc/architecture/decisions/C002-recursive-state-mechanism.md). Charter: [C001](../doc/architecture/decisions/C001-candidate-fork-charter.md).
 
-_Last checkpoint: 2026-06-09 — **#16 → C003** and **#20 → C004** both resolved, committed, mizan-gated. Next: #127._
+_Last checkpoint: 2026-06-09 — **#16→C003, #20→C004** resolved & committed; **#127 in flight** via `wf_dc8e3394-6d2`._
+
+> **⏳ #127 in flight** — workflow resolving the templating system. Crux = parseability (RFC6570 is expansion-designed, not parse-designed; our matcher #16 + evaluative extraction #20 both need parsing). Candidates: full RFC6570 / **parseable RFC6570 profile** / WHATWG URLPattern / extended-Moonwalk-template. On completion: mizan-gate, ADR **C005**, projection, daftar, then pop #127 → next #17. Must resolve the named URL→template ambiguity problem.
 
 ## ✓ #20 resolved → C004
 
