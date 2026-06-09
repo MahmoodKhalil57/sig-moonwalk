@@ -2,7 +2,7 @@
 
 > **These are reasoning stances, not people.** They predict no one and carry **no predictive ceiling** ([C007](../../doc/architecture/decisions/C007-council-persona-classes.md)). Each is a generative lens used to stress-test a decision from a fixed disposition. A disposition "finding" is a *consideration to weigh*, validated by whether it catches real issues on replay — never by predictive accuracy, never attributed to any real person.
 >
-> **Usefulness:** ⏳ pending replay-validation against #16 / #20.
+> **Usefulness:** ✅ validated against #16/#20 ([USEFULNESS.md](./USEFULNESS.md), `wf_657443b8-854`). **Useful:** expansionist (11), purist (11), conservative (10), pessimist (9), pragmatist (7), contrarian (5). **Marginal:** optimist (6 — names right axes but backs the *refuted pole* by default; use to enumerate, vote against its direction), minimalist (3 — thin on structural Steps).
 
 Eight dispositions on four opposing axes — run a candidate decision past each and see what it surfaces.
 

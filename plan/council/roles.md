@@ -2,7 +2,7 @@
 
 > **These are synthetic stakeholders, not real people.** They represent classes of people *affected* by the standard. They carry a **capped, moderate** trust at most, grounded only where the SIG record or industry practice evidences the role's real needs ([C007](../../doc/architecture/decisions/C007-council-persona-classes.md)). A role "finding" asks *"who does this help/hurt?"* — a consideration to weigh, never a real person's view.
 >
-> **Usefulness:** ⏳ pending replay-validation against #16 / #20.
+> **Usefulness:** ✅ validated against #16/#20 ([USEFULNESS.md](./USEFULNESS.md), `wf_657443b8-854`). **Useful:** tech-writer (10), ai-llm-consumer (9), codegen-author (8), platform-architect (7), hand-author-dev (7), security-reviewer (7), enterprise-integrator (6). **Marginal:** devex-pm (3 — thin on structural Steps; likely earns more on adoption/upgrade Steps).
 
 Each role: what they need from the standard · what they fear · their characteristic question · where the record already evidences them.
 

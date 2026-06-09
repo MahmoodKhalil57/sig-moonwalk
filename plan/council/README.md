@@ -6,7 +6,7 @@ Used as a **"what would they object to / who does this hurt?"** guide when resol
 - **B — Dispositions** (optimist/pessimist/contrarian/… — *lenses, no predictive ceiling*) → [dispositions.md](./dispositions.md).
 - **C — Roles** (codegen author, platform architect, security reviewer, … — *synthetic stakeholders*) → [roles.md](./roles.md).
 
-B and C are validated by **usefulness-replay** (do they catch real considerations on resolved Steps?), not by predicting a person — ⏳ pending. Calibration of A: [CALIBRATION.md](./CALIBRATION.md).
+B and C are validated by **usefulness-replay** (do they catch real considerations on resolved Steps?), not by predicting a person — ✅ done: 13 useful, 3 marginal, 0 drop ([USEFULNESS.md](./USEFULNESS.md)). Calibration of A: [CALIBRATION.md](./CALIBRATION.md).
 
 ## Class A members (calibrated)
 

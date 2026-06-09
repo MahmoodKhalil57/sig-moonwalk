@@ -11,10 +11,13 @@ _Last checkpoint: 2026-06-09 — **#16→C003, #20→C004, #127→C005** done & 
 
 Workflow `wf_dc8e3394-6d2` (resumed past a rate limit). **RFC6570 parseable profile:** keep the `{var}` surface (3.x continuity), restrict to an injective operator subset in path-identity position, and *add the two artifacts RFC6570 omits* — a normative observable-behavior grammar (handrews' #127 c2 demand) + a normative reverse-parse algorithm. Full-RFC6570 and bare-URLPattern both refuted; EMT's grammar+algorithm grafted; matrix correction (name-bearing matrix is match-safe). **D1-safe** (routes on segment structure, not JSON-Schema). Resolves the named URL→template ambiguity by splitting parse-ambiguity (eliminated) from collision (routed to #16). Honest cost: slash-bearing path params inexpressible. 4 deviations; verdict @0.62. **First council cross-check** (C006): hudlow strong-align, handrews align-with-one-predicted-objection (expressiveness loss — already surfaced in C005). Evidence: [`0127-templating-system.synthesis.md`](./facts/0127-templating-system.synthesis.md).
 
-## ⏳ Pending workflows (one at a time)
+## ✓ Council fully live (A backtested, B/C replay-validated)
 
-1. **Usefulness-replay** — IN FLIGHT `wf_657443b8-854`: validating 8 dispositions + 8 roles (C007) blind against #16/#20. On done: write useful|marginal|drop verdicts into roster files + C007 status.
-2. **Council resume** — 4 rate-limited voices (earth2marsh, darrelmiller, karenetheridge, arno-di-loreto).
+Class B/C usefulness-replay done (`wf_657443b8-854`): **13 useful, 3 marginal, 0 drop** ([USEFULNESS.md](./council/USEFULNESS.md)). The council (A: hudlow/handrews/rafalkrupinski; B: 6 useful dispositions; C: 7 useful roles) is ready to use up-front on the next Step. Optimist flagged biased-to-refuted-pole.
+
+## ⏳ Pending workflow
+
+1. **Council resume** — 4 rate-limited Class-A voices (earth2marsh, darrelmiller, karenetheridge, arno-di-loreto). Optional; do before leaning harder on Class A.
 
 ## ✓ #20 resolved → C004
 

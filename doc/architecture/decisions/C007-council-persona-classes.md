@@ -6,7 +6,7 @@ Date: 2026-06-09
 
 ## Status
 
-Accepted (candidate-fork). Class A is validated (C006). Classes B and C are authored (`plan/council/dispositions.md`, `plan/council/roles.md`) — **pending usefulness-replay validation** against the resolved Steps (#16, #20).
+Accepted (candidate-fork) — **VALIDATED** (2026-06-09). Class A backtested (C006). Classes B and C passed usefulness-replay against #16/#20: **13 useful, 3 marginal, 0 drop** (`plan/council/USEFULNESS.md`). Standouts: the contrarian anticipated deviation D2 (the riskiest sub-decision); the purist independently found the one "fixed inconsistency" (precedence runtime-only); the codegen-author named #20's overturn. The optimist is kept but flagged biased-toward-the-refuted-pole (enumerate with it, vote against its direction); minimalist/devex-pm are thin on structural Steps.
 
 ## Context
 
