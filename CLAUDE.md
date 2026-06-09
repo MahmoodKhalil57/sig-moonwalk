@@ -9,7 +9,7 @@
 **Suluk** is a clone of **OAI/sig-moonwalk** (the OpenAPI v4.0 "Moonwalk" SIG), repurposed as a
 **single-contributor candidate-v4.0 fork** (substrate codename `asl-ojs`). We are **not** the SIG and cannot ratify anything;
 we author our own complete *candidate* document, grounded in burhan/daftar/mizan. `origin` points
-at `MahmoodKhalil57/sig-moonwalk` (our fork) — the official OAI repo is **read-only priors**.
+at `MahmoodKhalil57/suluk` (our fork) — the official OAI repo is **read-only priors**.
 
 Founding decisions: charter [C001](doc/architecture/decisions/C001-candidate-fork-charter.md),
 mechanism [C002](doc/architecture/decisions/C002-recursive-state-mechanism.md), glossary

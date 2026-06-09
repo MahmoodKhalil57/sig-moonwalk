@@ -14,7 +14,8 @@ push LOW-prior (Originated) questions to the long horizon.
 - RESOLVED #20 — One `parameterSchema`? → **C004** (per-location slots + opt-in cross-cutting; D1-safe) → `plan/facts/0020-parameter-schema.bn`
 - OPEN #23 — Can we simplify paths further?
 - RESOLVED #127 — Path templating → **C005** (RFC6570 parseable profile + normative grammar/reverse-algorithm; D1-safe) → `plan/facts/0127-templating-system.bn`
-- OPEN #17 — Author-defined merge order and precedence
+- RESOLVED #17 — *(document merge / multi-file composition)* → **C008** out-of-scope, defer to Overlay Spec + tooling → `plan/facts/0017-merge-scope.bn`
+- OPEN **#17b (split-out)** — Response-level precedence: apiResponses vs pathResponses vs request-level responses; `parameterSchema` `allOf` composition across pathItem+request. *(The real precedence question, conflated with #17 in the original spine; now distinct.)*
 - OPEN #83 — Responses should be an array, not a map
 - OPEN #116 — Inheritance on paths and sublevels
 - OPEN #119 — Allow recursive paths
@@ -78,5 +79,6 @@ push LOW-prior (Originated) questions to the long horizon.
 - RESOLVED #16 — Signature mechanism → Deviation set (C003) → `plan/facts/0016-signature-mechanism.bn`
 - RESOLVED #20 — parameterSchema split → per-location slots + opt-in (C004) → `plan/facts/0020-parameter-schema.bn`
 - RESOLVED #127 — templating → RFC6570 parseable profile (C005) → `plan/facts/0127-templating-system.bn`
+- RESOLVED #17 — document merge → out-of-scope, defer to Overlay Spec (C008) → `plan/facts/0017-merge-scope.bn`
 
 > Full discussion text for any `#N` is in [github-export/discussions/](../github-export/discussions/).

@@ -1,0 +1,47 @@
+# Decision: frontier #17 — "Allow authors to define the merge order and precedence".
+# Candidate-fork resolution (C008). RIGHT-SIZED: the record CONVERGES on out-of-scope, so no
+# adversarial synthesis (atom-0011 cheapest-next-move). Provenance kept in comments.
+#
+# CONFLATION CORRECTION: the spine had mislabeled #17 as "response/param resolution precedence
+# across request/path/global levels". Discussion #17 is actually DOCUMENT-LEVEL MERGE / multi-file
+# composition / layering (earth2marsh's Photoshop-layers / manifest stub). The response-level
+# precedence question is REAL but DISTINCT -> split to a new frontier item, NOT resolved here.
+#
+# Sources: discussions/0017.md — earth2marsh layers/manifest stub (body L14, reply L25); handrews
+# "why are we back to merges?" + $merge/$ref lazy-eval complexity (c1 L22/L28) and 2025-10 "does the
+# Overlay Specification address this?" (L69); darrelmiller "no clear obvious wins ... revisit if
+# tooling coalesces" (c3 L52-53) + "common need to combine APIs from different internal teams" (L43);
+# MikeRalphson merge-tools-low-traction table (L58-66); lornajane "out of scope how people compose
+# their files" (L72, most recent 2025-10-30). Council cross-check recorded in ADR C008.
+
+# FRAME: #17 is document-merge / multi-file composition, NOT response precedence.
+claim s17_is_document_merge_not_response_precedence: Bool @>=0.9 = True
+falsified_when s17_is_document_merge_not_response_precedence == False
+
+# SIG lean (convergent 2022->2025, most recent lornajane 2025-10-30): document merge / multi-file
+# composition is OUT OF SCOPE for core; served by the Overlay Specification + community merge tooling;
+# revisit only if tooling coalesces (darrelmiller).
+claim sig_leans_merge_out_of_scope: Bool @>=0.8 = True
+falsified_when sig_leans_merge_out_of_scope == False
+
+# DECISION (INHERITED prior, adopt-by-default): the Candidate adds NO core merge/layering mechanism.
+# Multi-file composition is deferred to the Overlay Specification + community tooling; revisitable if
+# tooling coalesces. No deviation — we adopt the SIG lean.
+claim q17_verdict: Str @>=0.78 = "out-of-scope-defer-to-overlay-spec-and-tooling"
+falsified_when q17_verdict != "out-of-scope-defer-to-overlay-spec-and-tooling"
+
+# The real need (darrelmiller: combine APIs from different internal teams) is ACKNOWLEDGED and ROUTED
+# to Overlay + tooling, not denied. The enterprise-integrator council role is the dissent; its need is
+# real but served outside core.
+claim enterprise_merge_need_acknowledged_routed: Bool @>=0.75 = True
+falsified_when enterprise_merge_need_acknowledged_routed == False
+
+# SPLIT-OUT (new frontier item): response-level precedence — apiResponses vs pathResponses vs
+# request-level responses; parameterSchema allOf composition across pathItem+request — is a DISTINCT
+# real question, left OPEN, NOT resolved here.
+claim response_level_precedence_is_distinct_open: Bool @>=0.85 = True
+falsified_when response_level_precedence_is_distinct_open == False
+
+# No ratified SIG ADR, but a strong convergent lean (3 voices, 2022->2025). Candidate-level ceiling.
+claim s17_no_ratified_outcome: Bool @>=0.85 = True
+falsified_when s17_no_ratified_outcome == False

@@ -4,11 +4,11 @@
   "description": "Suluk — an independent OpenAPI Specification v4.0 candidate, forked from the OAI Moonwalk SIG and grounded in the Adam substrate",
   "author": {
     "name": "MahmoodKhalil57",
-    "url": "https://github.com/MahmoodKhalil57/sig-moonwalk"
+    "url": "https://github.com/MahmoodKhalil57/suluk"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/MahmoodKhalil57/sig-moonwalk.git"
+    "url": "https://github.com/MahmoodKhalil57/suluk.git"
   },
   "license": "Apache-2.0",
   "readmeFilename": "README.md",

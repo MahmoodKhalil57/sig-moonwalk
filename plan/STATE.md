@@ -5,7 +5,11 @@
 > reconstructed on demand (`daftar query`, burhan over `plan/facts/`), never carried.
 > Mechanism: [C002](../doc/architecture/decisions/C002-recursive-state-mechanism.md). Charter: [C001](../doc/architecture/decisions/C001-candidate-fork-charter.md).
 
-_Last checkpoint: 2026-06-09 — **#16→C003, #20→C004, #127→C005** done & committed; council live (C006/C007). Next: #17._
+_Last checkpoint: 2026-06-09 — **#16→C003, #20→C004, #127→C005, #17→C008** done; council live. Next: #83._
+
+## ✓ #17 resolved → C008 (out-of-scope) + conflation fix
+
+#17 turned out to be **document-merge / multi-file composition** (Photoshop-layers/manifest), **not** the response-precedence I'd mislabeled. Record converges out-of-scope (darrelmiller, handrews→Overlay, lornajane 2025-10 "out of scope"). **Inherited** that determination: defer to the **Overlay Specification + tooling**; enterprise need acknowledged+routed. **Right-sized — no workflow** (atom-0011; record uncontested). First proportionality call of the walk. The real **response-level precedence** question is split out as **#17b** (OPEN). Council cross-check: handrews/pragmatist/minimalist align, enterprise-integrator principled dissent (and the *marginal* minimalist was genuinely useful here — a scope Step is its turf).
 
 ## ✓ #127 resolved → C005
 
@@ -29,16 +33,16 @@ Workflow `wf_bebee5d2-131` (24 agents). ADA-first frame; mizan sole-witness caps
 
 ## Frontier head (next ~5 — full list in [frontier.md](./frontier.md))
 
-1. **#17 Merge order & precedence** — response/param resolution across request/path/global levels. **Do next.** (First Step to fully use the council A+B+C up front.)
-2. **#83 Responses: array vs map** — structural shape of the response collection.
+1. **#83 Responses: array vs map** — structural shape of the response collection. **Do next** (first Step to use the full validated council A+B+C up front).
+2. **#17b Response-level precedence** *(split from #17)* — apiResponses vs pathResponses vs request-level; `parameterSchema` `allOf` composition. The genuine precedence question.
 3. **#116 Inheritance on paths** — structural reuse across path sublevels.
 4. **#73 JSON Schema dialect + relational vocab** — gates #20's cross-type value-equality (path-ID==body-ID); hard dependency.
 5. **#108 Header model** — RFC9110/8941; gates header-aspect signatures (#16) + #20 header slot + #127 request-grammar completion.
 
 ## Decisions so far
 
-- Frontier resolved: **4** (#59 IRI, #16 signature, #20 parameter-schema, #127 templating) · Deviations recorded: **9** (#16 ×3, #20 ×2, #127 ×4) · ADRs: C001–C007 (+ `0002-iri-inherited`).
-- Last decision: **#127 templating → C005** (RFC6570 parseable profile + normative grammar/reverse-algorithm; D1-safe; verdict @0.62).
+- Frontier resolved: **5** (#59 IRI, #16 signature, #20 parameter-schema, #127 templating, #17 merge/out-of-scope) · Deviations recorded: **9** (#16 ×3, #20 ×2, #127 ×4; #17 none — inherited) · ADRs: C001–C008 (+ `0002-iri-inherited`).
+- Last decision: **#17 → C008** (document-merge out-of-scope, defer to Overlay Spec; inherited prior; right-sized, no workflow).
 
 ## Per-Concern confidence map
 
@@ -60,7 +64,7 @@ Workflow `wf_bebee5d2-131` (24 agents). ADA-first frame; mizan sole-witness caps
 
 ## Cheapest-next-move
 
-Run `mizan_recommend_next_experiment(plan/)`, else default: resolve **#17 (merge order & precedence)** — how response/param resolution composes across request/path/global levels (the proposal lets `response` objects live at request, path, or global scope). Read `github-export/discussions/0017.md` first. **This is the first Step to consult the council up front** (A: predict handrews/hudlow; B: pessimist/minimalist on layering complexity; C: hand-author dev on precedence-readability).
+Run `mizan_recommend_next_experiment(plan/)`, else default: resolve **#83 (responses: array vs map)** — should the response collection be an array or a status-keyed map? Structural, with real prior energy. Read `github-export/discussions/0083.md` first. **First Step to use the full validated council up front** (A: predict handrews/hudlow/rafalkrupinski; B-useful: expansionist/purist/pessimist/pragmatist/contrarian/conservative; C-useful: codegen-author/platform/tech-writer/hand-author/security/enterprise/ai-llm). **Right-size first** (as #17 showed): check the record's contention level before launching a full workflow.
 
 ## Index (pointers — load on demand)
 
@@ -69,6 +73,6 @@ Run `mizan_recommend_next_experiment(plan/)`, else default: resolve **#17 (merge
 - Burhan ledger → [plan/facts/](./facts/) · spine claims → [plan/MAIN.bn](./MAIN.bn)
 - Narrative receipts → `daftar query "<topic>" --project=/home/mk/apps/sig-moonwalk`
 - SIG record (priors) → [github-export/](../github-export/) · official ADRs → [doc/architecture/decisions/](../doc/architecture/decisions/)
-- Our ADRs → `doc/architecture/decisions/Cxxx-*.md` ([C003](../doc/architecture/decisions/C003-signature-mechanism.md), [C004](../doc/architecture/decisions/C004-parameter-schema.md), [C005 templating](../doc/architecture/decisions/C005-templating-system.md)) · glossary → [CONTEXT.md](../CONTEXT.md)
+- Our ADRs → `doc/architecture/decisions/Cxxx-*.md` ([C003](../doc/architecture/decisions/C003-signature-mechanism.md), [C004](../doc/architecture/decisions/C004-parameter-schema.md), [C005](../doc/architecture/decisions/C005-templating-system.md), [C008 merge-out-of-scope](../doc/architecture/decisions/C008-merge-out-of-scope.md); meta C001/C002/C006/C007) · glossary → [CONTEXT.md](../CONTEXT.md)
 - Spec projections → [specification/candidate-v4/](../specification/candidate-v4/) ([signature](../specification/candidate-v4/signature-mechanism.md), [parameter-schema](../specification/candidate-v4/parameter-schema.md), [templating](../specification/candidate-v4/templating-system.md))
 - Council (guides, not prophets) → [plan/council/](./council/) ([calibration](./council/CALIBRATION.md))
