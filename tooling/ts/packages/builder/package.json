@@ -1,0 +1,17 @@
+{
+  "name": "@suluk/builder",
+  "version": "0.1.0",
+  "description": "Tiered contract-narrowing DSL (components→blocks→sections→pages) bound to the Suluk cycle. A page composes sections; buildApp emits backend (routes+v4) AND frontend (page TSX) at once. Inspired by multivendorbuilder's DSL, rebuilt with the Suluk discipline. CANDIDATE tooling.",
+  "type": "module",
+  "main": "src/index.ts",
+  "exports": { ".": "./src/index.ts" },
+  "dependencies": {
+    "@suluk/core": "workspace:*",
+    "@suluk/zod": "workspace:*",
+    "@suluk/hono": "workspace:*",
+    "@suluk/shadcn": "workspace:*"
+  },
+  "peerDependencies": { "zod": "^4.0.0" },
+  "devDependencies": { "@types/bun": "latest", "zod": "^4.4.3" },
+  "scripts": { "test": "bun test", "typecheck": "tsc --noEmit -p ." }
+}
