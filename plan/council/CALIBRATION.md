@@ -33,3 +33,20 @@ The build+backtest hit a transient server rate limit (two big workflows ran conc
 - **arno-di-loreto** (build failed) — reserved-name / header-placement voice.
 
 Resume via `Workflow({scriptPath: ".../build-and-backtest-persona-council-wf_1046b106-ba2.js", resumeFromRunId: "wf_1046b106-ba2"})` — **as a single workflow, not concurrent with another** (concurrency caused the throttle).
+
+## Full council — 8 voices (resume complete, 2026-06-10)
+
+The 4 rate-limited voices were resumed (`wf_1046b106-ba2`). Final roster — **5 calibrated, 3 not** (the backtest discriminating honestly):
+
+| Voice | Split | n | Hit-rate | Ceiling | Status |
+|---|---|---|---|---|---|
+| [hudlow](./hudlow.md) | LOO | 4 | 1.00 | 0.78 | ✅ calibrated |
+| [handrews](./handrews.md) | LOO | 4 | 0.75–0.875 | 0.70 | ✅ calibrated (+ 2 in-the-wild hits) |
+| [rafalkrupinski](./rafalkrupinski.md) | LOO | 4 | 0.875 | 0.70 | ✅ calibrated |
+| [karenetheridge](./karenetheridge.md) | LOO | 4 | 0.75 | 0.70 | ✅ calibrated (new) |
+| [arno-di-loreto](./arno-di-loreto.md) | LOO | 3 | 1.00 | 0.60 | ✅ calibrated (new) |
+| [mikekistler](./mikekistler.md) | LOO | 1 | 1.00 | 0.45 | ⚠️ uncalibrated (n=1) |
+| [earth2marsh](./earth2marsh.md) | **temporal** | 4 | 0.375 | 0.45 | ⚠️ uncalibrated |
+| [darrelmiller](./darrelmiller.md) | **temporal** | 7 | **0.214** | 0.25 | ⚠️ uncalibrated |
+
+**The honest finding (the temporal split earned its keep):** the two high-volume voices (darrelmiller, earth2marsh) got a **temporal** split — predict their *later* statements from their *earlier* ones — which is strictly harder than leave-one-out, and both scored **poorly** (0.21–0.375). That is not a defect: darrelmiller is literally the "I'm not sure which I prefer / we have lots of options" voice and earth2marsh is the facilitator (varied, procedural) — their views are **genuinely not stably predictable from their past**, and the backtest correctly refuses to certify them. A council that calibrated everyone would be the suspicious result. **Use the 5 calibrated voices as guides; treat darrelmiller/earth2marsh predictions as low-confidence (≤0.45) hypotheses only.**

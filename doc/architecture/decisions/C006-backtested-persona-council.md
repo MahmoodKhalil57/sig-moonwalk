@@ -6,7 +6,7 @@ Date: 2026-06-09
 
 ## Status
 
-Accepted (candidate-fork) — **VALIDATED** (2026-06-09). The blind backtest works: hudlow 1.0, handrews 0.875, rafalkrupinski 0.875 hit-rate out-of-sample (n=4 leave-one-out each), with the judge cross-checking actuals against the real export. Ceilings are honestly capped at ≤0.78 for small `n`. mikekistler is built-but-uncalibrated (n=1); earth2marsh / darrelmiller / karenetheridge / arno-di-loreto are pending a resume (rate-limited). Full results: `plan/council/CALIBRATION.md`. A persona that fails its backtest is kept but flagged uncalibrated and excluded from the council.
+Accepted (candidate-fork) — **VALIDATED & COMPLETE** (council resume 2026-06-10). The blind backtest works and **discriminates**: of 8 voices built, **5 calibrated** (hudlow 0.78, handrews/rafalkrupinski/karenetheridge 0.70, arno-di-loreto 0.60) and **3 not** — mikekistler (n=1), and crucially **earth2marsh (0.375) + darrelmiller (0.214)**, whose harder *temporal* split correctly refused to certify two genuinely-unpredictable voices (the "lots of options" author + the facilitator). The judge cross-checks actuals against the real export; ceilings are honestly capped. handrews scored 2 in-the-wild hits during the walk. Full results + the temporal-split finding: `plan/council/CALIBRATION.md`. A persona that fails its backtest is kept but flagged uncalibrated and excluded from the calibrated council.
 
 ## Context
 
