@@ -72,10 +72,24 @@ A static export is just `render(contracts, publicPrincipal, now)`. Nothing speci
 | `@suluk/drizzle` | **data floor**: Drizzle table → Zod (drizzle-zod) → v4 schemas + DB metadata + **CRUD RouteContracts** | ✅ 17 tests |
 | `@suluk/nano-stores` | **state corner**: v4 contracts → typed `@nanostores/query` fetcher/mutator stores (Zod-guarded I/O) | ✅ 8 tests |
 | `@suluk/shadcn` | **UI corner**: v4 Schema Objects → form/table specs + shadcn TSX (react-hook-form + zodResolver) | ✅ 20 tests |
+| `@suluk/builder` | **the builder**: tiered contract-narrowing DSL; `buildApp` (backend+frontend) + `toShadcnRegistry` | ✅ 16 tests |
+| `@suluk/deploy` | **the capstone**: swappable `DeployProvider`; Cloudflare (Workers + D1 + assets) | ✅ 8 tests |
+| `@suluk/cockpit` | the **pure cockpit core** (cycle · builder · codegen · deploy · validate/audit/preview) — shared brain | ✅ 35 tests |
+| `@suluk/admin` | the **/superadmin web panel** — the cockpit rendered as a Hono web UI, superadmin-gated | ✅ 7 tests |
+| `@suluk/example-petshop` | runnable end-to-end demo — Drizzle → live CRUD + Scalar + frontend + /superadmin | ✅ 6 tests |
 | `suluk-core` (Rust) | perf core: parse + signature + reverse-parse matcher; 2nd independent impl | ✅ 9 tests |
-| `suluk-vscode` | **the cockpit** — every layer visible/actionable from one surface; cycle TreeView, "View as", codegen | ✅ 26 tests |
+| `suluk-vscode` | the cockpit's **editor face** — a thin vscode shell over `@suluk/cockpit` (Cycle + Builder TreeViews, "View as", codegen, deploy) | tsc + bundle |
 
-**Total: 11 TS packages (168 tests) + a Rust core (9 tests) = 177 green.**
+**Total: 16 TS packages (214 tests) + a Rust core (9 tests) = 223 green.**
+
+## One brain, two faces
+
+The cockpit's logic lives once, in **`@suluk/cockpit`** (pure: `buildCycle`, `buildBuilderModel`, codegen,
+`deployPlan`, validate/audit/preview — no host API). Two shells render it:
+- **`suluk-vscode`** — the editor face (TreeViews + commands + webviews).
+- **`@suluk/admin`** — the **`/superadmin`** web face (Hono-served HTML, superadmin-gated). Mounted with
+  `app.route("/", adminApp({ document, authorize }))`; the petshop demo mounts it live.
+Because both consume the same core, the admin panel *is* the extension — it cannot drift from it.
 
 ## `@suluk/hono` — the derivation engine (design)
 
@@ -164,7 +178,11 @@ to Cloudflare — Hono → **Workers**, the frontend → **Pages**, Drizzle(sqli
 compute. This is an *adapter, not a rewrite*: the stack is already Cloudflare-native by construction (Hono is
 the canonical Workers framework; `@suluk/drizzle` targets `sqlite-core`, which *is* D1). Kept behind a
 **swappable target interface** (`@suluk/deploy`) so Cloudflare is the first provider, not the only one — the
-services are built on good standards we can swap later. *(Planned.)*
+services are built on good standards we can swap later. **Built** as `@suluk/deploy`: `cloudflare.generate()`
+emits `wrangler.jsonc` (D1 binding + static `assets` SPA-fallback + observability) + `worker.ts`
+(`export default app`) + `schema.sql` (from the entities) + an ordered plan (login → d1 create → apply →
+deploy). The extension's "Deploy to Cloudflare" command writes these + a `DEPLOY.md` and opens a terminal —
+it never runs `wrangler` for you (deploys are consequential; OAuth login happens in your terminal).
 
 ## Invariants every package keeps
 
