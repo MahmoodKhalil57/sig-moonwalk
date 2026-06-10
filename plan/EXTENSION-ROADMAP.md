@@ -66,9 +66,12 @@ builder — so the extension can fetch it and **diff local-contract vs deployed-
 
 ### MEDIUM — ceiling ~0.6, the moat + the marketplace mechanics
 
-- **M1 — View-as × Environments cross-cut.** Project all 9 layers for {principal} × {env} at once; live
-  role-previews of the app via a **preview deployment with a real session** (never header-spoof prod). Host
-  fetches, webview renders via `postMessage`.
+- **M1 ✓ BUILT (commit af9a4b2).** View-as × Environments cross-cut — the moat. `crossCut(doc, viewers)` projects
+  one contract through every viewer and surfaces the scope-gated operations + who can reach each; the extension's
+  **Compare viewers** matrix + a status-bar **lens** showing the active {env · viewer}. Adversarially reviewed
+  (2 findings fixed — auth-only ops now distinguish authenticated from anonymous; the lens no longer claims a
+  stale environment). *Remaining for the richer M1: live role-previews of the app via a preview deployment (never
+  header-spoof prod).*
 - **M2 ✓ BUILT (commit cfcc43c).** Curated module-registry browser. `FIRST_PARTY_REGISTRY` (ecommerce + crm +
   billing); `gradeModule` (an honest conformance grade — cost-coverage minus a doc-warning penalty, C reachable);
   `previewInstall` (contract-diff-on-install — what a module adds/requires/costs + conflicts, no commit). The
@@ -128,11 +131,12 @@ builder — so the extension can fetch it and **diff local-contract vs deployed-
   conformance grade + burhan-converge), the *View-as × Environments* cross-cut (M1), provider-slot swapping
   (M3), and the *open* marketplace (L1, gated on M2). The merge primitive exists; the distribution + trust layer
   does not.
-- **Built since (S1+S2+M2):** the OBSERVE seam, the install-time contract-merge, AND the curated registry +
-  grade + preview — all adversarially reviewed. The curated marketplace shape exists end-to-end; what's left is
-  the cross-cut (M1), provider-swap (M3), and the *open/remote* registry (L1).
-- **Cheapest-next-move:** **M1** — the **View-as × Environments cross-cut** (the moat). Both axes already exist
-  in isolation (S1 environments + the cockpit's existing "View as" scopes); M1 wires them so the cockpit
-  projects all 9 layers for {principal} × {env} at once — the one thing no other tool can do. Reuses
-  `buildCycle({principal})` + the environment source. After that: M3 (provider slots), then L1 (remote registry
-  fetch + trust gate — the open marketplace, gated on M2's diff-on-install + grade discipline).
+- **Built since (S1+S2+M2+M1):** the OBSERVE seam, the install-time contract-merge, the curated registry +
+  grade + preview, AND the View-as × Environments cross-cut — all adversarially reviewed. The defensible core
+  (one contract × viewer × environment, composed from graded modules) exists end-to-end. What's left is
+  provider-swap (M3) and the *open/remote* registry (L1).
+- **Cheapest-next-move:** **M3** — provider slots. `@suluk/stripe`'s duck-typed `PaymentProvider` already proves
+  the pattern; modules already declare `providerSlots` (ecommerce/billing → `{ payments: "stripe" }`). M3
+  surfaces them: a `providerSlots` view of which facet bindings a contract uses + a swap affordance (rebind a
+  slot to a different implementation of the same interface). Then **L1** — the open/remote registry fetch + a
+  trust gate (signed registries, contract-diff review, conformance grade), gated on M2's discipline.
