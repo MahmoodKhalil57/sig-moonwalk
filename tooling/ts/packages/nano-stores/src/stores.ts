@@ -76,6 +76,12 @@ export interface CreateApiStoresOptions {
   baseUrl?: string;
   /** Injected fetch — defaults to the global. Tests pass a recording mock. */
   fetch?: typeof fetch;
+  /**
+   * The current frontend ACTION (a button-click id), sent as `x-suluk-action` on every request so the
+   * server's cost meter (@suluk/cost) can attribute cost back to the UI action. A function lets it reflect
+   * the live action. A per-call action on `.mutate({ action })` overrides it.
+   */
+  action?: string | (() => string | undefined);
 }
 
 /** A bound fetcher store factory: call with the route's path params to get a cache-keyed store. */
@@ -86,6 +92,8 @@ export type MutatorInvoker = MutatorStore<MutatorInput, unknown>;
 export interface MutatorInput {
   data?: unknown;
   params?: Record<string, string | number>;
+  /** Overrides the store's default action for this call (the `x-suluk-action` cost-tracing tag). */
+  action?: string;
 }
 
 export interface ApiStores {
@@ -106,6 +114,12 @@ export function createApiStores(routes: readonly RouteContract[], opts: CreateAp
   const baseUrl = opts.baseUrl;
 
   const [createFetcherStore, createMutatorStore, ctx] = nanoquery();
+
+  // resolve the frontend action → the x-suluk-action header (cost tracing). per-call wins over the default.
+  const actionHeaders = (perCall?: string): Record<string, string> => {
+    const action = perCall ?? (typeof opts.action === "function" ? opts.action() : opts.action);
+    return action ? { "x-suluk-action": action } : {};
+  };
 
   const fetchers: Record<string, FetcherFactory> = {};
   const mutators: Record<string, MutatorInvoker> = {};
@@ -129,7 +143,7 @@ export function createApiStores(routes: readonly RouteContract[], opts: CreateAp
         return createFetcherStore<unknown>([route.method.toUpperCase(), url], {
           // Per-store fetcher (CommonSettings.fetcher) — receives the spread keys, ignores them, hits the URL.
           fetcher: async () => {
-            const res = await doFetch(url);
+            const res = await doFetch(url, { headers: actionHeaders() });
             const json = await res.json();
             return guard("response", name, respSchema, json);
           },
@@ -145,13 +159,13 @@ export function createApiStores(routes: readonly RouteContract[], opts: CreateAp
       }
       // The actual mutation: validate body → fetch → parse → validate response. Throws on either violation.
       const run = async (input: MutatorInput): Promise<unknown> => {
-        const { data: body, params } = input ?? {};
+        const { data: body, params, action } = input ?? {};
         const validBody = guard("request", name, reqSchema, body); // fail BEFORE the network call
         const url = buildUrl(route.path, params, baseUrl);
         urlsByName[name]!.add(url);
         const res = await doFetch(url, {
           method: route.method.toUpperCase(),
-          headers: { "content-type": route.request?.contentType ?? "application/json" },
+          headers: { "content-type": route.request?.contentType ?? "application/json", ...actionHeaders(action) },
           body: validBody === undefined ? undefined : JSON.stringify(validBody),
         });
         const json = await res.json();

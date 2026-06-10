@@ -85,6 +85,16 @@ test("mutator .mutate hits the right URL+method+JSON body and returns the valida
   expect(calls[0]!.headers?.["content-type"]).toBe("application/json");
 });
 
+// ---- action tagging (cost tracing from the frontend button) ----------------
+test("action tagging: x-suluk-action from the default action, overridable per call", async () => {
+  const { fn, calls } = mockFetch(() => ({ id: 1, name: "Rex" }));
+  const api = createApiStores(routes, { baseUrl: "https://api.x.com", fetch: fn, action: "pets-page" });
+  await api.mutators.createPet.mutate({ data: { name: "Rex" } });
+  expect(calls[0]!.headers?.["x-suluk-action"]).toBe("pets-page"); // default action
+  await api.mutators.createPet.mutate({ data: { name: "Milo" }, action: "create-button" });
+  expect(calls[1]!.headers?.["x-suluk-action"]).toBe("create-button"); // per-call override wins
+});
+
 // ---- request-schema violation REJECTS --------------------------------------
 test("a request that violates the request schema is rejected (before the network call)", async () => {
   const { fn, calls } = mockFetch(() => ({ id: 1, name: "Rex" }));

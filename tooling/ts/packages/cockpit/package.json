@@ -1,10 +1,12 @@
 {
   "name": "@suluk/cockpit",
   "version": "0.1.0",
-  "description": "The pure cockpit core (cycle model · builder model · codegen · deploy planning · validate/audit/preview) shared by the vscode extension and the /superadmin web admin panel. CANDIDATE tooling.",
+  "description": "The pure cockpit core (cycle model \u00b7 builder model \u00b7 codegen \u00b7 deploy planning \u00b7 validate/audit/preview) shared by the vscode extension and the /superadmin web admin panel. CANDIDATE tooling.",
   "type": "module",
   "main": "src/index.ts",
-  "exports": { ".": "./src/index.ts" },
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "dependencies": {
     "@suluk/core": "workspace:*",
     "@suluk/hono": "workspace:*",
@@ -12,8 +14,14 @@
     "@suluk/swagger": "workspace:*",
     "@suluk/shadcn": "workspace:*",
     "@suluk/builder": "workspace:*",
-    "@suluk/deploy": "workspace:*"
+    "@suluk/deploy": "workspace:*",
+    "@suluk/cost": "workspace:*"
   },
-  "devDependencies": { "@types/bun": "latest" },
-  "scripts": { "test": "bun test", "typecheck": "tsc --noEmit -p ." }
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "scripts": {
+    "test": "bun test",
+    "typecheck": "tsc --noEmit -p ."
+  }
 }

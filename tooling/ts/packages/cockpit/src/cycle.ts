@@ -13,6 +13,7 @@ import { buildAda, validateDocument, isReference } from "@suluk/core";
 import type { OpenAPIv4Document, Request, SchemaOrRef, SecurityRequirement } from "@suluk/core";
 import { audit, coverage } from "@suluk/hono";
 import { formSpec, tableSpec } from "@suluk/shadcn";
+import { costAudit, costTable, formatMicroUsd } from "@suluk/cost";
 
 export type LayerStatus = "ok" | "warn" | "error" | "info";
 
@@ -25,7 +26,7 @@ export interface CycleItem {
 }
 
 export interface CycleLayer {
-  id: "data" | "contract" | "auth" | "document" | "docs" | "state" | "ui" | "tests";
+  id: "data" | "contract" | "auth" | "document" | "cost" | "docs" | "state" | "ui" | "tests";
   title: string;
   status: LayerStatus;
   summary: string;
@@ -133,6 +134,12 @@ export function buildCycle(doc: OpenAPIv4Document, opts: { principal?: Principal
     return { label: name, ref: name, detail: `form (${schemaFieldCount(s, defs)} fields) · table (${cols} cols)` };
   });
 
+  // ── cost: per-operation declared cost (x-suluk-cost) + coverage (which operations declared nothing)
+  const declaredCosts = costTable(doc);
+  const costFindings = costAudit(doc);
+  const undeclared = costFindings.filter((f) => f.code === "no-cost-model").length;
+  const costItems: CycleItem[] = declaredCosts.map((d) => ({ label: d.operation, ref: d.operation, detail: `${formatMicroUsd(d.estimateMicroUsd)} · ${d.sources.join(", ")}` }));
+
   // ── tests: doc-level contract checks
   const checks = docChecks(doc);
   const testsItems: CycleItem[] = checks.map((c) => ({ label: c.name, status: c.pass ? "ok" : "error", detail: c.pass ? "pass" : c.message }));
@@ -151,6 +158,12 @@ export function buildCycle(doc: OpenAPIv4Document, opts: { principal?: Principal
       status: pickStatus(v.valid ? "ok" : "error", warnFindings ? "warn" : "ok"),
       summary: `${v.valid ? "meta-schema ✓" : `${v.errors.length} errors`} · coverage ${cov.toFixed(2)} · ${warnFindings} audit warns`,
       items: v.valid ? [] : v.errors.slice(0, 20).map((e) => ({ label: e.message, detail: e.path, status: "error" as const })),
+    },
+    {
+      id: "cost", title: "Cost",
+      status: declaredCosts.length === 0 ? "info" : undeclared ? "warn" : "ok",
+      summary: declaredCosts.length === 0 ? "no costs declared" : `${declaredCosts.length} priced · ${undeclared} undeclared`,
+      items: costItems,
     },
     { id: "docs", title: "Docs", status: "ok", summary: "Scalar · Swagger", items: docsItems },
     { id: "state", title: "State (Nano Stores)", status: "ok", summary: `${stateItems.length} stores`, items: stateItems },
