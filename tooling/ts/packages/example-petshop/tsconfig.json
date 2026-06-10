@@ -1,5 +1,10 @@
 {
   "extends": "../../tsconfig.base.json",
-  "compilerOptions": { "types": ["bun"], "jsx": "react-jsx" },
-  "include": ["src", "test"]
+  "compilerOptions": {
+    "types": ["bun"],
+    "jsx": "react-jsx",
+    "baseUrl": ".",
+    "paths": { "@/*": ["frontend/*"] }
+  },
+  "include": ["src", "test", "frontend"]
 }
