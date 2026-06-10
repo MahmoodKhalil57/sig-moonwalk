@@ -163,5 +163,9 @@ builder — so the extension can fetch it and **diff local-contract vs deployed-
     contract's `docs/*.d2`; `@suluk/docs` `packageGraphD2` renders the "how the tools compose" diagram on the
     Architecture page (live docs regenerated). Reviewed (4 findings fixed — incl. mdToHtml had no image rule).
     The D2 idea now spans the extension, the generated app, AND the docs.
-  - **Still optional, operator's call (additive):** component-preview surfacing `@suluk/visual` (pixel-confidence);
-    live role-previews via a preview deployment; the originated L3 (round-trip lifecycle).
+  - **✓ Component preview + pixel-confidence (commit 2bd37b1)** — surfaces `@suluk/visual`: decompose generated
+    forms/tables into widget primitives, check each vs a committed baseline (confident/drifted/pending), verify
+    once. Reviewed (a HIGH false-confident bug fixed — the hash now tracks the REAL `@suluk/shadcn` renderer, not
+    an isolated mock). The last built-but-unsurfaced package is now in the cockpit.
+  - **Still optional, operator's call (additive):** live role-previews via a preview deployment; the originated
+    L3 (round-trip lifecycle).
