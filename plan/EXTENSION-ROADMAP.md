@@ -141,6 +141,11 @@ builder — so the extension can fetch it and **diff local-contract vs deployed-
   refracted through every viewer × environment, composed from graded modules drawn from curated *or* open
   registries, with swappable providers — all observable and editable from the VS Code extension, bounded by the
   no-credentials charter (C020). 38 adversarial-review findings fixed across the six slices.
-- **Beyond the roadmap (optional, operator's call):** signed registries (provenance cryptography) for L1; live
-  role-previews via a preview deployment (the richer M1); a `burhan-converge` pass over a merged contract; and
-  the originated L2/L3 (non-dev composition flow, round-trip lifecycle) — none load-bearing, all additive.
+- **Beyond the roadmap:**
+  - **✓ Signed registries (commit 6ca30f1)** — provenance cryptography for L1. `signRegistry`/`verifyRegistrySignature`
+    (Web Crypto ECDSA P-256 over canonical bytes); pin a publisher's public key → verify every fetch (valid →
+    "signed", invalid → refuse); a `suluk.signRegistry` publisher command. Security-reviewed (1 finding fixed —
+    canonicalization of shared references). The open marketplace now has a real trust root.
+  - **Still optional, operator's call (all additive, none load-bearing):** live role-previews via a preview
+    deployment (the richer M1); a `burhan-converge` pass over a merged contract; the originated L2/L3 (non-dev
+    composition flow, round-trip lifecycle).
