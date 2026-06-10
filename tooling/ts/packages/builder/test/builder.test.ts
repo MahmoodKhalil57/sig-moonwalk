@@ -120,4 +120,17 @@ describe("toShadcnRegistry — package each slice (frontend + backend) as an ins
   test("the registry index lists every item", () => {
     expect(reg.index.items.map((i) => i.name)).toContain("pet-crud");
   });
+
+  test("case-colliding entity names get UNIQUE registry item names (no silent overwrite)", () => {
+    const lowerPet: Entity = { name: "pet", schema: zodToV4(z.object({ name: z.string() })).schema };
+    const r = toShadcnRegistry(buildApp({ entities: [Pet, lowerPet], info: { title: "X", version: "1" } }));
+    const blockNames = r.items.filter((i) => i.type === "registry:block").map((i) => i.name);
+    expect(blockNames).toEqual(["pet-crud", "pet-crud-2"]); // disambiguated, both present
+    expect(new Set(r.items.map((i) => i.name)).size).toBe(r.items.length); // all unique
+  });
+
+  test("an unslug-safe title becomes a slug-safe registry name", () => {
+    const r = toShadcnRegistry(buildApp({ entities: [Pet] }), { name: "My Cool App!" });
+    expect(r.index.name).toBe("my-cool-app");
+  });
 });

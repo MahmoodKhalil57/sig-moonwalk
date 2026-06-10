@@ -39,6 +39,19 @@ export interface ShadcnRegistry {
 const ITEM_SCHEMA = "https://ui.shadcn.com/schema/registry-item.json";
 const lower = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
 
+/** A slug-safe identifier for shadcn registry names + file paths: lowercase, [a-z0-9-] only, no edge/double dashes. */
+function slug(s: string): string {
+  return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "item";
+}
+
+/** Ensure a name is unique within `seen` (case-insensitively), suffixing -2, -3, … on collision. */
+function unique(name: string, seen: Set<string>): string {
+  let candidate = name, i = 1;
+  while (seen.has(candidate)) candidate = `${name}-${++i}`;
+  seen.add(candidate);
+  return candidate;
+}
+
 /** The shadcn UI primitives the generated Form/Table depend on (registryDependencies). */
 const UI_DEPS = ["button", "form", "input", "label", "select", "switch", "table", "textarea"];
 
@@ -64,10 +77,11 @@ export const ${e}App = mount(new Hono(), ${e}Routes);
  * backend routes module + its v4 schema, plus one "page" item per generated page.
  */
 export function toShadcnRegistry(app: BuiltApp, opts: { name?: string; homepage?: string } = {}): ShadcnRegistry {
-  const name = opts.name ?? "suluk-app";
+  const name = slug(opts.name ?? "suluk-app");
   const homepage = opts.homepage ?? "https://example.com";
   const componentByName = new Map(app.frontend.components.map((c) => [c.name, c.tsx]));
   const items: RegistryItem[] = [];
+  const names = new Set<string>(); // guards against case-colliding entity/page names → same install path
 
   // one full-stack block per entity
   for (const e of app.entities) {
@@ -76,7 +90,7 @@ export function toShadcnRegistry(app: BuiltApp, opts: { name?: string; homepage?
     const eLower = lower(e.name);
     items.push({
       $schema: ITEM_SCHEMA,
-      name: `${eLower}-crud`,
+      name: unique(`${slug(e.name)}-crud`, names),
       type: "registry:block",
       title: `${e.name} CRUD`,
       description: `Full-stack ${e.name} slice — shadcn Form + Table, the backend CRUD routes, and the v4 schema. One install, the whole vertical.`,
@@ -95,7 +109,7 @@ export function toShadcnRegistry(app: BuiltApp, opts: { name?: string; homepage?
   for (const p of app.frontend.pages) {
     items.push({
       $schema: ITEM_SCHEMA,
-      name: `${lower(p.name)}-page`,
+      name: unique(`${slug(p.name)}-page`, names),
       type: "registry:page",
       title: `${p.name} page`,
       description: `The ${p.name} page — composes the entity slices.`,
