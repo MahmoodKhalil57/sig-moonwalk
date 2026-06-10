@@ -1,0 +1,13 @@
+openapi: 4.0.0-candidate
+info: { title: Query, version: "1.0" }
+paths:
+  "items{?status}":
+    requests:
+      listItems:
+        method: get
+        parameterSchema:
+          query: { type: object, required: [status], properties: { status: { type: string, enum: [a, b] } } }
+        responses:
+          ok: { status: 200, contentType: application/json, contentSchema: { type: array, items: { type: object } } }
+apiResponses:
+  serverError: { status: 5XX, contentType: application/http-problem }

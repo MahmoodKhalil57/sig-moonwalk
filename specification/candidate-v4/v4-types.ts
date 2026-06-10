@@ -112,8 +112,11 @@ export interface Response {
   description?: string;
 }
 
-/** A name-keyed map; each callback is a runtime-expression-keyed map of pathItem-shaped definitions (§14, C018). */
-export type Callback = Record<string, Record<string, PathItem>>;
+/**
+ * A runtime-expression-keyed map of pathItem-shaped definitions (§14, C018).
+ * The enclosing `Request.callbacks` is name-keyed, so `callbacks[name][expression]` is a {@link PathItem}.
+ */
+export type Callback = Record<string, PathItem>;
 
 /** Reusable definitions; the referencing anchor (C013). Keyed by name (C009). */
 export interface Components {

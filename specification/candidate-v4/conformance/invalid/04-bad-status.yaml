@@ -1,0 +1,3 @@
+openapi: 4.0.0-candidate
+info: { title: x, version: "1" }
+paths: { p: { requests: { r: { method: get, responses: { ok: { status: "tomato" } } } } } }   # status not a code/wildcard/default

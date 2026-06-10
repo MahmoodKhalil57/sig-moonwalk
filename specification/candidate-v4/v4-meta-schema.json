@@ -102,8 +102,8 @@
     },
     "Callback": {
       "type": "object",
-      "description": "A name-keyed map; each callback is a runtime-expression-keyed map of pathItem-shaped definitions (§14, C018).",
-      "additionalProperties": { "type": "object", "additionalProperties": { "$ref": "#/$defs/PathItem" } }
+      "description": "A runtime-expression-keyed map of pathItem-shaped definitions (§14, C018). The enclosing `callbacks` is itself name-keyed: callbacks[name] is one Callback; callbacks[name][expression] is a PathItem.",
+      "additionalProperties": { "$ref": "#/$defs/PathItem" }
     },
     "Components": {
       "type": "object",

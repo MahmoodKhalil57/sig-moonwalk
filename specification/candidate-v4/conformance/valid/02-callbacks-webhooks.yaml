@@ -1,0 +1,22 @@
+openapi: 4.0.0-candidate
+info: { title: Webhooks, version: "1.0" }
+paths:
+  "subscriptions":
+    requests:
+      createSubscription:
+        method: post
+        contentType: application/json
+        contentSchema: { type: object, properties: { callbackUrl: { type: string } } }
+        callbacks:
+          onEvent:
+            "{$request.body#/callbackUrl}":
+              requests:
+                event: { method: post, responses: { ok: { status: 200 } } }
+        responses:
+          created: { status: 201 }
+webhooks:
+  newPet:
+    method: post
+    contentType: application/json
+    contentSchema: { type: object }
+    responses: { ok: { status: 200 } }
