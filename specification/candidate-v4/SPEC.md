@@ -594,6 +594,8 @@ A profile-valid uriTemplate (containing only Tier 1 operators) satisfies the fol
 
 ### 2.4 Reverse-Parse Algorithm
 
+> ⚙ **Tooling note**: the precise, buildable reverse-parse algorithm (split-BEFORE-decode, capture-rest ranking) is in **Appendix A — Tooling Profile** (C019); where this narrative and Appendix A differ, **Appendix A governs** for implementers.
+
 Given an incoming request URL and a set of profile-valid uriTemplates in the Paths Object, the reverse-parse algorithm MUST route the request to zero or one pathItem. This algorithm is the mechanism by which the evaluative URL-to-parameter mapping (C004 §4.2) extracts per-location PATH slot values.
 
 #### Pseudocode
@@ -4223,3 +4225,117 @@ operations:
 > ⚠ **Deferred**: the exact runtime-expression grammar (3.x used `{$request.body#/x}`); and the broader async/event-driven/streaming space (AsyncAPI overlap) is **out of scope** for this candidate's HTTP core.
 
 ---
+
+---
+
+## A. Tooling Profile (provisional buildable defaults)
+
+> ⚠ **Candidate @0.55–0.62 — PROVISIONAL BUILDABLE DEFAULTS, NOT RATIFIED GRAMMARS.** This appendix pins concrete, implementable defaults for four surfaces that C003/C005/C013 deferred at the byte-grammar level but that tool authors need to build interoperable tooling. They do NOT override those deferrals; they are the default the spec RECOMMENDS until a ratified grammar lands (#26/#49/#72/#73, #100/#108, signature-key residual #7). Each is fully revisable. Source: ADR C019.
+>
+> **Base-document reconciliation prerequisites** (this appendix assumes these are applied to the normative body): (1) one canonical OpenAPI reference emitter `#/components/<type>/<name>` — the no-prefix `#/schemas/...` and dot/colon forms in §5/§8 are illustrative only; (2) §6.4's "an OAS-level reference mechanism is NOT introduced" clause is struck (§8 introduces it, per C013 #49); (3) per-location slots are named `parameterSchema.{query,path,header,cookie,body}` (the §7 `headerSchema`/`cookieSchema` spelling is an alias to be reconciled); (4) §2.4's URL input is split on unescaped `/` BEFORE percent-decoding each segment.
+
+### A.1 Reference resolution (write + resolve)
+
+Two reference surfaces, disjoint by host context, distinguished by **token + slot** (never tree-depth, C013 #49):
+
+| Surface | Where it appears | Token | Canonical emitter form | Resolution |
+|---|---|---|---|---|
+| **OpenAPI Reference Object** | non-Schema reuse: responses, requests, links, parameters, securitySchemes, tags, examples | `{$ref: ...}` (+ optional `summary`/`description`) | `#/components/<type>/<name>`, `#/paths/<esc-uriTemplate>/...`, `#/tags/<name>` | same-document JSON-Pointer, by **NAME** (C009) |
+| **JSON-Schema `$ref`** | inside any Schema Object: `contentSchema`/`body`, `parameterSchema.*`, `components/schemas/*`, `$defs`/`items`/`properties`/`allOf`/… | `$ref` (2020-12 keyword) | `#/components/schemas/<name>` **or** `#<name>` (implicit anchor) | the declared 2020-12 dialect evaluator |
+
+**Tie-break (the `body`/`contentSchema` ambiguity):** a `$ref` in any slot whose declared type *includes* Schema Object is **always** the JSON-Schema keyword, regardless of companion keys — never the Reference Object.
+
+**Pointer escaping:** tokens are RFC6901-escaped ONLY (`~0`=>`~`, `~1`=>`/`); the `#/...` is a JSON Pointer and is **NOT** re-percent-encoded as a URI fragment — braces stay literal. Worked example: pathItem key `/pets/{petId}` is referenced as `#/paths/~1pets~1{petId}` (not `…~1%7BpetId%7D`).
+
+```
+RESOLVE(ref, host, doc):
+  SCHEMA_OBJECT_SLOTS = { contentSchema, body, parameterSchema.{query,path,header,cookie,body},
+                          components.schemas.*, and anything transitively inside one }
+  kind = host ∈ SCHEMA_OBJECT_SLOTS ? JSON_SCHEMA_REF
+       : host has "$ref" (+ only summary/description) ? REFERENCE_OBJECT : error
+  ABNF: ref = [import-ns ":"] [doc-uri] "#" json-pointer ; json-pointer per RFC6901
+        import-ns = 1*(ALPHA/DIGIT/"-"/"_")             ; C013 #72, byte-grammar DEFERRED
+  if import-ns present: doc = resolve_import(import-ns)  // location only; no mandatory I/O
+  if JSON_SCHEMA_REF and ref == "#<name>": return schema whose implicit anchor == <name>
+  unescape tokens (~1->'/', then ~0->'~')
+  if pointer == /components/<type>/<name>:
+     t = doc.components[type][name]; if absent: error(missing)   // by KEY; MUST NOT fall back to positional
+     return t
+  if pointer == /paths/<tmpl>/...: return walk(doc.paths[unescape(tmpl)], rest)
+  if pointer == /tags/<name>:      return doc.tags[name]
+  if JSON_SCHEMA_REF: return dialect.resolve(ref, host)
+```
+
+### A.2 Canonical signature key + collision predicate
+
+The ADA computes a tooling-internal **matcher/dedup/collision key** (not a DOM field, C003(a)). Fixed aspect order `(method, path, queryKS, ctypeSet, headerAS, bodyId)`:
+
+```
+CANONICAL-SIGNATURE(request, pathItem):
+  method   = uppercase(request.method)
+  path     = pathItem.key                             // LITERAL uriTemplate (C009 map key) — NOT var-name-erased
+  queryKS  = sorted_dedup(Tier-Q query var-names)      // key-set, values excluded (C005 D3)
+  ctypeSet = sorted_dedup(map(strip_params∘lowercase, asArray(request.contentType))) or ['*']  // params stripped (C016)
+  headerAS = sorted_dedup(lowercase(name) for identity-participating headers) or ['*']  // C015/#224; best-effort #108
+  bodyId   = $ref ? canonical_ref_string : inline ? '#inline' : '*'   // SENTINEL, never a structural hash
+  key = 'M='+method+'|P='+path+'|Q='+join(',',queryKS)+'|C='+join(',',ctypeSet)+'|H='+join(',',headerAS)+'|B='+bodyId
+```
+
+Normalization (byte-identical across emitters): sets sorted by Unicode code point + deduped; non-participating aspect => `'*'`; path preserves var spelling (name-erasure is overlap-test-only).
+
+```
+COLLISION(a,b):  // C003 three-valued verdict, report-not-gate
+  ctypeSet:  MEDIA-DISJOINT(no a∈A,b∈B co-satisfy; ranges & C016-equivalents are NON-disjoint) ? provably-disjoint : UNDECIDED
+  bodyId:    a or b == '#inline' -> UNDECIDED        // D1: JSON-Schema discrimination is runtime last-resort
+  headerAS:  #108 incomplete    -> UNDECIDED
+  other:     both concrete & cannot co-satisfy -> provably-disjoint
+  any UNDECIDED -> not-statically-determinable ; else provable-collision
+```
+
+Collision **policy** (invalid vs precedence vs priority vs strict-mode) stays OPEN (C003).
+
+### A.3 Query / header / cookie evaluative deserialization
+
+Deserialize the raw request into the JSON instances the `parameterSchema.{query,header,cookie}` slots validate. Coercion is **slot-driven, type-category** (integer+number => JSON number; integer-ness left to validation).
+
+```
+QUERY  (form-style):  strip '?'; split on '&'; split each pair on FIRST '='; DECODE AFTER splitting ('+' -> SP)
+        repeated key -> array (wire order); single key -> scalar string
+        bare key '?flag' (no '=') -> true iff slot type boolean, else ''
+        absent slot -> all-strings instance, NO coercion
+HEADER: lowercase names (C015/#224 MUST); comma-split/combine ONLY for fields the §7.2 fieldModel registry
+        marks list-of-values (RFC9110 §5.6.1) — non-list fields (date, user-agent, quoted commas) preserved VERBATIM
+COOKIE: parse 'cookie' header (RFC6265) into name->string; coerce if slot present
+UNKNOWN keys (additionalProperties:true is the C004 default): included in wire form, uncoerced
+COERCE: numeric -> Number(v) if JSON-number; boolean -> true/false from true|1 / false|0; array -> wrap singleton;
+        union/oneOf/anyOf -> coerce iff a branch permits numeric/boolean, else leave string
+DETERMINISM: identical raw input + slot schema + fieldModel registry => identical JSON instance
+```
+
+> ⚠ Only **form-style** is pinned here; `deepObject`/`spaceDelimited`/`pipeDelimited` are left for the ratified #100/#108 grammar.
+
+### A.4 uriTemplate match / reverse-parse profile
+
+Three operator tiers (C005) + validate/compile/reverse-parse:
+
+| Tier | Operators | Use |
+|---|---|---|
+| **1 MATCH-SAFE** | literal; `{id}` (one segment, excl. `/ ? #`); `{+path}` = CAPTURE_REST (terminal, multi-segment); `;name={id}` (matrix) | path identity |
+| **2 QUERY-ONLY** | `{?a,b}`, `{&x,y}` | query, parsed as order/repetition-insensitive key-set |
+| **3 FORBIDDEN** | `{x*}`, `{+x*}`, non-boundary `{+x}`, `{#x}`, `{.x}`, `{x:2}`, regex, list/comma-scalar var | author error / `not-statically-determinable` |
+
+```
+VALIDATE-PROFILE: '{+var}' is Tier-1 IFF it is the entire final segment AND terminal AND single scalar
+   '/files/{+path}' -> Tier1 ; '/files/prefix{+path}' -> Tier3 ; '/a/{+path}/b' -> Tier3
+REVERSE-PARSE(urlPath, Paths):
+   urlSegs = split(urlPath, unescaped '/').map(pctDecodeSegment)   // SPLIT first, decode each segment
+   // '%2F' stays inside a segment -> '/files/a%2Fb' is 2 segments, not 3
+   candidates = templates whose COMPILE matches urlSegs (CAPTURE_REST consumes the tail)
+   if 0 -> (null,{}); if 1 -> it; else sort by specificity DESC -> top  (+ emit C003 verdict)
+specificity (over the TEMPLATE, not the matched portion):
+   CAPTURE_REST always ranks LAST; else count LITERAL segments, tie-break per-segment literal>var left-to-right
+```
+
+Worked: URL `/files/readme.txt` against `{/files/{+path}, /files/{id}/versions, /files/readme.txt}` routes to the literal (CAPTURE_REST loses); `/files/a/b` routes to `/files/{+path}` (path=`a/b`). Overlap (`/users/me` vs `/users/{id}`) is a C003 verdict + runtime concrete-over-variable tiebreak, never document order (C009).
+
+> ⚠ Slash-bearing single-value path params remain INEXPRESSIBLE in this profile (the price of deterministic reverse-parse, C005).

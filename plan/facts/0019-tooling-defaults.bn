@@ -1,0 +1,31 @@
+# Tooling-buildable provisional defaults (wf_f1934338-467: design -> refute-buildability -> finalize).
+# Pins the deferred-but-tooling-critical grammars so validators/codegen/vscode/TS-libs can be built.
+# Pairs with ADR C019 + SPEC Appendix A (Tooling Profile). LOW ceilings — provisional, fully revisable.
+
+# REFERENCE SYNTAX default: two surfaces (OpenAPI Reference Object {$ref:"#/components/<type>/<name>"}
+# resolved BY NAME per C009; JSON-Schema $ref inside Schema Objects under 2020-12), parse-time-distinguishable
+# by TOKEN+SLOT (C013 #49). Concrete RESOLVE algorithm + ABNF; import-ns prefix reserved (C013 #72 deferred).
+claim tool_reference_resolve_default: Bool @>=0.55 = True
+falsified_when tool_reference_resolve_default == False
+
+# SIGNATURE ENCODING default: the ADA computes a canonical signature TUPLE (method, pathPattern, query-key-set,
+# content-type-set, header-aspect-set, body-shape-id) -> a deterministic matcher KEY string; normalization rules
+# make two emitters produce identical keys; collision is a pairwise three-valued predicate (C003). NOT a DOM field.
+claim tool_signature_encoding_default: Bool @>=0.55 = True
+falsified_when tool_signature_encoding_default == False
+
+# QUERY/HEADER/COOKIE DESERIALIZATION default: form-style raw-HTTP -> the JSON instance the C004 slots validate;
+# string values (typed-coerced by the slot schema), repeated keys -> array, headers lowercase-normalized (#224),
+# header list-splitting gated on the §7 fieldModel registry. Absent slot = no constraint. Evaluative half (#100/#108).
+claim tool_query_header_deserialization_default: Bool @>=0.55 = True
+falsified_when tool_query_header_deserialization_default == False
+
+# uriTemplate TOOLING PROFILE: 3-tier RFC6570 operator profile + deterministic reverse-parse router (C005);
+# SPLIT-BEFORE-DECODE (fixes a §2.4 decode-then-split bug the audit caught), CAPTURE_REST ranking, '+' boundary.
+claim tool_uritemplate_profile_default: Bool @>=0.62 = True
+falsified_when tool_uritemplate_profile_default == False
+
+# These 4 are PROVISIONAL BUILDABLE DEFAULTS, not ratified grammars — they enable tooling and are fully revisable
+# when #26/#49/#72 (referencing), C003 (signature), #100/#108 (deserialization) ratify final forms.
+claim tool_defaults_provisional_not_ratified: Bool @>=0.55 = True
+falsified_when tool_defaults_provisional_not_ratified == False
