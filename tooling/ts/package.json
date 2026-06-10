@@ -1,0 +1,6 @@
+{
+  "name": "suluk-tooling",
+  "private": true,
+  "workspaces": ["packages/*"],
+  "description": "Reference tooling for the OpenAPI v4.0 Suluk candidate."
+}
