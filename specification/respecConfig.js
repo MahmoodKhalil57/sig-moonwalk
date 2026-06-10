@@ -6,7 +6,7 @@ var respecConfig = {
   // isPreview: true,
   format: "markdown",
   // maxTocLevel: 3,
-  latestVersion: "https://oai.github.io/sig-moonwalk/moonwalk.html",
+  latestVersion: "https://oai.github.io/suluk/moonwalk.html",
   edDraftURI:
     "https://github.com/OAI/sig-moonwalk/blob/main/specification/moonwalk-source.md",
   subtitle: "Version 4.0.0-draft",

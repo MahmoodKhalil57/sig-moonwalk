@@ -9,7 +9,7 @@
   "engines": { "vscode": "^1.85.0" },
   "categories": ["Linters", "Other"],
   "main": "./dist/extension.js",
-  "activationEvents": ["onLanguage:yaml", "onLanguage:json"],
+  "activationEvents": ["onStartupFinished"],
   "contributes": {
     "viewsContainers": {
       "activitybar": [
@@ -22,7 +22,19 @@
         { "id": "suluk.builder", "name": "Builder", "contextualTitle": "Suluk Builder" }
       ]
     },
+    "viewsWelcome": [
+      {
+        "view": "suluk.cycle",
+        "contents": "Welcome to the **Suluk cockpit**.\n\nIt shows every layer of an API — data, contract, auth, docs, state, UI, cost, tests — all derived from one OpenAPI v4 document.\n\nNothing is loaded yet. Light it up:\n[▶  Open a sample API](command:suluk.openSample)\n[🌐  Load from a URL…](command:suluk.openFromUrl)\n\nAlready have a contract? Open a `.yaml`/`.json` file whose `openapi:` starts with `4`.\n\n[📖  Read the docs](https://mahmoodkhalil57.github.io/suluk/)"
+      },
+      {
+        "view": "suluk.builder",
+        "contents": "The **Builder** composes a full stack from your entities — pages → sections → blocks → components — and generates the app + a shadcn registry.\n\nLoad a v4 document first:\n[▶  Open a sample API](command:suluk.openSample)\n[🌐  Load from a URL…](command:suluk.openFromUrl)\n\nThen use **Generate full app** from the view toolbar."
+      }
+    ],
     "commands": [
+      { "command": "suluk.openSample", "title": "Suluk: Open a sample API" },
+      { "command": "suluk.openFromUrl", "title": "Suluk: Load a v4 document from a URL…" },
       { "command": "suluk.validate", "title": "Suluk: Validate v4 document" },
       { "command": "suluk.audit", "title": "Suluk: Audit documentation coverage" },
       { "command": "suluk.previewScalar", "title": "Suluk: Preview in Scalar" },

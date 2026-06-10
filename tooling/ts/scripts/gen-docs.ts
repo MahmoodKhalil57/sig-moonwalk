@@ -17,7 +17,7 @@ const fw = harvest({
     "Nano Stores client, generated shadcn UI, request validation, contract tests, a documentation audit, an " +
     "admin panel (in your editor *and* on `/superadmin`), and a Cloudflare deploy plan — is **derived** from " +
     "it. One source, many projections; they cannot drift because they are the same source.",
-  repoUrl: "https://github.com/MahmoodKhalil57/sig-moonwalk",
+  repoUrl: "https://github.com/MahmoodKhalil57/suluk",
   architecturePath: join(tsRoot, "..", "ARCHITECTURE.md"),     // tooling/ARCHITECTURE.md
 });
 

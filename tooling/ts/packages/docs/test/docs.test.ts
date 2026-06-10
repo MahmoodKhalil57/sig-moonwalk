@@ -9,7 +9,7 @@ const fw = harvest({
   title: "Suluk",
   tagline: "One typed contract, projected into your whole stack.",
   description: "Suluk derives the **whole stack** from one source.",
-  repoUrl: "https://github.com/MahmoodKhalil57/sig-moonwalk",
+  repoUrl: "https://github.com/MahmoodKhalil57/suluk",
 });
 
 describe("mdToHtml", () => {

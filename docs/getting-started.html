@@ -5,7 +5,7 @@
 </head><body>
 <header class="top">
   <a class="brand" href="index.html">Suluk</a>
-  <nav><a href="index.html">Home</a><a href="getting-started.html" class="on">Get started</a><a href="index.html#packages">Packages</a><a href="architecture.html">Architecture</a><a href="contributing.html">Contributing</a><a href="community.html">Community</a><a class="gh" href="https://github.com/MahmoodKhalil57/sig-moonwalk">GitHub ↗</a></nav>
+  <nav><a href="index.html">Home</a><a href="getting-started.html" class="on">Get started</a><a href="index.html#packages">Packages</a><a href="architecture.html">Architecture</a><a href="contributing.html">Contributing</a><a href="community.html">Community</a><a class="gh" href="https://github.com/MahmoodKhalil57/suluk">GitHub ↗</a></nav>
 </header>
 <main><article class="prose"><h1>Get started</h1>
 <p>Suluk turns <strong>one source of truth</strong> — your data schema + your routes — into the whole stack. You write the contract once; the docs, the typed client, the UI, the validation, the tests, and the admin panel are all <em>derived</em> from it, so they cannot drift.</p>
@@ -28,7 +28,7 @@ app.backend.document;     // → the OpenAPI v4 document (validated)
 app.backend.routes;       // → Hono CRUD RouteContracts (mount them)
 app.frontend.components;  // → shadcn Form + Table (TSX)
 app.frontend.pages;       // → page TSX wired to the typed client</code></pre>
-<p>From that one document you get <strong>Scalar/Swagger docs</strong>, a typed <strong>Nano Stores</strong> client, generated <strong>shadcn</strong> UI, <strong>contract tests</strong>, a documentation <strong>audit</strong>, the <strong>/superadmin</strong> admin panel, and a <strong>Cloudflare</strong> deploy plan. See the <a href="https://github.com/MahmoodKhalil57/sig-moonwalk/tree/main/tooling/ts/packages/example-petshop">runnable demo</a> — it boots the entire stack from one schema.</p>
+<p>From that one document you get <strong>Scalar/Swagger docs</strong>, a typed <strong>Nano Stores</strong> client, generated <strong>shadcn</strong> UI, <strong>contract tests</strong>, a documentation <strong>audit</strong>, the <strong>/superadmin</strong> admin panel, and a <strong>Cloudflare</strong> deploy plan. See the <a href="https://github.com/MahmoodKhalil57/suluk/tree/main/tooling/ts/packages/example-petshop">runnable demo</a> — it boots the entire stack from one schema.</p>
 <h2>Install</h2>
 <p>Everything is a small focused package — add only what you need:</p>
 <pre><code>bun add @suluk/core @suluk/hono @suluk/zod</code></pre>

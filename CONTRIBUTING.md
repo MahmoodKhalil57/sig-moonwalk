@@ -33,4 +33,4 @@ branch → `main` / `docs`). Regenerate **and commit** `docs/` when packages cha
 cd tooling/ts && bun run gen:docs   # → ../../docs
 ```
 
-Open a [discussion](https://github.com/MahmoodKhalil57/sig-moonwalk/discussions) before large changes.
+Open a [discussion](https://github.com/MahmoodKhalil57/suluk/discussions) before large changes.
