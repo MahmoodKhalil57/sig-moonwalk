@@ -78,10 +78,12 @@ A static export is just `render(contracts, publicPrincipal, now)`. Nothing speci
 | `@suluk/admin` | the **/superadmin web panel** — the cockpit rendered as a Hono web UI, superadmin-gated | ✅ 7 tests |
 | `@suluk/example-petshop` | runnable end-to-end demo — real Drizzle → live CRUD + Scalar + frontend + /superadmin + client round-trip | ✅ 10 tests |
 | `@suluk/docs` | generate a GitHub-Pages docs site from source (Suluk documents itself) | ✅ 10 tests |
+| `@suluk/cost` | **cost as a contract facet** — declare per-op cost (x-suluk-cost, bubbles) + meter actual per-user cost | ✅ 10 tests |
+| `@suluk/stripe` | first-class Stripe behind a swappable `PaymentProvider`; bridges cost → metered billing | ✅ 9 tests |
 | `suluk-core` (Rust) | perf core: parse + signature + reverse-parse matcher; 2nd independent impl | ✅ 9 tests |
 | `suluk-vscode` | the cockpit's **editor face** — a thin vscode shell over `@suluk/cockpit` (Cycle + Builder TreeViews, "View as", codegen, deploy) | tsc + bundle |
 
-**Total: 17 TS packages (228 tests) + a Rust core (9 tests) = 237 green.**
+**Total: 19 TS packages (253 tests) + a Rust core (9 tests) = 262 green.**
 
 ## One brain, two faces
 
@@ -184,6 +186,22 @@ emits `wrangler.jsonc` (D1 binding + static `assets` SPA-fallback + observabilit
 (`export default app`) + `schema.sql` (from the entities) + an ordered plan (login → d1 create → apply →
 deploy). The extension's "Deploy to Cloudflare" command writes these + a `DEPLOY.md` and opens a terminal —
 it never runs `wrangler` for you (deploys are consequential; OAuth login happens in your terminal).
+
+## Cost & billing — you can't price what you can't measure
+
+Cost is just another facet of the contract. **`@suluk/cost`** lets an operation declare what it costs you
+(per-call + metered third-party usage, in raw µ$); `annotateCosts` writes it as `x-suluk-cost` on the
+operation, so it **bubbles** like everything else — through the 3.1 downgrade (the converter now passes `x-*`
+through), into Scalar, into the cockpit's **Cost layer**, and into a coverage audit (which operations
+declared nothing). At runtime, `costMeter` (Hono middleware) records what each request **actually** cost,
+attributed all the way down: the **frontend action** (`@suluk/nano-stores` tags requests with
+`x-suluk-action`) → the operation → each source. The ledger shows the raw per-user picture; you display it
+as it is and build pricing on top.
+
+**`@suluk/stripe`** is the reference `PaymentProvider` (swappable — other processors follow Stripe). It
+models the modern usage-based stack (Billing Meters + meter events + metered prices, customers,
+subscriptions, webhooks) as pure param-builders over a duck-typed client, and a bridge turns `@suluk/cost`
+events into Stripe usage — one meter event per principal. You meter usage; the price + your markup = revenue.
 
 ## Invariants every package keeps
 
