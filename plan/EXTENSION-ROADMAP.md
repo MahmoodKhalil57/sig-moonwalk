@@ -86,9 +86,12 @@ builder — so the extension can fetch it and **diff local-contract vs deployed-
 
 ### LONG — ceiling ~0.5, originated / aspirational (honestly low)
 
-- **L1 — Open marketplace.** *Any* user contributes modules. Gated behind everything in M2 (namespacing
-  enforced, contract-diff review, conformance gate, trust/signing). **Curated earns the right to open** — an
-  open marketplace before the merge-discipline is "npm with a nicer icon" and a supply-chain hole.
+- **L1 ✓ BUILT (commit 81f7ee9).** The open/remote registry. `parseRegistry` validates an UNTRUSTED registry
+  fetched from a URL (accepts well-formed manifests, surfaces the rejected); the extension's source picker
+  (first-party / remote / add-a-URL) shows a third-party provenance banner + contract-diff + grade, and installs
+  through `installModule`'s gate. Security-reviewed (5 findings fixed — a prototype-pollution gadget closed with
+  own-property checks in installModule AND core `resolveRef`, a dangling-$ref backstop, value-shape validation,
+  a stream-counted fetch cap, and codicon-sanitized labels so a hostile name can't forge the trust badge).
 - **L2 — Non-dev composition.** Compose a platform from modules; the developer wires only the irreducible 20%
   (cross-module relationships, business rules, money edge-cases, migrations). **Honest pitch:** *a non-developer
   composes ~80% — entities, CRUD UI, pages, usage-billing, deploy-prep; a developer wires the 20% that's
@@ -133,12 +136,11 @@ builder — so the extension can fetch it and **diff local-contract vs deployed-
   conformance grade + burhan-converge), the *View-as × Environments* cross-cut (M1), provider-slot swapping
   (M3), and the *open* marketplace (L1, gated on M2). The merge primitive exists; the distribution + trust layer
   does not.
-- **Built since (S1+S2+M2+M1+M3):** the OBSERVE seam, the install-time contract-merge, the curated registry +
-  grade + preview, the View-as × Environments cross-cut, AND provider-slot swapping — all adversarially reviewed.
-  The **entire SHORT + MEDIUM horizon is done.** The defensible core (one contract × viewer × environment,
-  composed from graded modules, with swappable providers) exists end-to-end.
-- **Cheapest-next-move:** **L1** — the *open/remote* registry. Everything is in place: `installModule`'s
-  refuse-on-collision discipline, `previewInstall`'s contract-diff-on-install, and `gradeModule`'s conformance
-  grade. L1 = fetch a registry from a URL (the same `ModuleRegistry` shape, reusing S1's `fetchText`) + a trust
-  gate (show the contract-diff + grade before installing a third-party module; optionally signed registries).
-  This is the open marketplace — and it is only safe NOW because M2's discipline was built and reviewed first.
+- **THE ROADMAP IS COMPLETE.** S1 · S2 · M2 · M1 · M3 · L1 are all built, adversarially reviewed, and shipped —
+  the entire SHORT → MEDIUM → LONG arc. The product the council designed exists end-to-end: one contract,
+  refracted through every viewer × environment, composed from graded modules drawn from curated *or* open
+  registries, with swappable providers — all observable and editable from the VS Code extension, bounded by the
+  no-credentials charter (C020). 38 adversarial-review findings fixed across the six slices.
+- **Beyond the roadmap (optional, operator's call):** signed registries (provenance cryptography) for L1; live
+  role-previews via a preview deployment (the richer M1); a `burhan-converge` pass over a merged contract; and
+  the originated L2/L3 (non-dev composition flow, round-trip lifecycle) — none load-bearing, all additive.
