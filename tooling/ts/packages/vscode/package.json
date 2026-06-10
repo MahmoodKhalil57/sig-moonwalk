@@ -1,7 +1,7 @@
 {
   "name": "suluk-vscode",
   "displayName": "Suluk — OpenAPI v4 (Candidate)",
-  "description": "Validate, audit, and preview (Scalar/Swagger) OpenAPI v4.0 'Suluk' candidate documents. CANDIDATE tooling — not official OAS.",
+  "description": "The unifying cockpit for the Suluk declarative cycle: validate, audit, preview (Scalar/Swagger), and generate stores/UI from one v4 source. CANDIDATE tooling — not official OAS.",
   "version": "0.1.0",
   "type": "module",
   "publisher": "suluk",
@@ -10,18 +10,42 @@
   "main": "./dist/extension.js",
   "activationEvents": ["onLanguage:yaml", "onLanguage:json"],
   "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        { "id": "suluk", "title": "Suluk", "icon": "$(symbol-namespace)" }
+      ]
+    },
+    "views": {
+      "suluk": [
+        { "id": "suluk.cycle", "name": "Cycle", "contextualTitle": "Suluk Cycle" }
+      ]
+    },
     "commands": [
       { "command": "suluk.validate", "title": "Suluk: Validate v4 document" },
       { "command": "suluk.audit", "title": "Suluk: Audit documentation coverage" },
       { "command": "suluk.previewScalar", "title": "Suluk: Preview in Scalar" },
-      { "command": "suluk.previewSwagger", "title": "Suluk: Preview in Swagger UI" }
-    ]
+      { "command": "suluk.previewSwagger", "title": "Suluk: Preview in Swagger UI" },
+      { "command": "suluk.refreshCycle", "title": "Suluk: Refresh Cycle", "icon": "$(refresh)" },
+      { "command": "suluk.viewAs", "title": "Suluk: View as (principal scopes)…", "icon": "$(account)" },
+      { "command": "suluk.generateForm", "title": "Suluk: Generate shadcn form for entity…" },
+      { "command": "suluk.generateTable", "title": "Suluk: Generate shadcn table for entity…" },
+      { "command": "suluk.generateStores", "title": "Suluk: Generate Nano Stores client" },
+      { "command": "suluk.exportV4", "title": "Suluk: Export v4 document (JSON)" },
+      { "command": "suluk.runChecks", "title": "Suluk: Run contract checks" }
+    ],
+    "menus": {
+      "view/title": [
+        { "command": "suluk.refreshCycle", "when": "view == suluk.cycle", "group": "navigation" },
+        { "command": "suluk.viewAs", "when": "view == suluk.cycle", "group": "navigation" }
+      ]
+    }
   },
   "dependencies": {
     "@suluk/core": "workspace:*",
     "@suluk/hono": "workspace:*",
     "@suluk/scalar": "workspace:*",
-    "@suluk/swagger": "workspace:*"
+    "@suluk/swagger": "workspace:*",
+    "@suluk/shadcn": "workspace:*"
   },
   "devDependencies": {
     "@types/bun": "latest",

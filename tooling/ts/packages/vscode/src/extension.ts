@@ -1,20 +1,104 @@
 /**
- * The VSCode extension shell — wires editor events + webviews to the pure logic in ./logic.ts.
- * Commands: Suluk: Validate · Suluk: Audit documentation coverage · Suluk: Preview in Scalar/Swagger.
- * Validation runs automatically on open/save for v4 documents. This file imports the vscode API and is
- * typechecked (not bun-tested — it needs the VSCode host); all real logic lives in ./logic.ts (tested).
+ * The VSCode extension shell — the UNIFYING COCKPIT. One v4 "Suluk" document is the hub, and this surface
+ * makes every projection of the cycle visible + actionable from one place:
+ *   - the "Suluk · Cycle" TreeView (data → contract → auth → document → docs → state → ui → tests), live
+ *   - "View as" (principal scopes) re-projects the whole tree to what that viewer sees (the per-WHO axis)
+ *   - actions that LAND files: generate shadcn form/table, generate the Nano Stores client, export v4
+ *   - previews (Scalar/Swagger webviews), validation + audit diagnostics in the Problems panel
+ * All real logic lives in ./cycle, ./codegen, ./logic (bun-tested); this file is the thin vscode wiring.
  */
 import * as vscode from "vscode";
 import { validateSource, auditSource, previewHtml, looksLikeV4, type Diagnostic } from "./logic";
+import { buildCycle, type CycleModel, type CycleLayer, type CycleItem, type LayerStatus } from "./cycle";
+import { entityNames, generateForm, generateTable, generateStoresModule, exportV4Json } from "./codegen";
 import { parseDocument } from "@suluk/core";
 
 const SUPPORTED = new Set(["yaml", "json", "yml"]);
 
+// ── helpers ─────────────────────────────────────────────────────────────────────────────────────────
+function isV4Source(text: string): boolean {
+  try { return looksLikeV4(parseDocument(text)); } catch { return false; }
+}
+
+function activeV4Source(): string | null {
+  const ed = vscode.window.activeTextEditor;
+  if (!ed || !SUPPORTED.has(ed.document.languageId)) return null;
+  const text = ed.document.getText();
+  return isV4Source(text) ? text : null;
+}
+
+async function openGenerated(content: string, language: string): Promise<void> {
+  const doc = await vscode.workspace.openTextDocument({ content, language });
+  await vscode.window.showTextDocument(doc, vscode.ViewColumn.Beside);
+}
+
+function themeIcon(status?: LayerStatus): vscode.ThemeIcon | undefined {
+  switch (status) {
+    case "error": return new vscode.ThemeIcon("error");
+    case "warn": return new vscode.ThemeIcon("warning");
+    case "ok": return new vscode.ThemeIcon("pass");
+    case "info": return new vscode.ThemeIcon("info");
+    default: return undefined;
+  }
+}
+
+// ── the Cycle TreeView ──────────────────────────────────────────────────────────────────────────────
+type Node = { kind: "layer"; layer: CycleLayer } | { kind: "item"; item: CycleItem };
+
+class CycleProvider implements vscode.TreeDataProvider<Node> {
+  private readonly _onDidChange = new vscode.EventEmitter<Node | undefined | void>();
+  readonly onDidChangeTreeData = this._onDidChange.event;
+  private principalScopes: string[] | undefined;
+
+  /** undefined ⇒ full/public view; [] ⇒ anonymous (no scopes); [..] ⇒ that principal. */
+  setPrincipal(scopes: string[] | undefined): void {
+    this.principalScopes = scopes;
+    this.refresh();
+  }
+  viewLabel(): string {
+    if (this.principalScopes === undefined) return "full";
+    return this.principalScopes.length ? this.principalScopes.join(", ") : "anonymous";
+  }
+  refresh(): void { this._onDidChange.fire(); }
+
+  private model(): CycleModel | null {
+    const src = activeV4Source();
+    if (!src) return null;
+    try {
+      return buildCycle(parseDocument(src), this.principalScopes !== undefined ? { principal: { scopes: this.principalScopes } } : {});
+    } catch {
+      return null;
+    }
+  }
+
+  getTreeItem(node: Node): vscode.TreeItem {
+    if (node.kind === "layer") {
+      const ti = new vscode.TreeItem(node.layer.title, node.layer.items.length ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None);
+      ti.description = node.layer.summary;
+      ti.iconPath = themeIcon(node.layer.status);
+      ti.contextValue = `suluk.layer.${node.layer.id}`;
+      return ti;
+    }
+    const ti = new vscode.TreeItem(node.item.label, vscode.TreeItemCollapsibleState.None);
+    ti.description = node.item.detail;
+    ti.iconPath = themeIcon(node.item.status);
+    if (node.item.ref) ti.contextValue = "suluk.item";
+    return ti;
+  }
+
+  getChildren(node?: Node): Node[] {
+    const model = this.model();
+    if (!model) return [];
+    if (!node) return model.layers.map((layer) => ({ kind: "layer", layer }));
+    if (node.kind === "layer") return node.layer.items.map((item) => ({ kind: "item", item }));
+    return [];
+  }
+}
+
+// ── diagnostics ─────────────────────────────────────────────────────────────────────────────────────
 function toVsDiagnostics(diags: Diagnostic[]): vscode.Diagnostic[] {
   const sev: Record<Diagnostic["severity"], vscode.DiagnosticSeverity> = {
-    error: vscode.DiagnosticSeverity.Error,
-    warning: vscode.DiagnosticSeverity.Warning,
-    info: vscode.DiagnosticSeverity.Information,
+    error: vscode.DiagnosticSeverity.Error, warning: vscode.DiagnosticSeverity.Warning, info: vscode.DiagnosticSeverity.Information,
   };
   return diags.map((d) => {
     const diag = new vscode.Diagnostic(new vscode.Range(0, 0, 0, 1), `[${d.path}] ${d.message}`, sev[d.severity]);
@@ -23,75 +107,102 @@ function toVsDiagnostics(diags: Diagnostic[]): vscode.Diagnostic[] {
   });
 }
 
-/** Only act on documents that parse as a v4 "Suluk" doc. */
-function isV4Document(doc: vscode.TextDocument): boolean {
-  if (!SUPPORTED.has(doc.languageId)) return false;
-  try {
-    return looksLikeV4(parseDocument(doc.getText()));
-  } catch {
-    return false;
-  }
-}
-
 function refreshDiagnostics(doc: vscode.TextDocument, collection: vscode.DiagnosticCollection): void {
-  if (!isV4Document(doc)) {
-    collection.delete(doc.uri);
-    return;
-  }
+  if (!SUPPORTED.has(doc.languageId) || !isV4Source(doc.getText())) { collection.delete(doc.uri); return; }
   const { diagnostics } = validateSource(doc.getText());
   const { diagnostics: auditDiags } = auditSource(doc.getText());
   collection.set(doc.uri, toVsDiagnostics([...diagnostics, ...auditDiags]));
 }
 
 function openPreview(ui: "scalar" | "swagger"): void {
-  const editor = vscode.window.activeTextEditor;
-  if (!editor) {
-    void vscode.window.showWarningMessage("Suluk: open an OpenAPI v4 document first.");
-    return;
-  }
+  const src = activeV4Source();
+  if (!src) { void vscode.window.showWarningMessage("Suluk: open an OpenAPI v4 document first."); return; }
   try {
-    const { html, diagnostics } = previewHtml(editor.document.getText(), ui);
-    const panel = vscode.window.createWebviewPanel(
-      `suluk.preview.${ui}`,
-      `Suluk — ${ui === "scalar" ? "Scalar" : "Swagger"} Preview`,
-      vscode.ViewColumn.Beside,
-      { enableScripts: true },
-    );
+    const { html, diagnostics } = previewHtml(src, ui);
+    const panel = vscode.window.createWebviewPanel(`suluk.preview.${ui}`, `Suluk — ${ui === "scalar" ? "Scalar" : "Swagger"} Preview`, vscode.ViewColumn.Beside, { enableScripts: true });
     panel.webview.html = html;
     if (diagnostics.length) void vscode.window.showInformationMessage(`Suluk: ${diagnostics.length} lossy-conversion note(s) — ${diagnostics[0].message}`);
-  } catch (e) {
-    void vscode.window.showErrorMessage(`Suluk: ${(e as Error).message}`);
-  }
+  } catch (e) { void vscode.window.showErrorMessage(`Suluk: ${(e as Error).message}`); }
 }
 
+async function pickEntity(): Promise<string | undefined> {
+  const src = activeV4Source();
+  if (!src) { void vscode.window.showWarningMessage("Suluk: open an OpenAPI v4 document first."); return undefined; }
+  const names = entityNames(parseDocument(src));
+  if (!names.length) { void vscode.window.showWarningMessage("Suluk: this document has no components.schemas entities."); return undefined; }
+  return vscode.window.showQuickPick(names, { placeHolder: "Entity to generate from" });
+}
+
+// ── activate ────────────────────────────────────────────────────────────────────────────────────────
 export function activate(context: vscode.ExtensionContext): void {
   const collection = vscode.languages.createDiagnosticCollection("suluk");
-  context.subscriptions.push(collection);
+  const cycle = new CycleProvider();
+  context.subscriptions.push(collection, vscode.window.registerTreeDataProvider("suluk.cycle", cycle));
 
+  const reg = (id: string, fn: (...a: never[]) => unknown) => context.subscriptions.push(vscode.commands.registerCommand(id, fn));
+
+  reg("suluk.validate", () => {
+    const ed = vscode.window.activeTextEditor; if (!ed) return;
+    refreshDiagnostics(ed.document, collection);
+    const { ok } = validateSource(ed.document.getText());
+    void vscode.window.showInformationMessage(ok ? "Suluk: document is valid v4 ✓" : "Suluk: validation errors — see Problems panel.");
+  });
+  reg("suluk.audit", () => {
+    const src = activeV4Source(); if (!src) return;
+    const { findings } = auditSource(src);
+    void vscode.window.showInformationMessage(`Suluk: ${findings.length} documentation finding(s).`);
+  });
+  reg("suluk.previewScalar", () => openPreview("scalar"));
+  reg("suluk.previewSwagger", () => openPreview("swagger"));
+  reg("suluk.refreshCycle", () => cycle.refresh());
+
+  reg("suluk.viewAs", async () => {
+    const input = await vscode.window.showInputBox({
+      prompt: "View the cycle AS a principal — comma-separated scopes. Empty = full view; 'anonymous' = no scopes.",
+      placeHolder: "e.g. write:pets, read:pets",
+      value: cycle.viewLabel() === "full" ? "" : cycle.viewLabel(),
+    });
+    if (input === undefined) return; // cancelled
+    const trimmed = input.trim();
+    if (trimmed === "") cycle.setPrincipal(undefined);
+    else if (trimmed.toLowerCase() === "anonymous") cycle.setPrincipal([]);
+    else cycle.setPrincipal(trimmed.split(",").map((s) => s.trim()).filter(Boolean));
+    void vscode.window.showInformationMessage(`Suluk: viewing as ${cycle.viewLabel()}.`);
+  });
+
+  reg("suluk.generateForm", async () => {
+    const name = await pickEntity(); if (!name) return;
+    try { await openGenerated(generateForm(parseDocument(activeV4Source()!), name), "typescriptreact"); }
+    catch (e) { void vscode.window.showErrorMessage(`Suluk: ${(e as Error).message}`); }
+  });
+  reg("suluk.generateTable", async () => {
+    const name = await pickEntity(); if (!name) return;
+    try { await openGenerated(generateTable(parseDocument(activeV4Source()!), name), "typescriptreact"); }
+    catch (e) { void vscode.window.showErrorMessage(`Suluk: ${(e as Error).message}`); }
+  });
+  reg("suluk.generateStores", async () => {
+    const src = activeV4Source(); if (!src) { void vscode.window.showWarningMessage("Suluk: open an OpenAPI v4 document first."); return; }
+    await openGenerated(generateStoresModule(parseDocument(src)), "typescript");
+  });
+  reg("suluk.exportV4", async () => {
+    const src = activeV4Source(); if (!src) { void vscode.window.showWarningMessage("Suluk: open an OpenAPI v4 document first."); return; }
+    await openGenerated(exportV4Json(src), "json");
+  });
+  reg("suluk.runChecks", () => {
+    const src = activeV4Source(); if (!src) return;
+    const model = buildCycle(parseDocument(src));
+    const tests = model.layers.find((l) => l.id === "tests");
+    const passed = (tests?.items ?? []).filter((i) => i.status === "ok").length;
+    void vscode.window.showInformationMessage(`Suluk: contract checks ${passed}/${tests?.items.length ?? 0} ✓`);
+  });
+
+  const onChange = () => cycle.refresh();
   context.subscriptions.push(
-    vscode.commands.registerCommand("suluk.validate", () => {
-      const editor = vscode.window.activeTextEditor;
-      if (!editor) return;
-      refreshDiagnostics(editor.document, collection);
-      const { ok } = validateSource(editor.document.getText());
-      void vscode.window.showInformationMessage(ok ? "Suluk: document is valid v4 ✓" : "Suluk: validation errors — see Problems panel.");
-    }),
-    vscode.commands.registerCommand("suluk.audit", () => {
-      const editor = vscode.window.activeTextEditor;
-      if (!editor) return;
-      const { findings } = auditSource(editor.document.getText());
-      void vscode.window.showInformationMessage(`Suluk: ${findings.length} documentation finding(s).`);
-    }),
-    vscode.commands.registerCommand("suluk.previewScalar", () => openPreview("scalar")),
-    vscode.commands.registerCommand("suluk.previewSwagger", () => openPreview("swagger")),
-    vscode.workspace.onDidOpenTextDocument((doc) => refreshDiagnostics(doc, collection)),
-    vscode.workspace.onDidSaveTextDocument((doc) => refreshDiagnostics(doc, collection)),
+    vscode.workspace.onDidOpenTextDocument((doc) => { refreshDiagnostics(doc, collection); onChange(); }),
+    vscode.workspace.onDidSaveTextDocument((doc) => { refreshDiagnostics(doc, collection); onChange(); }),
+    vscode.window.onDidChangeActiveTextEditor(onChange),
   );
-
-  // validate whatever is already open
   for (const doc of vscode.workspace.textDocuments) refreshDiagnostics(doc, collection);
 }
 
-export function deactivate(): void {
-  /* diagnostics collection is disposed via context.subscriptions */
-}
+export function deactivate(): void { /* subscriptions disposed via context */ }
