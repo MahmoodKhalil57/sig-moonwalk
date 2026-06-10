@@ -11,6 +11,7 @@ import * as vscode from "vscode";
 import { validateSource, auditSource, previewHtml, looksLikeV4, type Diagnostic } from "./logic";
 import { buildCycle, type CycleModel, type CycleLayer, type CycleItem, type LayerStatus } from "./cycle";
 import { entityNames, generateForm, generateTable, generateStoresModule, exportV4Json } from "./codegen";
+import { buildBuilderModel, generateAppFiles, generateRegistryJson, type BuilderNode } from "./builder";
 import { parseDocument } from "@suluk/core";
 
 const SUPPORTED = new Set(["yaml", "json", "yml"]);
@@ -95,6 +96,31 @@ class CycleProvider implements vscode.TreeDataProvider<Node> {
   }
 }
 
+// ── the Builder TreeView (pages → sections → blocks → components, with each tier's param contract) ─────
+class BuilderProvider implements vscode.TreeDataProvider<BuilderNode> {
+  private readonly _onDidChange = new vscode.EventEmitter<BuilderNode | undefined | void>();
+  readonly onDidChangeTreeData = this._onDidChange.event;
+  refresh(): void { this._onDidChange.fire(); }
+
+  private roots(): BuilderNode[] {
+    const src = activeV4Source();
+    if (!src) return [];
+    try { return buildBuilderModel(parseDocument(src)).tree; } catch { return []; }
+  }
+
+  getTreeItem(node: BuilderNode): vscode.TreeItem {
+    const ti = new vscode.TreeItem(node.label, node.children.length ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None);
+    // surface the contract-narrowing right on the node: what this tier may set upward
+    ti.description = node.contract.length ? `${node.tier} · may set { ${node.contract.join(", ")} }` : node.tier;
+    ti.iconPath = new vscode.ThemeIcon({ page: "browser", section: "symbol-namespace", block: "symbol-method", component: "symbol-field" }[node.tier] ?? "circle-outline");
+    ti.contextValue = `suluk.builder.${node.tier}`;
+    return ti;
+  }
+  getChildren(node?: BuilderNode): BuilderNode[] {
+    return node ? node.children : this.roots();
+  }
+}
+
 // ── diagnostics ─────────────────────────────────────────────────────────────────────────────────────
 function toVsDiagnostics(diags: Diagnostic[]): vscode.Diagnostic[] {
   const sev: Record<Diagnostic["severity"], vscode.DiagnosticSeverity> = {
@@ -137,7 +163,12 @@ async function pickEntity(): Promise<string | undefined> {
 export function activate(context: vscode.ExtensionContext): void {
   const collection = vscode.languages.createDiagnosticCollection("suluk");
   const cycle = new CycleProvider();
-  context.subscriptions.push(collection, vscode.window.registerTreeDataProvider("suluk.cycle", cycle));
+  const builder = new BuilderProvider();
+  context.subscriptions.push(
+    collection,
+    vscode.window.registerTreeDataProvider("suluk.cycle", cycle),
+    vscode.window.registerTreeDataProvider("suluk.builder", builder),
+  );
 
   const reg = (id: string, fn: (...a: never[]) => unknown) => context.subscriptions.push(vscode.commands.registerCommand(id, fn));
 
@@ -196,7 +227,27 @@ export function activate(context: vscode.ExtensionContext): void {
     void vscode.window.showInformationMessage(`Suluk: contract checks ${passed}/${tests?.items.length ?? 0} ✓`);
   });
 
-  const onChange = () => cycle.refresh();
+  // ── Builder commands ──
+  reg("suluk.refreshBuilder", () => builder.refresh());
+  reg("suluk.exportRegistry", async () => {
+    const src = activeV4Source(); if (!src) { void vscode.window.showWarningMessage("Suluk: open an OpenAPI v4 document first."); return; }
+    await openGenerated(generateRegistryJson(parseDocument(src)), "json");
+  });
+  reg("suluk.generateApp", async () => {
+    const src = activeV4Source(); if (!src) { void vscode.window.showWarningMessage("Suluk: open an OpenAPI v4 document first."); return; }
+    const folder = vscode.workspace.workspaceFolders?.[0];
+    if (!folder) { void vscode.window.showWarningMessage("Suluk: open a workspace folder to generate into."); return; }
+    const files = generateAppFiles(parseDocument(src));
+    const root = vscode.Uri.joinPath(folder.uri, "suluk-generated");
+    for (const f of files) {
+      const uri = vscode.Uri.joinPath(root, f.path);
+      await vscode.workspace.fs.createDirectory(vscode.Uri.joinPath(uri, ".."));
+      await vscode.workspace.fs.writeFile(uri, new TextEncoder().encode(f.content));
+    }
+    void vscode.window.showInformationMessage(`Suluk: generated ${files.length} files (backend + frontend + shadcn registry) into suluk-generated/.`);
+  });
+
+  const onChange = () => { cycle.refresh(); builder.refresh(); };
   context.subscriptions.push(
     vscode.workspace.onDidOpenTextDocument((doc) => { refreshDiagnostics(doc, collection); onChange(); }),
     vscode.workspace.onDidSaveTextDocument((doc) => { refreshDiagnostics(doc, collection); onChange(); }),

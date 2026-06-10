@@ -17,7 +17,8 @@
     },
     "views": {
       "suluk": [
-        { "id": "suluk.cycle", "name": "Cycle", "contextualTitle": "Suluk Cycle" }
+        { "id": "suluk.cycle", "name": "Cycle", "contextualTitle": "Suluk Cycle" },
+        { "id": "suluk.builder", "name": "Builder", "contextualTitle": "Suluk Builder" }
       ]
     },
     "commands": [
@@ -31,12 +32,17 @@
       { "command": "suluk.generateTable", "title": "Suluk: Generate shadcn table for entity…" },
       { "command": "suluk.generateStores", "title": "Suluk: Generate Nano Stores client" },
       { "command": "suluk.exportV4", "title": "Suluk: Export v4 document (JSON)" },
-      { "command": "suluk.runChecks", "title": "Suluk: Run contract checks" }
+      { "command": "suluk.runChecks", "title": "Suluk: Run contract checks" },
+      { "command": "suluk.generateApp", "title": "Suluk: Generate full app (backend + frontend)" },
+      { "command": "suluk.exportRegistry", "title": "Suluk: Export shadcn registry (whole-stack)" },
+      { "command": "suluk.refreshBuilder", "title": "Suluk: Refresh Builder", "icon": "$(refresh)" }
     ],
     "menus": {
       "view/title": [
         { "command": "suluk.refreshCycle", "when": "view == suluk.cycle", "group": "navigation" },
-        { "command": "suluk.viewAs", "when": "view == suluk.cycle", "group": "navigation" }
+        { "command": "suluk.viewAs", "when": "view == suluk.cycle", "group": "navigation" },
+        { "command": "suluk.refreshBuilder", "when": "view == suluk.builder", "group": "navigation" },
+        { "command": "suluk.generateApp", "when": "view == suluk.builder", "group": "navigation" }
       ]
     }
   },
@@ -45,7 +51,8 @@
     "@suluk/hono": "workspace:*",
     "@suluk/scalar": "workspace:*",
     "@suluk/swagger": "workspace:*",
-    "@suluk/shadcn": "workspace:*"
+    "@suluk/shadcn": "workspace:*",
+    "@suluk/builder": "workspace:*"
   },
   "devDependencies": {
     "@types/bun": "latest",
