@@ -78,9 +78,11 @@ builder — so the extension can fetch it and **diff local-contract vs deployed-
   extension's **Browse modules** command: pick (grade shown) → preview webview → modal confirm → install.
   Adversarially reviewed (6 findings fixed — the grade was structurally inflated; now honest). *Remaining for a
   full M2: a remote-registry fetch (shares L1's plumbing) + `burhan-converge` over the merged contract.*
-- **M3 — Provider-slot generalization.** Lift `@suluk/stripe`'s duck-typed `PaymentProvider` to a per-facet
-  **slot** concept `{ payments, auth, email, storage }`; "swap a provider" UX in the extension. The slot
-  interface is the visible seam a developer reads to understand *why* — exactly the user's intent.
+- **M3 ✓ BUILT (commit 5752de3).** Provider slots. `PROVIDER_CATALOG` (payments/auth/email/storage, each with
+  first-party + alternative impls of one duck-typed interface), `readProviders`, `swapProvider` (rebind a slot —
+  contract unchanged, only the runtime binding differs); modules record `providerSlots` as `x-suluk-providers`;
+  a Providers cockpit layer + a swap command. Adversarially reviewed (5 findings fixed — a second install no
+  longer clobbers a deliberate swap; provider drift is now reported; malformed input is inert).
 
 ### LONG — ceiling ~0.5, originated / aspirational (honestly low)
 
@@ -131,12 +133,12 @@ builder — so the extension can fetch it and **diff local-contract vs deployed-
   conformance grade + burhan-converge), the *View-as × Environments* cross-cut (M1), provider-slot swapping
   (M3), and the *open* marketplace (L1, gated on M2). The merge primitive exists; the distribution + trust layer
   does not.
-- **Built since (S1+S2+M2+M1):** the OBSERVE seam, the install-time contract-merge, the curated registry +
-  grade + preview, AND the View-as × Environments cross-cut — all adversarially reviewed. The defensible core
-  (one contract × viewer × environment, composed from graded modules) exists end-to-end. What's left is
-  provider-swap (M3) and the *open/remote* registry (L1).
-- **Cheapest-next-move:** **M3** — provider slots. `@suluk/stripe`'s duck-typed `PaymentProvider` already proves
-  the pattern; modules already declare `providerSlots` (ecommerce/billing → `{ payments: "stripe" }`). M3
-  surfaces them: a `providerSlots` view of which facet bindings a contract uses + a swap affordance (rebind a
-  slot to a different implementation of the same interface). Then **L1** — the open/remote registry fetch + a
-  trust gate (signed registries, contract-diff review, conformance grade), gated on M2's discipline.
+- **Built since (S1+S2+M2+M1+M3):** the OBSERVE seam, the install-time contract-merge, the curated registry +
+  grade + preview, the View-as × Environments cross-cut, AND provider-slot swapping — all adversarially reviewed.
+  The **entire SHORT + MEDIUM horizon is done.** The defensible core (one contract × viewer × environment,
+  composed from graded modules, with swappable providers) exists end-to-end.
+- **Cheapest-next-move:** **L1** — the *open/remote* registry. Everything is in place: `installModule`'s
+  refuse-on-collision discipline, `previewInstall`'s contract-diff-on-install, and `gradeModule`'s conformance
+  grade. L1 = fetch a registry from a URL (the same `ModuleRegistry` shape, reusing S1's `fetchText`) + a trust
+  gate (show the contract-diff + grade before installing a third-party module; optionally signed registries).
+  This is the open marketplace — and it is only safe NOW because M2's discipline was built and reviewed first.
