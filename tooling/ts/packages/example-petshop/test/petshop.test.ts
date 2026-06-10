@@ -58,4 +58,11 @@ describe("petshop — one source (Drizzle entities) boots the whole stack", () =
     expect(page.tsx).toContain("<PetTable />");
     expect(page.tsx).toContain("<CategoryForm />");
   });
+
+  test("the /superadmin web panel is mounted, gated, and mirrors the cockpit", async () => {
+    expect((await app.request("/superadmin")).status).toBe(403); // gated
+    const r = await app.request("/superadmin", { headers: { "x-role": "superadmin" } });
+    expect(r.status).toBe(200);
+    expect(await r.text()).toContain("SULUK · SUPERADMIN");
+  });
 });

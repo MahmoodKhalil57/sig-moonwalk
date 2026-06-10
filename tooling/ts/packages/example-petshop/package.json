@@ -2,7 +2,7 @@
   "name": "@suluk/example-petshop",
   "version": "0.1.0",
   "private": true,
-  "description": "End-to-end demo: Drizzle tables → @suluk/builder → a live validated CRUD server + Scalar docs + generated frontend, all from one source. CANDIDATE tooling.",
+  "description": "End-to-end demo: Drizzle tables \u2192 @suluk/builder \u2192 a live validated CRUD server + Scalar docs + generated frontend, all from one source. CANDIDATE tooling.",
   "type": "module",
   "main": "src/app.ts",
   "dependencies": {
@@ -10,7 +10,8 @@
     "@suluk/drizzle": "workspace:*",
     "@suluk/core": "workspace:*",
     "@suluk/hono": "workspace:*",
-    "@suluk/scalar": "workspace:*"
+    "@suluk/scalar": "workspace:*",
+    "@suluk/admin": "workspace:*"
   },
   "devDependencies": {
     "@types/bun": "latest",
@@ -20,5 +21,9 @@
     "@hono/zod-validator": "^0.8.0",
     "zod": "^4.4.3"
   },
-  "scripts": { "start": "bun src/main.ts", "test": "bun test", "typecheck": "tsc --noEmit -p ." }
+  "scripts": {
+    "start": "bun src/main.ts",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit -p ."
+  }
 }

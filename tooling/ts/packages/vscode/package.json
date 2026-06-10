@@ -49,12 +49,7 @@
   },
   "dependencies": {
     "@suluk/core": "workspace:*",
-    "@suluk/hono": "workspace:*",
-    "@suluk/scalar": "workspace:*",
-    "@suluk/swagger": "workspace:*",
-    "@suluk/shadcn": "workspace:*",
-    "@suluk/builder": "workspace:*",
-    "@suluk/deploy": "workspace:*"
+    "@suluk/cockpit": "workspace:*"
   },
   "devDependencies": {
     "@types/bun": "latest",

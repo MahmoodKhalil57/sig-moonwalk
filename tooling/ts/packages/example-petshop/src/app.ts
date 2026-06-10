@@ -8,6 +8,7 @@ import { Hono } from "hono";
 import { mount, type RouteContract } from "@suluk/hono";
 import { buildApp } from "@suluk/builder";
 import { scalarResponse } from "@suluk/scalar";
+import { adminApp } from "@suluk/admin";
 import { entities } from "./entities";
 import { makeHandlers, type CrudHandlers } from "./store";
 
@@ -29,4 +30,13 @@ export const app = mount(new Hono(), routes);
 // the derived docs surface — same v4 document, two renderings
 app.get("/openapi.json", (c) => c.json(built.backend.document as unknown as Record<string, unknown>));
 app.get("/scalar", () => scalarResponse(built.backend.document));
-app.get("/", (c) => c.text("Petshop demo — try /scalar · /openapi.json · /pet · /category (GET/POST), /pet/:id (GET/PATCH/DELETE)"));
+
+// the /superadmin web admin panel — the SAME cockpit as the vscode extension, web-hosted.
+// Demo gate: an x-role header (in production, wire authorize to @suluk/better-auth principalFromSession).
+app.route("/", adminApp({
+  document: built.backend.document,
+  title: "Petshop",
+  authorize: (c) => c.req.header("x-role") === "superadmin",
+}));
+
+app.get("/", (c) => c.text("Petshop demo — try /scalar · /openapi.json · /superadmin (x-role: superadmin) · /pet · /category"));

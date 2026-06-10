@@ -8,11 +8,13 @@
  * All real logic lives in ./cycle, ./codegen, ./logic (bun-tested); this file is the thin vscode wiring.
  */
 import * as vscode from "vscode";
-import { validateSource, auditSource, previewHtml, looksLikeV4, type Diagnostic } from "./logic";
-import { buildCycle, type CycleModel, type CycleLayer, type CycleItem, type LayerStatus } from "./cycle";
-import { entityNames, generateForm, generateTable, generateStoresModule, exportV4Json } from "./codegen";
-import { buildBuilderModel, generateAppFiles, generateRegistryJson, type BuilderNode } from "./builder";
-import { deployPlan, deployMarkdown } from "./deploy";
+import {
+  validateSource, auditSource, previewHtml, looksLikeV4, type Diagnostic,
+  buildCycle, type CycleModel, type CycleLayer, type CycleItem, type LayerStatus,
+  entityNames, generateForm, generateTable, generateStoresModule, exportV4Json,
+  buildBuilderModel, generateAppFiles, generateRegistryJson, type BuilderNode,
+  deployPlan, deployMarkdown,
+} from "@suluk/cockpit";
 import { parseDocument } from "@suluk/core";
 
 const SUPPORTED = new Set(["yaml", "json", "yml"]);
