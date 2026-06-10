@@ -1,6 +1,6 @@
 {
   "name": "@suluk/cockpit",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "The pure cockpit core (cycle model \u00b7 builder model \u00b7 codegen \u00b7 deploy planning \u00b7 validate/audit/preview) shared by the vscode extension and the /superadmin web admin panel. CANDIDATE tooling.",
   "type": "module",
   "main": "src/index.ts",

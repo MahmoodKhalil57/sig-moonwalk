@@ -1,6 +1,6 @@
 {
   "name": "@suluk/builder",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Tiered contract-narrowing DSL (components→blocks→sections→pages) bound to the Suluk cycle. A page composes sections; buildApp emits backend (routes+v4) AND frontend (page TSX) at once. Inspired by multivendorbuilder's DSL, rebuilt with the Suluk discipline. CANDIDATE tooling.",
   "type": "module",
   "main": "src/index.ts",
