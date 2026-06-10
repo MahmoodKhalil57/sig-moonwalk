@@ -1,6 +1,6 @@
 {
   "name": "@suluk/better-auth",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Official Better-Auth-on-Hono support for Suluk: auth methods -> v4 securitySchemes; ingest Better Auth's OpenAPI 3.0 -> v4; session -> principal for per-viewer docs. CANDIDATE tooling.",
   "type": "module",
   "main": "src/index.ts",

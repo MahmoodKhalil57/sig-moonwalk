@@ -1,6 +1,6 @@
 {
   "name": "@suluk/nano-stores",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "v4 'Suluk' contracts -> typed Nano Stores client: per-operation fetcher/mutator stores (@nanostores/query) with Zod-validated I/O. CANDIDATE tooling.",
   "type": "module",
   "main": "src/index.ts",

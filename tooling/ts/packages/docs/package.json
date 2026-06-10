@@ -1,6 +1,6 @@
 {
   "name": "@suluk/docs",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Generate an intuitive static documentation site for a Bun/TS monorepo, straight from source (package.json + doc-comments + exports + README/ARCHITECTURE). Deployable to GitHub Pages. CANDIDATE tooling.",
   "type": "module",
   "main": "src/index.ts",

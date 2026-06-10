@@ -1,6 +1,6 @@
 {
   "name": "@suluk/visual",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Pixel-confidence by construction: verify each UI primitive's pixels ONCE (a golden snapshot), and confidence propagates to every generated UI via content-hashing + the deterministic generator — re-verify a primitive only when its source changes. CANDIDATE tooling.",
   "type": "module",
   "main": "src/index.ts",

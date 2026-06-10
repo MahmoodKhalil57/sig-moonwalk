@@ -1,6 +1,6 @@
 {
   "name": "@suluk/cost",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Cost as a contract facet: declare per-operation cost (incl. third-party usage), bubble it into the v4 doc/Scalar/tests, and meter the ACTUAL per-user cost at runtime (frontend action -> operation -> third-party). Display as-is. CANDIDATE tooling.",
   "type": "module",
   "main": "src/index.ts",

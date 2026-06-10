@@ -1,6 +1,6 @@
 {
   "name": "@suluk/deploy",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Deploy a Suluk app behind a SWAPPABLE target interface. Cloudflare is the first provider (Workers + D1 + static assets) \u2014 an adapter, since the stack is already Cloudflare-native. CANDIDATE tooling.",
   "type": "module",
   "main": "src/index.ts",

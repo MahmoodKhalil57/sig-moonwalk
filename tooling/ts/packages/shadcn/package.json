@@ -1,6 +1,6 @@
 {
   "name": "@suluk/shadcn",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "v4 'Suluk' Schema Objects -> shadcn/ui form + table specs and TSX scaffolds (react-hook-form + zodResolver). Codegen, no runtime UI deps. CANDIDATE tooling.",
   "type": "module",
   "main": "src/index.ts",

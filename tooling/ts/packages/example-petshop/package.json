@@ -1,6 +1,6 @@
 {
   "name": "@suluk/example-petshop",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "End-to-end demo: Drizzle tables \u2192 @suluk/builder \u2192 a live validated CRUD server + Scalar docs + generated frontend, all from one source. CANDIDATE tooling.",
   "type": "module",

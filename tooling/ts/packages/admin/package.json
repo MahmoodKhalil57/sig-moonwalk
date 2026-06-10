@@ -1,6 +1,6 @@
 {
   "name": "@suluk/admin",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "The /superadmin web admin panel — the same cockpit as the vscode extension (@suluk/cockpit core), rendered as a Hono-served web UI. Superadmin-gated. CANDIDATE tooling.",
   "type": "module",
   "main": "src/index.ts",

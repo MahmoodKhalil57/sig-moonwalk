@@ -1,6 +1,6 @@
 {
   "name": "@suluk/core",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Core library for the OpenAPI v4.0 Suluk candidate: parse, validate, resolve, signature, ADA, match.",
   "type": "module",
   "module": "src/index.ts",

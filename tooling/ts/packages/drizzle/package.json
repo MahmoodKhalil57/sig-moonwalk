@@ -1,6 +1,6 @@
 {
   "name": "@suluk/drizzle",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Drizzle ORM schema -> v4 'Suluk' contract: table -> Zod (drizzle-zod) -> v4 Schema Objects, DB metadata, and generated CRUD RouteContracts. CANDIDATE tooling.",
   "type": "module",
   "main": "src/index.ts",
