@@ -1,0 +1,35 @@
+{
+  "name": "suluk-vscode",
+  "displayName": "Suluk — OpenAPI v4 (Candidate)",
+  "description": "Validate, audit, and preview (Scalar/Swagger) OpenAPI v4.0 'Suluk' candidate documents. CANDIDATE tooling — not official OAS.",
+  "version": "0.1.0",
+  "type": "module",
+  "publisher": "suluk",
+  "engines": { "vscode": "^1.85.0" },
+  "categories": ["Linters", "Other"],
+  "main": "./dist/extension.js",
+  "activationEvents": ["onLanguage:yaml", "onLanguage:json"],
+  "contributes": {
+    "commands": [
+      { "command": "suluk.validate", "title": "Suluk: Validate v4 document" },
+      { "command": "suluk.audit", "title": "Suluk: Audit documentation coverage" },
+      { "command": "suluk.previewScalar", "title": "Suluk: Preview in Scalar" },
+      { "command": "suluk.previewSwagger", "title": "Suluk: Preview in Swagger UI" }
+    ]
+  },
+  "dependencies": {
+    "@suluk/core": "workspace:*",
+    "@suluk/hono": "workspace:*",
+    "@suluk/scalar": "workspace:*",
+    "@suluk/swagger": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/vscode": "^1.85.0"
+  },
+  "scripts": {
+    "test": "bun test",
+    "typecheck": "tsc --noEmit -p .",
+    "build": "bun build ./src/extension.ts --outdir dist --target node --external vscode --format cjs"
+  }
+}
