@@ -25,3 +25,6 @@ export const entities: Entity[] = [
   { name: "Pet", schema: tableToV4(pet).insert },
   { name: "Category", schema: tableToV4(category).insert },
 ];
+
+// entity name → the Drizzle table backing it (the data floor's system of record).
+export const tables = { Pet: pet, Category: category } as const;

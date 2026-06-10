@@ -19,7 +19,9 @@
     "drizzle-orm": "^0.45.2",
     "hono": "^4.0.0",
     "@hono/zod-validator": "^0.8.0",
-    "zod": "^4.4.3"
+    "zod": "^4.4.3",
+    "@suluk/nano-stores": "workspace:*",
+    "nanostores": "^1.3.0"
   },
   "scripts": {
     "start": "bun src/main.ts",

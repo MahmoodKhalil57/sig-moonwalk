@@ -9,19 +9,21 @@ import { mount, type RouteContract } from "@suluk/hono";
 import { buildApp } from "@suluk/builder";
 import { scalarResponse } from "@suluk/scalar";
 import { adminApp } from "@suluk/admin";
-import { entities } from "./entities";
-import { makeHandlers, type CrudHandlers } from "./store";
+import { entities, tables } from "./entities";
+import { drizzleHandlers, type CrudHandlers } from "./store";
 
 export const built = buildApp({ entities, info: { title: "Petshop", version: "1.0.0" } });
 
-// one in-memory store per entity; bind its handlers to the matching generated routes.
-const stores = new Map<string, CrudHandlers>(entities.map((e) => [e.name, makeHandlers()]));
+// REAL Drizzle handlers, one per entity table, bound to the matching contract-generated routes.
+const handlersByEntity = new Map<string, CrudHandlers>(
+  entities.map((e) => [e.name, drizzleHandlers(tables[e.name as keyof typeof tables] as Parameters<typeof drizzleHandlers>[0])]),
+);
 
 const routes: RouteContract[] = built.backend.routes.map((r) => {
   const m = /^(list|create|get|update|delete)(.+)$/.exec(r.name ?? "");
   if (!m) return r;
   const [, op, entity] = m;
-  const handlers = stores.get(entity);
+  const handlers = handlersByEntity.get(entity);
   return handlers ? { ...r, handler: handlers[op as keyof CrudHandlers] as RouteContract["handler"] } : r;
 });
 
