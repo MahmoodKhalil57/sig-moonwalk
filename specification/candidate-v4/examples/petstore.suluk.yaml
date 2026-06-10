@@ -1,0 +1,116 @@
+# Petstore — OpenAPI v4.0 "Suluk" CANDIDATE worked example.
+#
+# A validation artifact: the canonical petstore expressed under the Suluk candidate decisions
+# (ADRs C001–C018). Annotations cite the governing § of SPEC.md / ADR. Where this DIVERGES from
+# the initial proposal's doc/initial-proposals/examples/petstore.yaml, the divergence is marked
+# "DIVERGES:" with the deciding ADR. This file is a candidate artifact, NOT official OAS.
+#
+# What this example VALIDATES (i.e. the candidate could express it):
+#  - the pinned canonical model (§1): pathItem.requests name-keyed; each Request IS an operation
+#  - query-in-uriTemplate + parameterSchema dual role (should-fix #1; §2/§4)
+#  - pathItem inheritance via the OPTIONAL `shared` wrapper (C012 #116; DIVERGES from proposal)
+#  - pathResponses at pathItem level (§1.3; DIVERGES: proposal called them `responses`)
+#  - externalized security referenced BY NAME (C014 #69; DIVERGES: proposal left ops unsecured)
+#  - reusable requests/responses in components (§8; DIVERGES: proposal used 3.x requestBodies)
+# What it SURFACES as honest gaps (from the C017 upgrade capstone):
+#  - schema `xml:` objects (13× in the source) have NO ADR target -> flagged, dropped (lossy)
+#  - multi-distinct-media-type bodies fan out OR use equivalent-media-type lists (C016)
+
+openapi: 4.0.0-candidate
+info:
+  title: Swagger Petstore — OpenAPI v4.0 Suluk Candidate
+  version: 1.0.15
+  license: { name: Apache 2.0, url: http://www.apache.org/licenses/LICENSE-2.0.html }
+servers:
+  - { url: https://petstore.example/api }      # § server IDENTITY is a by-name shape primitive (C015 #55);
+                                                #   environment URLs are a deployment-layer concern (out of core).
+paths:
+  # ---- collection: create + list (no path/query params) ----
+  "pet":
+    requests:                                   # § pathItem.requests: name-keyed map; each entry IS an operation (§1.3/1.4)
+      createPet:                                #   name unique WITHIN the pathItem (C009); ADA derives its signature (§3)
+        method: post
+        contentType: application/json           # § flattened body: contentType + contentSchema (no 3.x requestBody)
+        contentSchema: { $ref: "#/components/schemas/Pet" }   # § ref by typed-component-NAME (C013 #26/#49)
+        security: [ petstore_auth: [ "write:pets" ] ]         # § security referenced by name (C014 #69)
+        responses:                              # § named responses; each carries its own `status` (§5, C009)
+          created:      { status: 201, contentType: application/json, contentSchema: { $ref: "#/components/schemas/Pet" } }
+          failCreate:   { status: 400, contentType: application/http-problem }
+      listPets:
+        method: get
+        responses:
+          ok:           { status: 200, contentType: application/json, contentSchema: { type: array, items: { $ref: "#/components/schemas/Pet" } } }
+
+  # ---- query participates in the uriTemplate KEY (identity) AND parameterSchema.query (validation) ----
+  "pet/findByStatus{?status}":                  # § query in the uriTemplate (C005 Tier-Q, form-query operator).
+    requests:                                   #   SHOULD-FIX #1: query has a DUAL role — it MAY appear in the
+      findByStatus:                             #   uriTemplate (for operation identity/matching) AND in the
+        method: get                             #   parameterSchema.query slot (for value validation). Both, not either.
+        parameterSchema:
+          query:                                # § per-location SLOT (C004 #20); the slot validates, the template routes
+            type: object
+            required: [ status ]
+            properties:
+              status: { type: string, enum: [ available, pending, sold ] }
+        responses:
+          ok:           { status: 200, contentType: application/json, contentSchema: { type: array, items: { $ref: "#/components/schemas/Pet" } } }
+          failStatus:   { status: 400, description: Invalid status value }
+
+  # ---- path param + pathItem-level inheritance via the OPTIONAL `shared` wrapper ----
+  "pet/{petId}":
+    shared:                                     # § DIVERGES from proposal (which put parameterSchema directly on the
+      parameterSchema:                          #   pathItem). C012 #116: inheritance is an OPTIONAL `shared` wrapper,
+        path:                                   #   allOf-composed into each request's parameterSchema. (@0.55, candidate)
+          type: object
+          properties: { petId: { type: string, format: int64 } }
+    requests:
+      getPet:
+        method: get
+        responses:
+          ok:           { status: 200, contentType: application/json, contentSchema: { $ref: "#/components/schemas/Pet" } }
+      updatePet:
+        method: put
+        contentType: application/json
+        contentSchema: { $ref: "#/components/schemas/Pet" }
+        security: [ petstore_auth: [ "write:pets" ] ]
+        responses:
+          updated:      { status: 200, contentType: application/json, contentSchema: { $ref: "#/components/schemas/Pet" } }
+          failUpdate:   { status: 400 }
+      deletePet:
+        method: delete
+        security: [ petstore_auth: [ "write:pets" ] ]
+        responses:
+          deleted:      { status: 204 }
+    pathResponses:                              # § DIVERGES: proposal called this `responses` at pathItem level;
+      petNotFound:  { status: 404, description: The pet was not found }   #   our §1.3 names it `pathResponses`
+      serverError:  { status: 5XX, contentType: application/http-problem }
+
+components:                                     # § dynamic-key map; the referencing anchor (C013)
+  schemas:
+    Pet:
+      type: object
+      required: [ name, photoUrls ]
+      properties:
+        id:        { type: integer, format: int64 }
+        name:      { type: string }
+        category:  { $ref: "#/components/schemas/Category" }
+        photoUrls: { type: array, items: { type: string } }
+        tags:      { type: array, items: { $ref: "#/components/schemas/Tag" } }
+        status:    { type: string, enum: [ available, pending, sold ] }
+      # ⚠ LOSSY (C017): the source Pet had `xml:` annotations (name/wrapped) on the schema and items.
+      #   No Suluk ADR models XML serialization metadata -> DROPPED here, flagged for human review.
+    Category: { type: object, properties: { id: { type: integer, format: int64 }, name: { type: string } } }
+    Tag:      { type: object, properties: { id: { type: integer, format: int64 }, name: { type: string } } }
+  # § reusable security definitions; v4 references them BY NAME from each request's `security` (C014 #69).
+  securitySchemes:
+    petstore_auth:
+      type: oauth2
+      flows:
+        implicit:
+          authorizationUrl: https://petstore.example/oauth/authorize
+          scopes: { "write:pets": modify pets, "read:pets": read pets }
+    api_key: { type: apiKey, name: api_key, in: header }
+
+# apiResponses: document-level responses reusable across ALL operations (§5) — e.g. a global serverError.
+apiResponses:
+  globalServerError: { status: 5XX, contentType: application/http-problem }

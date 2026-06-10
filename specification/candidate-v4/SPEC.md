@@ -566,6 +566,17 @@ Single-segment variables (Tier 1) cannot capture a literal `/` in the captured v
 
 > ⚠ **Candidate @0.62**: Slash-bearing single-value path parameters (e.g., `/bucket/{+path}` where the user intends to capture `/folder/subfolder/file.txt`) are INEXPRESSIBLE in the parseable profile without the reserved explode operator. This is a conscious expressiveness trade-off: forbidden operators are the price of deterministic reverse parsing. Non-slash-bearing recursion (e.g., `/api/v1/{resource}/{id}` with independent segment variables) is fully supported.
 
+#### 2.2.1 Query parameters — dual role (normative)
+
+A query parameter has up to **two distinct, non-exclusive roles** (resolves the placement question):
+
+1. **Identity (uriTemplate).** A query parameter named in the uriTemplate key via a Tier-Q form-query expression — e.g. `pet/findByStatus{?status}` — **participates in operation identity**: it is part of the matcher input, so two requests distinguished only by query are different operations. The query component is parsed as a **key-set**, order- and repetition-insensitive (Tier-Q); the operator (`{?…}`/`{&…}`) affects value-joining within a key, not key routing.
+2. **Validation (slot).** A query parameter declared in the `parameterSchema.query` slot (§4, C004) is **validated** against that JSON Schema at runtime.
+
+The roles compose: a parameter MAY be in **both** (template for routing/identity, slot for value validation — see the petstore example, `pet/findByStatus{?status}`), in the **slot only** (a pure runtime filter that does not distinguish operations — the common case), or — rarely — in the **template only** (identity-bearing, validated by the template literal alone). Query parameters in the slot but absent from the template do **not** participate in signature matching.
+
+> ⚠ **Candidate @0.62 / DEFERRED**: the **evaluative mapping** — how a raw query-string (always-string values, repeated keys, no native types) becomes the JSON instance the `query` slot validates — is deferred (Hudlow "a query string is not JSON", #100/#108). The *identity* role above is closed by the C005 matcher; the *validation* role's deserialization is not.
+
 ### 2.3 Grammar & Parse Model
 
 #### Normative Observable Behavior
