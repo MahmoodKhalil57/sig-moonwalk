@@ -17,16 +17,28 @@ one Derivation, never the source (this mirrors Suluk's own "the Document is a pr
 discipline).
 
 ```
-                        ┌──────────────────────────── Derivations ───────────────────────────┐
-   Contracts            │                                                                     │
-  (source of truth)     │   v4 OpenAPI doc ──▶ 3.1 downgrade ──▶ Scalar / Swagger UI          │
-  ┌───────────────┐     │        │                                                            │
-  │ Hono routes   │     │        ├──▶ TS types (consumer SDKs)                                │
-  │ Zod schemas   │ ───▶│        ├──▶ request-validation middleware (same schemas)            │
-  │ Better Auth   │     │        ├──▶ auto-generated contract TESTS (executable checks)       │
-  └───────────────┘     │        └──▶ documentation-coverage audit (under-doc detection)      │
-                        └─────────────────────────────────────────────────────────────────────┘
+   Data floor               Contracts                         Derivations (projections of the hub)
+  ┌──────────────┐        ┌───────────────┐        ┌──────────────────────────────────────────────┐
+  │ Drizzle      │  CRUD  │ Hono routes   │        │  v4 doc ─▶ 3.1 downgrade ─▶ Scalar / Swagger  │
+  │  tables      │ ─────▶ │ Zod schemas   │ ─────▶ │     │                                          │
+  │ (system of   │        │ Better Auth   │  v4    │     ├──▶ Nano Stores client (state corner)     │
+  │  record)     │        │  settings     │  hub   │     ├──▶ shadcn forms / tables (UI corner)     │
+  └──────────────┘        └───────────────┘        │     ├──▶ request-validation middleware         │
+                                                   │     ├──▶ auto-generated contract TESTS         │
+                                                   │     └──▶ documentation-coverage audit          │
+                                                   └──────────────────────────────────────────────┘
+                                       ▲
+                          ┌────────────┴─────────────┐
+                          │  suluk-vscode = the COCKPIT — every layer above is visible, navigable,
+                          │  and actionable from one surface, re-projected per viewer + time.
+                          └──────────────────────────────────────────────────────────────────────┘
 ```
+
+The cycle is now **declarative end to end**: a Drizzle table is the system of record (`@suluk/drizzle`
+emits its CRUD RouteContracts); the contract projects to the v4 hub; and from the hub fall the docs
+(`@suluk/scalar`/`swagger`), the client **state** (`@suluk/nano-stores`), the **UI** (`@suluk/shadcn`),
+the validation, the tests, and the audit. The developer authors the data + contract; everything else is
+derived.
 
 ## The doc is a function, not a file
 
@@ -51,14 +63,19 @@ A static export is just `render(contracts, publicPrincipal, now)`. Nothing speci
 
 | Package | Role | Status |
 |---|---|---|
-| `@suluk/core` | parse · validate(meta-schema) · resolve-by-name · signature · ADA · match | ✅ built, tested |
-| `@suluk/openapi-compat` | v4 ⇄ 3.1 (the Scalar/Swagger lever; ingest external 3.x via `upgrade`) | ✅ built, tested |
-| `@suluk/zod` | lossless Zod ⇄ v4 Schema Objects (fixpoint-proven) | ✅ built, tested |
-| `@suluk/scalar` / `@suluk/swagger` | render a v4 doc via the 3.1 downgrade | ✅ built, tested |
-| `@suluk/hono` | the derivation engine: `render(routes, principal, now) -> v4`; validation middleware; **audit**; **contract-test generation** | ◻ next |
-| `@suluk/better-auth` | official Better-Auth-on-Hono: auth settings → securitySchemes/security; ingest its `openAPI()` output via `compat.upgrade` | ◻ next |
-| `suluk-core` (Rust) | perf core: parse + signature + reverse-parse matcher | ◻ planned |
-| `tooling/vscode/` | validate (core) + "Preview in Scalar/Swagger" (compat) — the higher-level proof | ◻ planned |
+| `@suluk/core` | parse · validate(meta-schema) · resolve-by-name · signature · ADA · match | ✅ 19 tests |
+| `@suluk/openapi-compat` | v4 ⇄ 3.1 (the Scalar/Swagger lever; ingest external 3.x via `upgrade`) | ✅ 12 tests |
+| `@suluk/zod` | lossless Zod ⇄ v4 Schema Objects (fixpoint-proven) | ✅ 29 tests |
+| `@suluk/scalar` / `@suluk/swagger` | render a v4 doc via the 3.1 downgrade | ✅ 5 + 6 tests |
+| `@suluk/hono` | the derivation engine: `render(routes, principal, now) -> v4`; validation middleware; **audit**; **contract-test generation** | ✅ 14 tests |
+| `@suluk/better-auth` | official Better-Auth-on-Hono: auth settings → securitySchemes/security; ingest its `openAPI()` output via `compat.upgrade`; session → principal | ✅ 12 tests |
+| `@suluk/drizzle` | **data floor**: Drizzle table → Zod (drizzle-zod) → v4 schemas + DB metadata + **CRUD RouteContracts** | ✅ 17 tests |
+| `@suluk/nano-stores` | **state corner**: v4 contracts → typed `@nanostores/query` fetcher/mutator stores (Zod-guarded I/O) | ✅ 8 tests |
+| `@suluk/shadcn` | **UI corner**: v4 Schema Objects → form/table specs + shadcn TSX (react-hook-form + zodResolver) | ✅ 20 tests |
+| `suluk-core` (Rust) | perf core: parse + signature + reverse-parse matcher; 2nd independent impl | ✅ 9 tests |
+| `suluk-vscode` | **the cockpit** — every layer visible/actionable from one surface; cycle TreeView, "View as", codegen | ✅ 26 tests |
+
+**Total: 11 TS packages (168 tests) + a Rust core (9 tests) = 177 green.**
 
 ## `@suluk/hono` — the derivation engine (design)
 
@@ -89,10 +106,44 @@ A static export is just `render(contracts, publicPrincipal, now)`. Nothing speci
 - Provide the `principal` extractor that feeds `render(contracts, principal, now)` — closing the loop on
   per-viewer docs.
 
+## The three cycle-closing packages
+
+- **`@suluk/drizzle` (data floor).** A Drizzle table is the system of record. `tableSchemas` (drizzle-zod
+  select/insert/update) → `tableToV4` (via `@suluk/zod`) → `tableComponents`; `tableMetadata` reads
+  pk/notNull/hasDefault/enum off the column descriptors; `crudRoutes(table)` emits list/get/create/update/
+  delete RouteContracts. `emitV4(crudRoutes(table))` validates against the meta-schema — the floor reaches
+  the hub with no hand-written contract.
+- **`@suluk/nano-stores` (state corner).** The *same* RouteContracts the server is built from project into a
+  typed `@nanostores/query` client: GET → fetcher stores, the rest → mutator stores, with the contract's Zod
+  guarding request **and** response edges (`SchemaViolationError`). One contract, two projections.
+- **`@suluk/shadcn` (UI corner).** v4 Schema Object → `formSpec`/`tableSpec` descriptors → shadcn TSX
+  (`renderFormTsx`/`renderTableTsx`: react-hook-form + zodResolver). Codegen only — no runtime UI deps.
+
+## `suluk-vscode` — the cockpit (the unifying surface)
+
+The extension is where the whole cycle becomes coherent: one v4 document is the hub, and every projection is
+visible, navigable, and actionable from one place.
+
+- **`buildCycle(doc, {principal?})` (pure, tested).** An 8-layer model — *data · contract · auth · document ·
+  docs · state · ui · tests* — each layer a projection of the hub. It is a **function of the viewer**: pass
+  scopes and scope-gated operations the principal can't reach are filtered out (the per-WHO projection,
+  applied at the hub; the hidden count surfaced honestly). `docChecks` = the doc as an executable check.
+- **`codegen` (pure, tested).** Actions that land files, each reusing a projection package: `generateForm`/
+  `generateTable` (shadcn TSX), `generateStoresModule` (the `@suluk/nano-stores` wiring + derived store
+  list), `exportV4Json`. The editor never reimplements a projection.
+- **The shell.** A "Suluk · Cycle" TreeView with status icons; **"View as…"** re-projects the tree to a
+  principal's scopes; commands for every codegen action; Scalar/Swagger webview previews; validate/audit
+  diagnostics in the Problems panel.
+
 ## Invariants every package keeps
 
 - **Honest losses are enumerated, never silent** — `compat` collision diagnostics, `zod` lossy-effect
-  warnings, `hono` audit findings. The pattern is uniform.
-- **Schema Objects are JSON Schema 2020-12 verbatim** across v4 / 3.1 / Zod — no re-encoding, so the
+  warnings, `hono` audit findings, `drizzle`/`shadcn` warnings. The pattern is uniform.
+- **Schema Objects are JSON Schema 2020-12 verbatim** across v4 / 3.1 / Zod / Drizzle — no re-encoding, so the
   conversions are thin and the round-trips are exact.
+- **One source, many projections.** The data + contract are authored once; docs, state, UI, validation,
+  tests, and audit are all derived — they cannot drift, because they are the same source.
+- **Pure logic + thin adapters.** Every package separates tested pure functions from a duck-typed/host shell
+  (`hono.mount`, `better-auth.mountAuth`, the vscode shell). That is why coverage is high and the host
+  bindings are trivial.
 - **CANDIDATE labeling** stays on every artifact; nothing here is official OAS.
