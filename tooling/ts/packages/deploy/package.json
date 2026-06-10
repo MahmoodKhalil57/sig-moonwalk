@@ -1,0 +1,22 @@
+{
+  "name": "@suluk/deploy",
+  "version": "0.1.0",
+  "description": "Deploy a Suluk app behind a SWAPPABLE target interface. Cloudflare is the first provider (Workers + D1 + static assets) \u2014 an adapter, since the stack is already Cloudflare-native. CANDIDATE tooling.",
+  "type": "module",
+  "main": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@suluk/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@suluk/zod": "workspace:*",
+    "zod": "^4.4.3"
+  },
+  "scripts": {
+    "test": "bun test",
+    "typecheck": "tsc --noEmit -p ."
+  }
+}

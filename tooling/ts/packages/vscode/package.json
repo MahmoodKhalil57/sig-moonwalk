@@ -34,14 +34,16 @@
       { "command": "suluk.runChecks", "title": "Suluk: Run contract checks" },
       { "command": "suluk.generateApp", "title": "Suluk: Generate full app (backend + frontend)" },
       { "command": "suluk.exportRegistry", "title": "Suluk: Export shadcn registry (whole-stack)" },
-      { "command": "suluk.refreshBuilder", "title": "Suluk: Refresh Builder", "icon": "$(refresh)" }
+      { "command": "suluk.refreshBuilder", "title": "Suluk: Refresh Builder", "icon": "$(refresh)" },
+      { "command": "suluk.deployCloudflare", "title": "Suluk: Deploy to Cloudflare (Workers + D1 + assets)", "icon": "$(cloud-upload)" }
     ],
     "menus": {
       "view/title": [
         { "command": "suluk.refreshCycle", "when": "view == suluk.cycle", "group": "navigation" },
         { "command": "suluk.viewAs", "when": "view == suluk.cycle", "group": "navigation" },
         { "command": "suluk.refreshBuilder", "when": "view == suluk.builder", "group": "navigation" },
-        { "command": "suluk.generateApp", "when": "view == suluk.builder", "group": "navigation" }
+        { "command": "suluk.generateApp", "when": "view == suluk.builder", "group": "navigation" },
+        { "command": "suluk.deployCloudflare", "when": "view == suluk.builder", "group": "navigation" }
       ]
     }
   },
@@ -51,7 +53,8 @@
     "@suluk/scalar": "workspace:*",
     "@suluk/swagger": "workspace:*",
     "@suluk/shadcn": "workspace:*",
-    "@suluk/builder": "workspace:*"
+    "@suluk/builder": "workspace:*",
+    "@suluk/deploy": "workspace:*"
   },
   "devDependencies": {
     "@types/bun": "latest",

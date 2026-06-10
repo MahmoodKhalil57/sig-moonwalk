@@ -12,6 +12,7 @@ import { validateSource, auditSource, previewHtml, looksLikeV4, type Diagnostic 
 import { buildCycle, type CycleModel, type CycleLayer, type CycleItem, type LayerStatus } from "./cycle";
 import { entityNames, generateForm, generateTable, generateStoresModule, exportV4Json } from "./codegen";
 import { buildBuilderModel, generateAppFiles, generateRegistryJson, type BuilderNode } from "./builder";
+import { deployPlan, deployMarkdown } from "./deploy";
 import { parseDocument } from "@suluk/core";
 
 const SUPPORTED = new Set(["yaml", "json", "yml"]);
@@ -245,6 +246,25 @@ export function activate(context: vscode.ExtensionContext): void {
       await vscode.workspace.fs.writeFile(uri, new TextEncoder().encode(f.content));
     }
     void vscode.window.showInformationMessage(`Suluk: generated ${files.length} files (backend + frontend + shadcn registry) into suluk-generated/.`);
+  });
+  reg("suluk.deployCloudflare", async () => {
+    const src = activeV4Source(); if (!src) { void vscode.window.showWarningMessage("Suluk: open an OpenAPI v4 document first."); return; }
+    const folder = vscode.workspace.workspaceFolders?.[0];
+    if (!folder) { void vscode.window.showWarningMessage("Suluk: open a workspace folder to deploy."); return; }
+    const plan = deployPlan(parseDocument(src));
+    const root = vscode.Uri.joinPath(folder.uri, "suluk-deploy");
+    await vscode.workspace.fs.createDirectory(root);
+    for (const f of plan.files) {
+      await vscode.workspace.fs.writeFile(vscode.Uri.joinPath(root, f.path), new TextEncoder().encode(f.content));
+    }
+    const md = vscode.Uri.joinPath(root, "DEPLOY.md");
+    await vscode.workspace.fs.writeFile(md, new TextEncoder().encode(deployMarkdown(plan)));
+    await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(md), vscode.ViewColumn.Beside);
+    // open a terminal at the deploy dir so the user runs the steps themselves (OAuth login happens here)
+    const term = vscode.window.createTerminal({ name: "Suluk · Cloudflare", cwd: root.fsPath });
+    term.show();
+    term.sendText("# Suluk: run the steps from DEPLOY.md. First: wrangler login", false);
+    void vscode.window.showInformationMessage(`Suluk: deploy files written to suluk-deploy/ — follow DEPLOY.md (${plan.steps.length} steps). Suluk won't run wrangler for you; log in in the terminal.`);
   });
 
   const onChange = () => { cycle.refresh(); builder.refresh(); };
