@@ -1,0 +1,31 @@
+{
+  "name": "@suluk/visual",
+  "version": "0.1.0",
+  "description": "Pixel-confidence by construction: verify each UI primitive's pixels ONCE (a golden snapshot), and confidence propagates to every generated UI via content-hashing + the deterministic generator \u2014 re-verify a primitive only when its source changes. CANDIDATE tooling.",
+  "type": "module",
+  "main": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@suluk/core": "workspace:*"
+  },
+  "peerDependencies": {
+    "@suluk/shadcn": "workspace:*"
+  },
+  "peerDependenciesMeta": {
+    "@suluk/shadcn": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@suluk/shadcn": "workspace:*",
+    "zod": "^4.4.3",
+    "@suluk/zod": "workspace:*"
+  },
+  "scripts": {
+    "test": "bun test",
+    "typecheck": "tsc --noEmit -p ."
+  }
+}
