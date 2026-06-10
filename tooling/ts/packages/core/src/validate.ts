@@ -12,9 +12,15 @@ export interface ValidationResult {
   errors: ValidationIssue[];
 }
 
-const ajv = new Ajv2020({ allErrors: true, strict: false });
-addFormats(ajv);
-const validateFn = ajv.compile(metaSchema as object);
+// Lazy: ajv compiles validators via `new Function`, which Cloudflare Workers forbid at IMPORT time. Compiling
+// on first use keeps @suluk/core importable on Workers (the deploy target) — you only pay (and only hit the
+// eval restriction) if you actually call validateDocument, which a Worker's request path need not.
+function buildValidator() {
+  const ajv = new Ajv2020({ allErrors: true, strict: false });
+  addFormats(ajv);
+  return ajv.compile(metaSchema as object);
+}
+let validateFn: ReturnType<typeof buildValidator> | undefined;
 
 /**
  * Validate a document's STRUCTURE against the v4 meta-schema (SPEC §1, ADRs C003/C004/C009/C013).
@@ -22,6 +28,7 @@ const validateFn = ajv.compile(metaSchema as object);
  * JSON Schema 2020-12 Schema Objects (those are validated by the 2020-12 dialect separately).
  */
 export function validateDocument(doc: unknown): ValidationResult {
+  if (!validateFn) validateFn = buildValidator();
   const valid = validateFn(doc) as boolean;
   const errors: ValidationIssue[] = (validateFn.errors ?? []).map((e) => ({
     path: e.instancePath || "/",
