@@ -4,3 +4,4 @@ tooling/**/node_modules
 tooling/ts/bun.lock
 tooling/**/target
 tooling/**/dist
+tooling/ts/.workflows
