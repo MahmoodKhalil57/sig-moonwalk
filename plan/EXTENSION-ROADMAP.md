@@ -49,19 +49,20 @@ builder — so the extension can fetch it and **diff local-contract vs deployed-
   source · validate · run checks · Scalar/Swagger preview · generate stores/form/table). Onboarding welcome
   (Open a sample / Load from URL). `saasuluk/openapi.json` committed so the demo lights up on open. The last v4
   doc is **pinned** so generating an artifact no longer blanks the trees.
-- **S1 — Environments axis + contract-drift + live cost.** `EnvironmentsProvider` tree (local / preview / prod
-  base URLs, persisted in `workspaceState`); **connect** = fetch `{base}/openapi.json` → pin → cockpit projects
-  the *live* contract; **drift** = `diffContracts(local, deployed)` (NEW pure fn in `@suluk/cockpit`, tested) →
-  added/removed/changed ops+schemas; **cost** = host-fetch `{base}/cost` → render `@suluk/cost` `summarize`;
-  **health** dot from `{base}/api/health`; one-click `openExternal` to the live app / `/superadmin` / `/scalar`.
-  No secrets. ~200 LoC. *Reuses: cockpit, cost, deploy. Ceiling 0.82.* **← cheapest-next-move.**
-- **S2 — `installModule` contract-merge** (the load-bearing modules primitive). `@suluk/builder`: a
-  `SulukModule` manifest type + `installModule(doc, mod)` that merges `schemas`/`paths`, applies cost/auth
-  facets, **namespaces entities, rewrites `$ref`s, refuses on collision, checks `requires`** — plus ONE
-  first-party `ecommerce` manifest (`Product`, `Order → $ref User`, a checkout op + `x-suluk-cost`, a `payments`
-  slot, seed) + tests. `suluk.installModule` merges into the active doc → the cockpit lights up the new
-  entities/ops/cost for free. *Reuses: builder registry, stripe provider pattern. Ceiling 0.72 — but this is THE
-  product; build the merge discipline carefully (see C021).*
+- **S1 ✓ BUILT (commit de851b7).** Environments axis + contract-drift + live cost. `EnvironmentsProvider` tree
+  (prod/local defaults, persisted, health dots); **connect** = fetch `{base}/openapi.json` → cockpit projects
+  the live contract; **drift** = `diffContracts(local, deployed)` (pure `@suluk/cockpit` fn, 12 tests); **cost**
+  = host-fetch `{base}/cost` → `formatMicroUsd`; one-click `openExternal` to the live app / `/superadmin` /
+  `/scalar`. No secrets. Adversarially reviewed (9 findings fixed — incl. the op-keying collision that could
+  report "in sync" while prod drifted, and the connect-then-diff self-compare).
+- **S2 ✓ BUILT (commit 94635df).** `installModule` contract-merge (the load-bearing modules primitive).
+  `@suluk/builder`: `SulukModule` + `installModule(doc, mod)` — merges `schemas`/`paths`, applies cost facets,
+  **refuses on collision** (entity/route/operation, incl. webhooks + self-collision), **checks `requires`**,
+  **validates the merged doc** (fail-closed), never mutates the manifest; `namespaceModule` resolves collisions
+  ($ref + op-name + path + cost rename, single-pass). First-party `ECOMMERCE` (Product, Order → `$ref` User,
+  checkout, cost, a `payments` slot). `suluk.installModule` in the extension. Proven: cockpit re-projects every
+  layer on install (6 integration tests). Adversarially reviewed (13 findings fixed — incl. the path-key
+  collision bypass and the substring double-prefix that desynced cost keys).
 
 ### MEDIUM — ceiling ~0.6, the moat + the marketplace mechanics
 
@@ -117,10 +118,15 @@ builder — so the extension can fetch it and **diff local-contract vs deployed-
   (`MahmoodKhalil.suluk-vscode`). The cockpit is interactive; saasuluk is deployed + has a committed contract.
 - **Decided:** the cockpit charter (C020) + the modules/marketplace architecture (C021). The seam and the
   decline-list are settled; the horizons are sequenced.
-- **Not yet built (the gap):** *every* OBSERVE surface (env-aware fetch, drift, live cost) and the *entire*
-  module-merge layer. The "complete interacting platform" is currently aspiration — **no working multi-module
-  install exists in the repo yet** (Module-Skeptic, capped 0.62). That is the honest frontier.
-- **Cheapest-next-move:** **S1** (Environments + drift + cost) — invariant to the vision, no secrets, proves the
-  OBSERVE seam end-to-end. Then **S2** (`installModule`) — the load-bearing modules primitive; do the
-  namespacing + collision-refuse discipline *first*, prove it with the `ecommerce` module, *then* the registry
-  browser (M2), *then* open the marketplace (L1).
+- **Built since (S1+S2):** the OBSERVE seam (env-aware connect, contract-drift, live cost) and the load-bearing
+  install-time contract-merge (refuse-on-collision + requires + namespacing + validate), both adversarially
+  reviewed. A real two-module install (ecommerce + a namespaced copy) composes cleanly — the "no working
+  multi-module install" gap the Module-Skeptic flagged is now closed at the primitive level.
+- **Still aspiration (the honest frontier):** the *curated registry browser* (M2: contract-diff-on-install +
+  conformance grade + burhan-converge), the *View-as × Environments* cross-cut (M1), provider-slot swapping
+  (M3), and the *open* marketplace (L1, gated on M2). The merge primitive exists; the distribution + trust layer
+  does not.
+- **Cheapest-next-move:** **M2** — the curated module-registry browser. The install primitive (S2) is the hard
+  part and it's done + reviewed; M2 is mostly the shadcn-registry fetch + the contract-diff-on-install UX (reuse
+  S1's `diffContracts` to preview what a module adds before installing) + a conformance grade (reuse
+  `@suluk/hono` `audit`). Curated first; open marketplace (L1) only after.
