@@ -8,12 +8,12 @@ export { validateSource, auditSource, previewHtml, looksLikeV4, type Diagnostic 
 export { buildCycle, docChecks, cycleSummary, type CycleModel, type CycleLayer, type CycleItem, type LayerStatus, type Principal, type DocCheck } from "./cycle";
 export { buildBuilderModel, builderTree, entitiesFromDoc, generateAppFiles, generateRegistryJson, type BuilderModel, type BuilderNode, type GeneratedFile } from "./builder";
 export { entityNames, generateForm, generateTable, generateStoresModule, exportV4Json } from "./codegen";
-export { deployPlan, deployMarkdown } from "./deploy";
+export { deployPlan, deployMarkdown, previewDeployPlan, previewDeployMarkdown } from "./deploy";
 export type { DeployPlan, DeployStep, DeployProvider } from "@suluk/deploy";
 // drift (OBSERVE): compare a LOCAL contract against a DEPLOYED one — the "what's drifted in prod" view (C020).
 export { diffContracts, canonical, type ContractDiff, type ChangedOp, type OpRef, type ProviderDelta, type ProviderChange } from "./drift";
 // cross-cut (M1): one contract refracted through every viewer — the scope-gated surface, the moat.
-export { crossCut, documentScopes, defaultViewers, type Viewer, type ViewerView, type GatedOp, type CrossCut } from "./crosscut";
+export { crossCut, documentScopes, defaultViewers, previewRoles, previewAllowedRoles, previewLaunchUrl, type Viewer, type ViewerView, type GatedOp, type CrossCut, type PreviewRole } from "./crosscut";
 // converge: a coherence audit over a whole contract — the cross-cutting contradictions a clean merge leaves behind.
 export { convergeContract, type ConvergeReport, type ConvergeFinding, type ConvergeCode } from "./converge";
 // diagrams: D2 source for views of the contract (ERD / the declarative cycle / the operation surface) — another projection.

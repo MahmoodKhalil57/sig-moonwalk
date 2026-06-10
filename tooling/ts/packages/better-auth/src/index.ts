@@ -11,3 +11,6 @@ export { authSecuritySchemes, type AuthMethods, type AuthSecurity } from "./secu
 export { normalizeOas30, ingestAuthOpenAPI, mergeAuth, type IngestOptions } from "./ingest";
 export { principalFromSession, type Principal, type SessionLike, type PrincipalOptions } from "./principal";
 export { mountAuth, type AuthHandlerLike, type HonoLike, type MountAuthOptions } from "./mount";
+// live role-preview (charter-bounded by C020): the fail-closed, deploy-gated role-login handler. The extension
+// holds NO token — it deep-links this route in the browser; the credentialed mint happens here, server-side.
+export { previewLoginHandler, isPreviewRuntime, type PreviewRequestLike, type PreviewEnvLike, type MintedSession, type PreviewLoginOptions } from "./preview";

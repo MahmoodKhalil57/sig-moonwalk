@@ -10,6 +10,10 @@ export { AUTH } from "./auth";
 export { ECOMMERCE } from "./ecommerce";
 export { CRM } from "./crm";
 export { BILLING } from "./billing";
+// `preview` is a session-establishing fragment — exported so a deploy flow can install it DELIBERATELY, but
+// intentionally ABSENT from FIRST_PARTY_REGISTRY.modules and every STACK_TEMPLATE below: it must never be
+// marketplace-browsable (suluk.installModule) or auto-composed (suluk.composePlatform). Supply-chain discipline.
+export { PREVIEW, PREVIEW_ONLY_MARKER } from "./preview";
 
 export const FIRST_PARTY_REGISTRY: ModuleRegistry = {
   name: "Suluk first-party modules",

@@ -22,6 +22,12 @@ export interface DeployInput {
   assetsDir?: string;
   /** Worker runtime compatibility date (default DEFAULT_COMPAT_DATE). Pass today's date in production. */
   compatibilityDate?: string;
+  /** Emit a PREVIEW deployment variant (charter-bounded role-preview): a `${slug}-preview` Worker with the
+   *  two fail-closed locks — a `SULUK_PREVIEW="1"` var + a `PREVIEW_DB` D1 binding on an isolated
+   *  `${slug}-preview-db` — plus a seed.sql with one throwaway demo user per role. Prod plans never set these. */
+  preview?: boolean;
+  /** The roles to seed for a preview deployment (from the contract's User.role enum; cockpit threads them in). */
+  previewRoles?: string[];
 }
 
 /** A file the provider wants written into the project. */

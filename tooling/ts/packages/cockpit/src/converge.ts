@@ -8,9 +8,9 @@
  */
 import { buildAda } from "@suluk/core";
 import type { OpenAPIv4Document, Request, SchemaOrRef, SecurityRequirement } from "@suluk/core";
-import { schemaRefName } from "@suluk/builder";
+import { schemaRefName, PREVIEW_ONLY_MARKER } from "@suluk/builder";
 
-export type ConvergeCode = "dangling-ref" | "undeclared-scheme" | "orphan-scope" | "empty-path" | "unreferenced-entity";
+export type ConvergeCode = "dangling-ref" | "undeclared-scheme" | "orphan-scope" | "empty-path" | "unreferenced-entity" | "preview-op-exposed";
 
 export interface ConvergeFinding {
   code: ConvergeCode;
@@ -91,6 +91,22 @@ export function convergeContract(doc: OpenAPIv4Document): ConvergeReport {
 
   // unreferenced entities — a schema nothing $refs (dead weight; info, not an error)
   for (const name of Object.keys(schemas)) if (!referenced.has(name)) findings.push({ code: "unreferenced-entity", severity: "info", message: `entity "${name}" is referenced by no $ref`, where: name });
+
+  // preview-only operations — a `x-suluk-preview-only` op (the /preview/login backdoor) must NEVER silently sit
+  // in a contract that gets deployed to prod. WARN (not error) so its presence is always surfaced: it is only
+  // safe behind the deploy-time SULUK_PREVIEW gate; confirm this projection is a preview, not production. Walk
+  // BOTH path operations AND webhooks — a marker hidden on a webhook is exactly the same backdoor surface.
+  const previewMarked = (req: unknown): boolean => (req as Record<string, unknown> | null | undefined)?.[PREVIEW_ONLY_MARKER] === true;
+  for (const o of buildAda(doc).operations) {
+    if (previewMarked(o.request as unknown)) {
+      findings.push({ code: "preview-op-exposed", severity: "warn", message: `operation "${o.name}" is preview-only (a role-login backdoor) — it must reach prod ONLY behind the SULUK_PREVIEW gate; confirm this is a preview deployment, not production`, where: o.name });
+    }
+  }
+  for (const [name, req] of Object.entries((doc as { webhooks?: Record<string, Request> }).webhooks ?? {})) {
+    if (previewMarked(req as unknown)) {
+      findings.push({ code: "preview-op-exposed", severity: "warn", message: `webhook "${name}" is preview-only (a role-login backdoor) — it must reach prod ONLY behind the SULUK_PREVIEW gate; confirm this is a preview deployment, not production`, where: name });
+    }
+  }
 
   return { findings, clean: !findings.some((f) => f.severity === "error") };
 }

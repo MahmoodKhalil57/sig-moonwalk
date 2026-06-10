@@ -74,3 +74,30 @@ describe("schemaToSql + the provider registry", () => {
     expect(providers.cloudflare.name).toBe("cloudflare");
   });
 });
+
+describe("cloudflare provider — PREVIEW variant (the two locks + a safe seed)", () => {
+  const plan = cloudflare.generate({ ...input, preview: true, previewRoles: ["admin", "super-admin", "x'); DROP TABLE user;--"] });
+  const wrangler = plan.files.find((f) => f.path === "wrangler.jsonc")!.content;
+  const seed = plan.files.find((f) => f.path === "seed.sql")!.content;
+  test("names a -preview Worker with BOTH locks (SULUK_PREVIEW var + PREVIEW_DB binding)", () => {
+    const cfg = JSON.parse(wrangler);
+    expect(cfg.name).toContain("-preview");
+    expect(cfg.vars.SULUK_PREVIEW).toBe("1");
+    expect(cfg.d1_databases.some((d: { binding: string }) => d.binding === "PREVIEW_DB")).toBe(true);
+    expect(cfg.d1_databases.some((d: { binding: string }) => d.binding === "DB")).toBe(true);
+  });
+  test("seedSql sanitizes role names — a hostile role is SKIPPED, never interpolated into SQL", () => {
+    expect(seed).toContain("preview-admin");
+    expect(seed).toContain("preview-super-admin"); // hyphen is safe
+    expect(seed).not.toContain("DROP TABLE");      // the injection payload is rejected
+    expect(seed).toContain("SKIPPED 1 role");      // seedSql's own defense-in-depth filter surfaces it
+  });
+  test("a teardown step is included (a standing preview is a live credentialed surface)", () => {
+    expect(plan.steps.some((s) => s.cmd.includes("wrangler delete"))).toBe(true);
+  });
+  test("the PROD plan sets none of it", () => {
+    const prod = cloudflare.generate(input).files.find((f) => f.path === "wrangler.jsonc")!.content;
+    expect(prod).not.toContain("SULUK_PREVIEW");
+    expect(prod).not.toContain("PREVIEW_DB");
+  });
+});

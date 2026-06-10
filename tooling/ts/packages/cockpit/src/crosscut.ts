@@ -94,3 +94,64 @@ export function crossCut(doc: OpenAPIv4Document, viewers: Viewer[]): CrossCut {
   }
   return { operations: ops.map((o) => ({ name: o.name, detail: o.detail })), viewers: views, gated };
 }
+
+/** A principal you can preview the running app AS — derived from the contract, never hardcoded. */
+export interface PreviewRole {
+  label: string;
+  /** the role token passed to the preview deploy's /preview/login?role=… (or "anonymous"). */
+  role: string;
+  /** the scopes this role implies in the cross-cut (here, just the role itself; the runtime maps role→scopes). */
+  scopes: string[];
+  authenticated: boolean;
+}
+
+/**
+ * The previewable principals for live role-preview (the LAST roadmap slice): anonymous, then ONE per role the
+ * contract's `User.role` enum declares (the auth module ships ["user","admin","superadmin"]). Pure; degrades
+ * HONESTLY to anonymous-only when there is no User.role enum — never a hardcoded role list. The extension turns
+ * each into a deep-link to the preview deploy's own login; the cockpit never mints or holds a session.
+ */
+// the safe identifier charset a previewable role name must match — it flows into a URL, into seed.sql, AND into
+// the deployed gate's allow-list, so all three agree on exactly this set. Anything else is not previewable.
+const SAFE_ROLE = /^[A-Za-z0-9_-]{1,40}$/;
+
+export function previewRoles(doc: OpenAPIv4Document): PreviewRole[] {
+  const anonymous: PreviewRole = { label: "anonymous", role: "anonymous", scopes: [], authenticated: false };
+  const user = (doc.components?.schemas as Record<string, unknown> | undefined)?.["User"] as
+    | { properties?: { role?: { enum?: unknown } } }
+    | undefined;
+  const raw = user?.properties?.role?.enum;
+  const seen = new Set<string>();
+  const roles = (Array.isArray(raw) ? raw : [])
+    .filter((r): r is string => typeof r === "string" && r.length > 0)
+    // exclude the RESERVED "anonymous" (it is never a mintable session — login-less by definition), apply the safe
+    // charset (URL + SQL + gate safety), and DEDUP — so the previewable set == the seeded set == the gate allow-list.
+    .filter((r) => r !== "anonymous" && SAFE_ROLE.test(r))
+    .filter((r) => (seen.has(r) ? false : (seen.add(r), true)));
+  return [anonymous, ...roles.map((r) => ({ label: r, role: r, scopes: [r], authenticated: true }))];
+}
+
+/**
+ * The roles a preview may be minted AS — the authenticated principals, EXCLUDING the login-less `anonymous`. This
+ * is the ONE source for the deployed gate's allow-list AND for which demo users seed.sql seeds; keeping them equal
+ * means a role can be previewed iff it is seeded iff the gate allows it (no allow-but-unseedable divergence).
+ */
+export function previewAllowedRoles(doc: OpenAPIv4Document): string[] {
+  return previewRoles(doc).filter((r) => r.authenticated).map((r) => r.role);
+}
+
+/**
+ * Resolve the browser deep-link for previewing AS a role — the security-critical guard, made PURE so it is
+ * unit-testable (the extension package has no test harness). Hard-REFUSES any non-preview env BEFORE producing
+ * a URL (INV-08: role-preview can never target prod/local). anonymous ⇒ just the app; a role ⇒ the preview
+ * deploy's own gated /preview/login. The extension calls this, then openExternal — it never builds the URL itself.
+ */
+export function previewLaunchUrl(
+  env: { baseUrl: string; isPreview: boolean },
+  role: string,
+): { refused: true; reason: string } | { refused: false; url: string } {
+  if (!env.isPreview) return { refused: true, reason: "not a preview deployment — role-preview is refused on prod/local" };
+  const base = env.baseUrl.replace(/\/+$/, "");
+  const url = role === "anonymous" ? base : `${base}/preview/login?role=${encodeURIComponent(role)}`;
+  return { refused: false, url };
+}

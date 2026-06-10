@@ -2,7 +2,7 @@
   "name": "suluk-vscode",
   "displayName": "Suluk \u2014 OpenAPI v4 (Candidate)",
   "description": "The unifying cockpit for the Suluk declarative cycle: validate, audit, preview (Scalar/Swagger), and generate stores/UI from one v4 source. CANDIDATE tooling \u2014 not official OAS.",
-  "version": "0.1.13",
+  "version": "0.1.14",
   "publisher": "MahmoodKhalil",
   "license": "Apache-2.0",
   "icon": "icon.png",
@@ -231,6 +231,16 @@
         "command": "suluk.openScalarLive",
         "title": "Suluk: Open the live Scalar docs in a browser",
         "icon": "$(book)"
+      },
+      {
+        "command": "suluk.previewAsRole",
+        "title": "Suluk: Preview as role (open the running app as a principal)…",
+        "icon": "$(person)"
+      },
+      {
+        "command": "suluk.deployPreview",
+        "title": "Suluk: Deploy a preview (role-preview) to Cloudflare",
+        "icon": "$(beaker)"
       }
     ],
     "menus": {
@@ -296,6 +306,11 @@
           "group": "navigation"
         },
         {
+          "command": "suluk.deployPreview",
+          "when": "view == suluk.builder",
+          "group": "navigation"
+        },
+        {
           "command": "suluk.addEnvironment",
           "when": "view == suluk.environments",
           "group": "navigation"
@@ -307,15 +322,16 @@
         }
       ],
       "view/item/context": [
-        { "command": "suluk.connectEnvironment", "when": "view == suluk.environments && viewItem == suluk.env", "group": "inline@1" },
-        { "command": "suluk.diffEnvironment", "when": "view == suluk.environments && viewItem == suluk.env", "group": "inline@2" },
-        { "command": "suluk.openCostLedger", "when": "view == suluk.environments && viewItem == suluk.env", "group": "inline@3" },
-        { "command": "suluk.diffEnvironment", "when": "view == suluk.environments && viewItem == suluk.env", "group": "1_observe@1" },
-        { "command": "suluk.openCostLedger", "when": "view == suluk.environments && viewItem == suluk.env", "group": "1_observe@2" },
-        { "command": "suluk.openLiveApp", "when": "view == suluk.environments && viewItem == suluk.env", "group": "2_open@1" },
-        { "command": "suluk.openScalarLive", "when": "view == suluk.environments && viewItem == suluk.env", "group": "2_open@2" },
-        { "command": "suluk.openSuperadmin", "when": "view == suluk.environments && viewItem == suluk.env", "group": "2_open@3" },
-        { "command": "suluk.removeEnvironment", "when": "view == suluk.environments && viewItem == suluk.env", "group": "9_danger@1" }
+        { "command": "suluk.connectEnvironment", "when": "view == suluk.environments && viewItem =~ /^suluk.env/", "group": "inline@1" },
+        { "command": "suluk.diffEnvironment", "when": "view == suluk.environments && viewItem =~ /^suluk.env/", "group": "inline@2" },
+        { "command": "suluk.openCostLedger", "when": "view == suluk.environments && viewItem =~ /^suluk.env/", "group": "inline@3" },
+        { "command": "suluk.diffEnvironment", "when": "view == suluk.environments && viewItem =~ /^suluk.env/", "group": "1_observe@1" },
+        { "command": "suluk.openCostLedger", "when": "view == suluk.environments && viewItem =~ /^suluk.env/", "group": "1_observe@2" },
+        { "command": "suluk.previewAsRole", "when": "view == suluk.environments && viewItem == suluk.env.preview", "group": "2_open@0" },
+        { "command": "suluk.openLiveApp", "when": "view == suluk.environments && viewItem =~ /^suluk.env/", "group": "2_open@1" },
+        { "command": "suluk.openScalarLive", "when": "view == suluk.environments && viewItem =~ /^suluk.env/", "group": "2_open@2" },
+        { "command": "suluk.openSuperadmin", "when": "view == suluk.environments && viewItem =~ /^suluk.env/", "group": "2_open@3" },
+        { "command": "suluk.removeEnvironment", "when": "view == suluk.environments && viewItem =~ /^suluk.env/", "group": "9_danger@1" }
       ]
     }
   },

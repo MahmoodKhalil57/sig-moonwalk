@@ -14,10 +14,10 @@ import {
   buildCycle, type CycleModel, type CycleLayer, type CycleItem, type LayerStatus,
   entityNames, generateForm, generateTable, generateStoresModule, exportV4Json,
   buildBuilderModel, generateAppFiles, generateRegistryJson, type BuilderNode,
-  deployPlan, deployMarkdown,
+  deployPlan, deployMarkdown, previewDeployPlan, previewDeployMarkdown,
   diffContracts, formatMicroUsd, type ContractDiff,
   installModule, previewInstall, FIRST_PARTY_REGISTRY, type ModuleEntry, type InstallPreview,
-  crossCut, defaultViewers, type CrossCut,
+  crossCut, defaultViewers, previewRoles, previewLaunchUrl, type CrossCut, type PreviewRole,
   convergeContract, type ConvergeReport,
   contractToD2, diagramViews, type DiagramView,
   componentReport, approveComponents, primitiveCss, type ComponentReport, type Baseline,
@@ -203,7 +203,10 @@ class BuilderProvider implements vscode.TreeDataProvider<BuilderNode> {
 // /scalar. The extension is a read-only CLIENT of these — it never holds credentials and never mutates prod
 // (writing to prod is a deploy, in your terminal). "Connect" loads the live contract into the cockpit; "Diff"
 // compares your LOCAL contract against the deployed one (the free "what's drifted in prod" view).
-interface SulukEnv { name: string; baseUrl: string; }
+// kind discriminates a throwaway PREVIEW deployment (the ONLY target role-preview may touch) from prod/local.
+// Default 'prod' so every EXISTING saved env is fail-closed: role-preview can never target it (INV-08).
+interface SulukEnv { name: string; baseUrl: string; kind?: "preview" | "prod"; }
+const isPreviewEnv = (env: SulukEnv): boolean => env.kind === "preview";
 const DEFAULT_ENVS: SulukEnv[] = [
   { name: "prod", baseUrl: "https://saasuluk.saastemly.com" },
   { name: "local", baseUrl: "http://localhost:8787" },
@@ -260,16 +263,21 @@ class EnvironmentsProvider implements vscode.TreeDataProvider<SulukEnv> {
   getTreeItem(env: SulukEnv): vscode.TreeItem {
     const ti = new vscode.TreeItem(env.name, vscode.TreeItemCollapsibleState.None);
     const h = this.health.get(env.baseUrl);
-    ti.description = env.baseUrl;
-    ti.tooltip = `${env.baseUrl}\nClick to connect (load the live contract into the cockpit).${h && h !== "checking" ? `\nHealth: ${h}` : ""}`;
-    ti.iconPath = h === "ok"
-      ? new vscode.ThemeIcon("circle-filled", new vscode.ThemeColor("charts.green"))
-      : h === "down"
-        ? new vscode.ThemeIcon("circle-outline", new vscode.ThemeColor("charts.red"))
-        : h === "checking"
-          ? new vscode.ThemeIcon("loading~spin")
-          : new vscode.ThemeIcon("circle-outline"); // never probed ⇒ neutral, not a permanent spinner
-    ti.contextValue = "suluk.env";
+    const preview = isPreviewEnv(env);
+    ti.description = preview ? `${env.baseUrl} · preview` : env.baseUrl;
+    ti.tooltip = `${env.baseUrl}\nClick to connect (load the live contract into the cockpit).${preview ? "\nPREVIEW deployment — role-preview enabled (ephemeral; tear it down when done)." : ""}${h && h !== "checking" ? `\nHealth: ${h}` : ""}`;
+    // health dot, EXCEPT preview envs which carry a distinct beaker so the throwaway target reads at a glance.
+    ti.iconPath = preview && h !== "ok" && h !== "down"
+      ? new vscode.ThemeIcon("beaker")
+      : h === "ok"
+        ? new vscode.ThemeIcon("circle-filled", new vscode.ThemeColor("charts.green"))
+        : h === "down"
+          ? new vscode.ThemeIcon("circle-outline", new vscode.ThemeColor("charts.red"))
+          : h === "checking"
+            ? new vscode.ThemeIcon("loading~spin")
+            : new vscode.ThemeIcon(preview ? "beaker" : "circle-outline"); // never probed ⇒ neutral, not a spinner
+    // a distinct contextValue so the "Preview as role" lever appears ONLY on preview envs (never prod/local).
+    ti.contextValue = preview ? "suluk.env.preview" : "suluk.env";
     ti.command = { command: "suluk.connectEnvironment", title: "Connect", arguments: [env] };
     return ti;
   }
@@ -718,7 +726,19 @@ export function activate(context: vscode.ExtensionContext): void {
     const src = activeV4Source(); if (!src) { void vscode.window.showWarningMessage("Suluk: open an OpenAPI v4 document first."); return; }
     const folder = vscode.workspace.workspaceFolders?.[0];
     if (!folder) { void vscode.window.showWarningMessage("Suluk: open a workspace folder to deploy."); return; }
-    const plan = deployPlan(parseDocument(src));
+    const doc = parseDocument(src);
+    // PROD deploy guard: a preview-only (role-login) op must never reach production silently. Surface it as a
+    // BLOCKING modal that names the op(s) and requires an explicit "Deploy anyway" — not a quiet write.
+    const backdoors = convergeContract(doc).findings.filter((f) => f.code === "preview-op-exposed");
+    if (backdoors.length) {
+      const ops = backdoors.map((f) => f.where).filter(Boolean).join(", ");
+      const choice = await vscode.window.showWarningMessage(
+        `Suluk: this contract contains ${backdoors.length} PREVIEW-ONLY role-login backdoor op(s) (${ops}). Deploying them to PRODUCTION exposes a session-establishing endpoint. Deploy anyway?`,
+        { modal: true }, "Deploy anyway",
+      );
+      if (choice !== "Deploy anyway") return;
+    }
+    const plan = deployPlan(doc);
     const root = vscode.Uri.joinPath(folder.uri, "suluk-deploy");
     await vscode.workspace.fs.createDirectory(root);
     for (const f of plan.files) {
@@ -734,6 +754,26 @@ export function activate(context: vscode.ExtensionContext): void {
     void vscode.window.showInformationMessage(`Suluk: deploy files written to suluk-deploy/ — follow DEPLOY.md (${plan.steps.length} steps). Suluk won't run wrangler for you; log in in the terminal.`);
   });
 
+  // deploy a PREVIEW variant (role-preview) — terminal-gated IDENTICALLY to prod; Suluk runs no wrangler.
+  reg("suluk.deployPreview", async () => {
+    const src = activeV4Source(); if (!src) { void vscode.window.showWarningMessage("Suluk: open an OpenAPI v4 document first."); return; }
+    const folder = vscode.workspace.workspaceFolders?.[0];
+    if (!folder) { void vscode.window.showWarningMessage("Suluk: open a workspace folder to deploy."); return; }
+    const plan = previewDeployPlan(parseDocument(src));
+    const root = vscode.Uri.joinPath(folder.uri, "suluk-preview-deploy");
+    await vscode.workspace.fs.createDirectory(root);
+    for (const f of plan.files) {
+      await vscode.workspace.fs.writeFile(vscode.Uri.joinPath(root, f.path), new TextEncoder().encode(f.content));
+    }
+    const md = vscode.Uri.joinPath(root, "PREVIEW-DEPLOY.md");
+    await vscode.workspace.fs.writeFile(md, new TextEncoder().encode(previewDeployMarkdown(plan)));
+    await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(md), vscode.ViewColumn.Beside);
+    const term = vscode.window.createTerminal({ name: "Suluk · Preview", cwd: root.fsPath });
+    term.show();
+    term.sendText("# Suluk: run the steps from PREVIEW-DEPLOY.md. First: wrangler login. Tear the preview down when done.", false);
+    void vscode.window.showInformationMessage(`Suluk: PREVIEW deploy files written to suluk-preview-deploy/ — follow PREVIEW-DEPLOY.md. After deploying, add the env as kind:Preview, then "Preview as role". Tear it down when finished.`);
+  });
+
   // ── Environments (OBSERVE) commands ──
   const pickEnv = async (): Promise<SulukEnv | undefined> => {
     const items = envs.list().map((e) => ({ label: e.name, description: e.baseUrl, env: e }));
@@ -746,8 +786,41 @@ export function activate(context: vscode.ExtensionContext): void {
     if (!name) return;
     const baseUrl = await vscode.window.showInputBox({ prompt: "Base URL of the deployed Worker", placeHolder: "https://staging.example.com", value: "https://" });
     if (!baseUrl || baseUrl === "https://") return;
-    await envs.save([...envs.list(), { name, baseUrl: baseUrl.replace(/\/+$/, "") }]);
+    // is this an EPHEMERAL preview deployment? Only a 'preview'-kind env can be a role-preview target (INV-08).
+    const kindPick = await vscode.window.showQuickPick(
+      [
+        { label: "Production / staging", description: "OBSERVE-only (connect, drift, cost). The default.", envKind: "prod" as const },
+        { label: "Ephemeral PREVIEW", description: "Enables role-preview (the /preview/login backdoor). Throwaway only.", envKind: "preview" as const },
+      ],
+      { placeHolder: "What kind of environment is this?" },
+    );
+    if (!kindPick) return; // cancelled ⇒ do not silently default to prod for a blank choice
+    await envs.save([...envs.list(), { name, baseUrl: baseUrl.replace(/\/+$/, ""), kind: kindPick.envKind }]);
     void envs.checkAll();
+  });
+
+  // PREVIEW AS ROLE (the last roadmap slice) — open the running preview app AS a chosen principal. The extension
+  // holds NO token: it deep-links the preview deploy's OWN /preview/login in the system BROWSER (the C020-sanctioned
+  // path). Refuses any non-preview env BEFORE touching the network (INV-08); never createWebviewPanel here (INV-07).
+  reg("suluk.previewAsRole", async (env?: SulukEnv) => {
+    env = env ?? await pickEnv(); if (!env) return;
+    if (!isPreviewEnv(env)) { // hard stop BEFORE listing roles / any network — role-preview is preview-only (INV-08)
+      void vscode.window.showWarningMessage(`Suluk: "${env.name}" is not a preview deployment — role-preview is refused on prod/local. Add an ephemeral preview env (kind: Preview) and deploy with "Deploy a preview".`);
+      return;
+    }
+    const src = activeV4Source();
+    if (!src) { void vscode.window.showWarningMessage("Suluk: open the v4 contract first so I can list its roles."); return; }
+    const roles: PreviewRole[] = previewRoles(parseDocument(src));
+    const pick = await vscode.window.showQuickPick(
+      roles.map((r) => ({ label: r.label, description: r.authenticated ? `scopes: ${r.scopes.join(", ") || "(role-defined)"}` : "no session", role: r })),
+      { placeHolder: `Preview "${env.name}" as which principal? (opens in your browser)` },
+    );
+    if (!pick) return;
+    // the URL + the preview-only guard come from the PURE, unit-tested helper; the extension only opens the browser.
+    const launch = previewLaunchUrl({ baseUrl: env.baseUrl, isPreview: isPreviewEnv(env) }, pick.role.role);
+    if (launch.refused) { void vscode.window.showWarningMessage(`Suluk: ${launch.reason}.`); return; }
+    void vscode.env.openExternal(vscode.Uri.parse(launch.url));
+    void vscode.window.showInformationMessage(`Suluk: opening ${env.name} as "${pick.role.label}" in your browser. The login happens in the preview Worker — Suluk holds no session.`);
   });
   reg("suluk.removeEnvironment", async (env?: SulukEnv) => {
     env = env ?? await pickEnv(); if (!env) return;

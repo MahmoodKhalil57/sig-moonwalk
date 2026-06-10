@@ -6,6 +6,7 @@
  * envelope check that keeps a malformed/hostile registry from corrupting the UI before that gate runs. Pure.
  */
 import type { ModuleEntry, SulukModule } from "./module";
+import { PREVIEW_ONLY_MARKER } from "./modules/preview";
 
 /** A configured remote registry (persisted by the host). */
 export interface RegistrySource {
@@ -47,7 +48,19 @@ export function validateModule(m: unknown): { module?: SulukModule; error?: stri
   if (o.paths !== undefined) {
     const paths = asObject(o.paths);
     if (!paths) return { error: `${where}: paths must be an object` };
-    for (const [k, pi] of Object.entries(paths)) if (!asObject(pi)) return { error: `${where}: path "${k}" must be an object` };
+    for (const [k, pi] of Object.entries(paths)) {
+      const pio = asObject(pi);
+      if (!pio) return { error: `${where}: path "${k}" must be an object` };
+      // SUPPLY-CHAIN: an UNTRUSTED module must NOT declare a preview-only (session-establishing role-login) op.
+      // That marker is reserved for the FIRST-PARTY preview module, which is installed directly — never through
+      // this untrusted-registry path. A community module carrying it is the textbook backdoor smuggle: refuse it.
+      const reqs = asObject(pio.requests);
+      for (const [opName, op] of Object.entries(reqs ?? {})) {
+        if (asObject(op)?.[PREVIEW_ONLY_MARKER] === true) {
+          return { error: `${where}: operation "${opName}" is a preview-only (session-establishing) backdoor — refused from an untrusted registry` };
+        }
+      }
+    }
   }
   // cost: each entry must be { components: [...], estimateMicroUsd: <finite> } — else a malformed facet is stamped verbatim
   if (o.cost !== undefined) {

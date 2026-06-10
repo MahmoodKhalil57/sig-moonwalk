@@ -53,6 +53,18 @@ export function contractGates(doc: OpenAPIv4Document, baseline: Baseline): Gate[
     action: errs ? "suluk.convergeContract" : undefined,
   });
 
+  // 2b. no preview backdoor — a contract carrying an x-suluk-preview-only op (a role-login backdoor) must be
+  // deployed ONLY as a preview, never prod. WARN-status so it counts against ready (shipSummary blocks on warn):
+  // a clean contract reads ready; one with the backdoor reads NOT ready until the user confirms it is a preview.
+  // (Fixes the supply-chain hole where a smuggled preview op was hard-filtered out of the error-only coherent gate.)
+  const previewOps = conv.findings.filter((f) => f.code === "preview-op-exposed");
+  gates.push({
+    id: "noBackdoor", title: "No preview backdoor in prod",
+    status: previewOps.length ? "warn" : "ok",
+    detail: previewOps.length ? `${previewOps.length} preview-only op${previewOps.length === 1 ? "" : "s"} (${previewOps.map((f) => f.where).filter(Boolean).join(", ")}) — deploy ONLY as a preview, never to production` : "no preview-only operations",
+    action: previewOps.length ? "suluk.convergeContract" : undefined,
+  });
+
   // 3. pixel-confident components
   const cr = componentReport(doc, baseline);
   const pending = cr.confidence.missing.length + cr.confidence.drifted.length;
