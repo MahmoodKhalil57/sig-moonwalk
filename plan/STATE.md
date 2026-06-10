@@ -5,7 +5,7 @@
 > reconstructed on demand (`daftar query`, burhan over `plan/facts/`), never carried.
 > Mechanism: [C002](../doc/architecture/decisions/C002-recursive-state-mechanism.md). Charter: [C001](../doc/architecture/decisions/C001-candidate-fork-charter.md).
 
-_Last checkpoint: 2026-06-09 — **COMPLETION v1**: candidate spec drafted (`specification/candidate-v4/SPEC.md`, ~27k words, 13 sections). Frontier decided + document assembled.
+_Last checkpoint: 2026-06-10 — **TOOLING-READY**: candidate decided (C001–C019) + drafted (SPEC v1.2) + validated (petstore) + meta-schema/TS-types/conformance/ADA-contract (all cross-verified) + council complete (5/8 calibrated). Ready to build tooling.
 
 ## ✓ C010 Wave-2B1 → C013 (referencing cluster, 4 facets, one panel)
 
@@ -82,6 +82,7 @@ Waves 1 (17 convergent) and 2A (8 contested) are done. **Next:**
 - Narrative receipts → `daftar query "<topic>" --project=/home/mk/apps/sig-moonwalk`
 - SIG record (priors) → [github-export/](../github-export/) · official ADRs → [doc/architecture/decisions/](../doc/architecture/decisions/)
 - Our ADRs → `doc/architecture/decisions/Cxxx-*.md` (frontier: [C003](../doc/architecture/decisions/C003-signature-mechanism.md) [C004](../doc/architecture/decisions/C004-parameter-schema.md) [C005](../doc/architecture/decisions/C005-templating-system.md) [C008](../doc/architecture/decisions/C008-merge-out-of-scope.md) [C009](../doc/architecture/decisions/C009-array-vs-map.md) **[C011 batch×17](../doc/architecture/decisions/C011-convergent-batch-1.md) [C012 waveA×8](../doc/architecture/decisions/C012-contested-batch-waveA.md) [C013 referencing×4](../doc/architecture/decisions/C013-referencing-cluster.md) [C014 waveB2×5](../doc/architecture/decisions/C014-contested-batch-waveB2.md) [C015 waveC1×6](../doc/architecture/decisions/C015-contested-batch-waveC1.md)**; meta C001/C002/C006/C007/C010) · glossary → [CONTEXT.md](../CONTEXT.md)
-- Worked example → [specification/candidate-v4/examples/petstore.suluk.yaml](../specification/candidate-v4/examples/petstore.suluk.yaml) (validates the candidate end-to-end)
+- **Tooling substrate** → [v4-meta-schema.json](../specification/candidate-v4/v4-meta-schema.json) (validates docs) · [v4-types.ts](../specification/candidate-v4/v4-types.ts) (TS model) · [conformance/](../specification/candidate-v4/conformance/) (corpus + ADA contract) · [CONFIDENCE.md](../specification/candidate-v4/CONFIDENCE.md) (soft points) · SPEC Appendix A (grammars)
+- Worked example → [examples/petstore.suluk.yaml](../specification/candidate-v4/examples/petstore.suluk.yaml) (validates the candidate)
 - **Candidate spec document → [specification/candidate-v4/SPEC.md](../specification/candidate-v4/SPEC.md)** (Completion v1, ~27k words, 91 flagged-provisional points) · section stubs in the same dir
 - Council (guides, not prophets) → [plan/council/](./council/) ([calibration](./council/CALIBRATION.md))
