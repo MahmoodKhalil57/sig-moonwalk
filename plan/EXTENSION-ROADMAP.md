@@ -146,6 +146,10 @@ builder — so the extension can fetch it and **diff local-contract vs deployed-
     (Web Crypto ECDSA P-256 over canonical bytes); pin a publisher's public key → verify every fetch (valid →
     "signed", invalid → refuse); a `suluk.signRegistry` publisher command. Security-reviewed (1 finding fixed —
     canonicalization of shared references). The open marketplace now has a real trust root.
-  - **Still optional, operator's call (all additive, none load-bearing):** live role-previews via a preview
-    deployment (the richer M1); a `burhan-converge` pass over a merged contract; the originated L2/L3 (non-dev
-    composition flow, round-trip lifecycle).
+  - **✓ L2 non-developer composition (commit 11d6971)** — `planComposition`/`composeModules` topologically
+    install a set of modules in dependency order; an `auth` module provides the User every other module
+    requires; stack templates (SaaS starter / Storefront / Everything) + a "Compose a platform" command turn a
+    fresh contract into a whole working platform, no hand-wiring. Reviewed (6 findings fixed — the planner now
+    models install collisions, classifies unmet vs cycle correctly, and reports dropped template names).
+  - **Still optional, operator's call (additive):** live role-previews via a preview deployment (the richer M1);
+    a `burhan-converge` pass over a merged contract; the originated L3 (round-trip lifecycle management).
