@@ -78,6 +78,7 @@ Waves 1 (17 convergent) and 2A (8 contested) are done. **Next:**
 
 - Open questions → [plan/frontier.md](./frontier.md)
 - Horizon plan → [plan/HORIZONS.md](./HORIZONS.md)
+- **Product track** (the extension as cockpit + modules + marketplace) → [plan/EXTENSION-ROADMAP.md](./EXTENSION-ROADMAP.md) — decided 2026-06-10 by a 6-lens council ([C020](../doc/architecture/decisions/C020-extension-cockpit-charter.md) charter, [C021](../doc/architecture/decisions/C021-modules-contract-merge-marketplace.md) modules). Cheapest-next: **S1** Environments + contract-drift + live cost.
 - Burhan ledger → [plan/facts/](./facts/) · spine claims → [plan/MAIN.bn](./MAIN.bn)
 - Narrative receipts → `daftar query "<topic>" --project=/home/mk/apps/sig-moonwalk`
 - SIG record (priors) → [github-export/](../github-export/) · official ADRs → [doc/architecture/decisions/](../doc/architecture/decisions/)
