@@ -133,6 +133,11 @@
         "icon": "$(package)"
       },
       {
+        "command": "suluk.swapProvider",
+        "title": "Suluk: Swap a provider (payments/auth/email/storage)",
+        "icon": "$(plug)"
+      },
+      {
         "command": "suluk.refreshBuilder",
         "title": "Suluk: Refresh Builder",
         "icon": "$(refresh)"

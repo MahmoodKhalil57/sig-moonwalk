@@ -127,6 +127,12 @@ export function installModule(base: OpenAPIv4Document, mod: SulukModule): Instal
   if (mod.securitySchemes) {
     doc.components.securitySchemes = { ...(doc.components.securitySchemes ?? {}), ...mod.securitySchemes } as typeof doc.components.securitySchemes;
   }
+  if (mod.providerSlots) {
+    // record the module's provider-slot defaults (M3) — but an EXISTING binding (a user's deliberate swap, or
+    // an earlier module's choice) WINS, so installing a second module never silently clobbers it.
+    const d = doc as unknown as Record<string, unknown>;
+    d["x-suluk-providers"] = { ...mod.providerSlots, ...((d["x-suluk-providers"] as Record<string, string>) ?? {}) };
+  }
   doc.paths = { ...((doc.paths ?? {}) as Record<string, PathItem>), ...newPaths } as typeof doc.paths;
 
   // 7. cost facets — x-suluk-cost, stamped ONLY on the operations the module added (never on host ops)

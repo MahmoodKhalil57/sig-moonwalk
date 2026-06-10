@@ -139,6 +139,15 @@ paths: { "p": { requests: { g: { method: get, responses: { ok: { status: 200 } }
     expect(c.changes.some((x) => x.includes("shape"))).toBe(true); // the residual is not suppressed
   });
 
+  test("provider-slot drift (x-suluk-providers) is reported", () => {
+    const local = { openapi: "4.0.0-candidate", info: { title: "T", version: "1.0.0" }, paths: {}, "x-suluk-providers": { payments: "paddle", email: "resend" } } as unknown as Parameters<typeof diffContracts>[0];
+    const deployed = { openapi: "4.0.0-candidate", info: { title: "T", version: "1.0.0" }, paths: {}, "x-suluk-providers": { payments: "stripe" } } as unknown as Parameters<typeof diffContracts>[0];
+    const d = diffContracts(local, deployed);
+    expect(d.identical).toBe(false);
+    expect(d.providers.changed).toEqual([{ facet: "payments", from: "stripe", to: "paddle" }]);
+    expect(d.providers.added).toEqual([{ facet: "email", impl: "resend" }]);
+    expect(d.summary).toContain("providers");
+  });
   test("canonical() is cycle-safe (does not overflow the stack)", () => {
     const a: Record<string, unknown> = { x: 1 };
     a.self = a;

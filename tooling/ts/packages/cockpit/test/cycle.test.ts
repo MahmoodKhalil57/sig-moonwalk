@@ -14,8 +14,8 @@ const petstore = parseDocument(petstoreSrc);
 describe("buildCycle — the cockpit spine (every layer from one hub)", () => {
   const model = buildCycle(petstore);
 
-  test("models all nine layers (incl. cost)", () => {
-    expect(model.layers.map((l) => l.id)).toEqual(["data", "contract", "auth", "document", "cost", "docs", "state", "ui", "tests"]);
+  test("models all ten layers (incl. cost + providers)", () => {
+    expect(model.layers.map((l) => l.id)).toEqual(["data", "contract", "auth", "document", "cost", "docs", "state", "ui", "providers", "tests"]);
   });
   test("the cost layer reflects declared costs (x-suluk-cost) — none on the bare petstore", () => {
     expect(model.layers.find((l) => l.id === "cost")!.summary).toBe("no costs declared");
@@ -110,6 +110,6 @@ describe("codegen actions land real artifacts", () => {
 
 describe("cycleSummary — flat status line", () => {
   test("returns one entry per layer", () => {
-    expect(cycleSummary(buildCycle(petstore)).length).toBe(9);
+    expect(cycleSummary(buildCycle(petstore)).length).toBe(10);
   });
 });

@@ -17,6 +17,7 @@ import {
   diffContracts, formatMicroUsd, type ContractDiff,
   installModule, previewInstall, FIRST_PARTY_REGISTRY, type ModuleEntry, type InstallPreview,
   crossCut, defaultViewers, type CrossCut,
+  PROVIDER_CATALOG, readProviders, swapProvider,
 } from "@suluk/cockpit";
 import { parseDocument } from "@suluk/core";
 import { SAMPLE_V4 } from "./sample";
@@ -93,6 +94,7 @@ function cycleItemCommand(layerId: CycleLayer["id"], item: CycleItem): vscode.Co
                        : { command: "suluk.previewSwagger", title: "Open the Swagger UI preview" };
     case "state":    return { command: "suluk.generateStores", title: "Generate the Nano Stores client" };
     case "ui":       return { command: "suluk.generateUi", title: `Generate shadcn form/table for ${ref}`, arguments: [ref] };
+    case "providers": return { command: "suluk.swapProvider", title: `Swap the ${ref} provider`, arguments: [ref] };
     case "tests":    return { command: "suluk.runChecks", title: "Run the contract checks" };
     default:         return undefined;
   }
@@ -283,7 +285,14 @@ function driftHtml(d: ContractDiff, env: SulukEnv): string {
     + opGroup("add", "added — authored locally, not yet deployed", d.operations.added.map((o) => ({ name: o.name, tail: o.detail })))
     + opGroup("rem", "removed — deleted locally, still live in prod", d.operations.removed.map((o) => ({ name: o.name, tail: o.detail })))
     + opGroup("chg", "changed — drift between local and deployed", d.operations.changed.map((o) => ({ name: o.name, tail: o.changes.join(" · ") })))
-    + schGroup();
+    + schGroup()
+    + ((d.providers.added.length || d.providers.removed.length || d.providers.changed.length)
+        ? `<div class="g"><h3>providers</h3>`
+          + d.providers.added.map((p) => `<div class="row"><span class="k add">+ ${esc(p.facet)}</span><span class="d">${esc(p.impl)} (not deployed)</span></div>`).join("")
+          + d.providers.removed.map((p) => `<div class="row"><span class="k rem">− ${esc(p.facet)}</span><span class="d">${esc(p.impl)} (live, not local)</span></div>`).join("")
+          + d.providers.changed.map((p) => `<div class="row"><span class="k chg">~ ${esc(p.facet)}</span><span class="d">${esc(p.from)} → ${esc(p.to)}</span></div>`).join("")
+          + `</div>`
+        : "");
   return htmlPage(`Drift vs ${env.name}`, body);
 }
 function costHtml(data: unknown, env: SulukEnv): string {
@@ -645,6 +654,38 @@ export function activate(context: vscode.ExtensionContext): void {
       cycle.refresh(); builder.refresh();
       void vscode.window.showInformationMessage(`Suluk: installed ${entry.module.name} — the cockpit now projects the merged contract.`);
     } catch (e) { void vscode.window.showErrorMessage(`Suluk: install of ${entry.module.name} failed — ${(e as Error).message}`); }
+  });
+
+  // ── Providers (M3): swap a facet binding (payments/auth/email/storage) for another impl of the same interface ──
+  reg("suluk.swapProvider", async (facetArg?: string) => {
+    const src = activeV4Source();
+    if (!src) { void vscode.window.showWarningMessage("Suluk: open your v4 contract first."); return; }
+    const doc = parseDocument(src);
+    const bound = readProviders(doc);
+    // choose the facet — from the clicked row, else from the facets the contract uses (else the whole catalog)
+    let facet = facetArg;
+    if (!facet) {
+      const facets = bound.length ? bound.map((b) => b.facet) : Object.keys(PROVIDER_CATALOG);
+      const pick = await vscode.window.showQuickPick(facets.map((f) => ({ label: f, description: bound.find((b) => b.facet === f)?.impl ?? "(unbound)" })), { placeHolder: "Which provider slot to swap?" });
+      facet = pick?.label;
+    }
+    if (!facet) return;
+    const impls = PROVIDER_CATALOG[facet];
+    if (!impls) { void vscode.window.showWarningMessage(`Suluk: "${facet}" is not a known provider facet.`); return; }
+    const current = bound.find((b) => b.facet === facet)?.impl;
+    const chosen = await vscode.window.showQuickPick(
+      impls.map((i) => ({ label: i.id === current ? `$(check) ${i.title}` : i.title, description: i.pkg ?? "", detail: i.description, id: i.id })),
+      { placeHolder: `Bind ${facet} to… (current: ${current ?? "none"})`, matchOnDetail: true },
+    );
+    if (!chosen || chosen.id === current) return;
+    // re-read the live contract — the user may have edited/switched editors during the pickers
+    const liveDoc = parseDocument(activeV4Source() ?? src);
+    const { doc: next, error } = swapProvider(liveDoc as unknown as Record<string, unknown>, facet, chosen.id);
+    if (error) { void vscode.window.showErrorMessage(`Suluk: ${error}`); return; }
+    const out = await vscode.workspace.openTextDocument({ content: JSON.stringify(next, null, 2), language: "json" });
+    await vscode.window.showTextDocument(out);
+    cycle.refresh(); builder.refresh();
+    void vscode.window.showInformationMessage(`Suluk: bound ${facet} → ${chosen.id}. The contract is unchanged; only the runtime provider binding differs.`);
   });
 
   const onChange = () => { cycle.refresh(); builder.refresh(); updateLens(); };

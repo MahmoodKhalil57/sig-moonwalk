@@ -14,6 +14,7 @@ import type { OpenAPIv4Document, Request, SchemaOrRef, SecurityRequirement } fro
 import { audit, coverage } from "@suluk/hono";
 import { formSpec, tableSpec } from "@suluk/shadcn";
 import { costAudit, costTable, formatMicroUsd } from "@suluk/cost";
+import { readProviders } from "@suluk/builder";
 
 export type LayerStatus = "ok" | "warn" | "error" | "info";
 
@@ -26,7 +27,7 @@ export interface CycleItem {
 }
 
 export interface CycleLayer {
-  id: "data" | "contract" | "auth" | "document" | "cost" | "docs" | "state" | "ui" | "tests";
+  id: "data" | "contract" | "auth" | "document" | "cost" | "docs" | "state" | "ui" | "providers" | "tests";
   title: string;
   status: LayerStatus;
   summary: string;
@@ -140,6 +141,14 @@ export function buildCycle(doc: OpenAPIv4Document, opts: { principal?: Principal
   const undeclared = costFindings.filter((f) => f.code === "no-cost-model").length;
   const costItems: CycleItem[] = declaredCosts.map((d) => ({ label: d.operation, ref: d.operation, detail: `${formatMicroUsd(d.estimateMicroUsd)} · ${d.sources.join(", ")}` }));
 
+  // ── providers: the swappable facet bindings recorded on the document (M3)
+  const providerBindings = readProviders(doc);
+  const providerItems: CycleItem[] = providerBindings.map((b) => ({
+    label: b.facet, ref: b.facet,
+    detail: `${b.title}${b.alternatives.length ? ` · ${b.alternatives.length} alternatives` : ""}`,
+    status: b.known ? undefined : "warn",
+  }));
+
   // ── tests: doc-level contract checks
   const checks = docChecks(doc);
   const testsItems: CycleItem[] = checks.map((c) => ({ label: c.name, status: c.pass ? "ok" : "error", detail: c.pass ? "pass" : c.message }));
@@ -168,6 +177,12 @@ export function buildCycle(doc: OpenAPIv4Document, opts: { principal?: Principal
     { id: "docs", title: "Docs", status: "ok", summary: "Scalar · Swagger", items: docsItems },
     { id: "state", title: "State (Nano Stores)", status: "ok", summary: `${stateItems.length} stores`, items: stateItems },
     { id: "ui", title: "UI (shadcn)", status: uiItems.length ? "ok" : "info", summary: `${uiItems.length} forms/tables`, items: uiItems },
+    {
+      id: "providers", title: "Providers",
+      status: providerItems.length ? "ok" : "info",
+      summary: providerItems.length ? providerBindings.map((b) => `${b.facet}→${b.impl}`).join(" · ") : "none",
+      items: providerItems,
+    },
     {
       id: "tests", title: "Tests (contract checks)",
       status: checks.every((c) => c.pass) ? "ok" : "error",

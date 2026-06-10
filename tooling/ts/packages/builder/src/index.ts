@@ -30,3 +30,5 @@ export {
 } from "./module";
 // the curated first-party module registry (M2)
 export { ECOMMERCE, CRM, BILLING, FIRST_PARTY_REGISTRY } from "./modules";
+// provider slots (M3): swap a facet binding (payments/auth/email/storage) for another impl of the same interface
+export { PROVIDER_CATALOG, providerFacets, readProviders, swapProvider, type ProviderImpl, type ProviderBinding, type SwapResult } from "./providers";

@@ -43,4 +43,10 @@ describe("installModule → the cockpit cycle lights up", () => {
   test("the document still validates against the v4 meta-schema after the merge", () => {
     expect(after.valid).toBe(true);
   });
+  test("the Providers layer lights up with the module's provider slot (payments→stripe)", () => {
+    const providers = layer(after, "providers");
+    expect(providers.summary).toContain("payments→stripe");
+    expect(providers.items.map((i) => i.label)).toContain("payments");
+    expect(layer(before, "providers").summary).toBe("none"); // the host had no provider slots
+  });
 });
