@@ -159,6 +159,9 @@ builder — so the extension can fetch it and **diff local-contract vs deployed-
     one contract. ERD (entities + `$ref` edges), the declarative cycle, the operation surface; a Generate-diagram
     command (D2 source + opt-in kroki.io render). Reviewed against the real d2 CLI (2 syntax findings fixed —
     hub/layer collision, reserved-keyword quoting). Reusable into the docs + generated UI (a natural follow-up).
-  - **Still optional, operator's call (additive):** the D2 generator wired into `@suluk/docs` + the generated app;
-    component-preview surfacing `@suluk/visual` (pixel-confidence); live role-previews via a preview deployment;
-    the originated L3 (round-trip lifecycle).
+  - **✓ Diagrams in the generated app + docs (commit f8abdbc, 0c3ab87)** — `generateAppFiles` ships the
+    contract's `docs/*.d2`; `@suluk/docs` `packageGraphD2` renders the "how the tools compose" diagram on the
+    Architecture page (live docs regenerated). Reviewed (4 findings fixed — incl. mdToHtml had no image rule).
+    The D2 idea now spans the extension, the generated app, AND the docs.
+  - **Still optional, operator's call (additive):** component-preview surfacing `@suluk/visual` (pixel-confidence);
+    live role-previews via a preview deployment; the originated L3 (round-trip lifecycle).

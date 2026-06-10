@@ -74,17 +74,17 @@ A static export is just `render(contracts, publicPrincipal, now)`. Nothing speci
 | `@suluk/shadcn` | **UI corner**: v4 Schema Objects → form/table specs + shadcn TSX (react-hook-form + zodResolver) | ✅ 20 tests |
 | `@suluk/builder` | **the builder**: DSL; `buildApp`/`toShadcnRegistry`; **modules** (C021) — `installModule` (refuse-on-collision + `requires` + dangling-ref backstop + namespacing), curated + **remote** + **signed** registries, `gradeModule`/`previewInstall`, **provider slots** (`swapProvider`), **composition** (`planComposition`/`composeModules` + stack templates — the non-dev "compose a platform" flow) | ✅ 77 tests |
 | `@suluk/deploy` | **the capstone**: swappable `DeployProvider`; Cloudflare (Workers + D1 + assets) | ✅ 8 tests |
-| `@suluk/cockpit` | the **pure cockpit core** (10-layer cycle incl. **cost · providers** · builder · codegen · deploy · **drift** · **cross-cut** · **converge** · **D2 diagrams** · validate/audit/preview) — shared brain | ✅ 84 tests |
+| `@suluk/cockpit` | the **pure cockpit core** (10-layer cycle incl. **cost · providers** · builder · codegen+**diagrams** · deploy · **drift** · **cross-cut** · **converge** · **D2 diagrams** · validate/audit/preview) — shared brain | ✅ 85 tests |
 | `@suluk/admin` | the **/superadmin web panel** — the cockpit rendered as a Hono web UI, superadmin-gated | ✅ 7 tests |
 | `@suluk/example-petshop` | runnable end-to-end demo — real Drizzle → live CRUD + Scalar + frontend + /superadmin + client round-trip | ✅ 10 tests |
-| `@suluk/docs` | generate a GitHub-Pages docs site from source (Suluk documents itself) | ✅ 10 tests |
+| `@suluk/docs` | generate a GitHub-Pages docs site from source (Suluk documents itself); **`packageGraphD2`** — the "how the tools compose" diagram on the Architecture page | ✅ 14 tests |
 | `@suluk/cost` | **cost as a contract facet** — declare per-op cost (x-suluk-cost, bubbles) + meter actual per-user cost | ✅ 10 tests |
 | `@suluk/stripe` | first-class Stripe behind a swappable `PaymentProvider`; bridges cost → metered billing | ✅ 9 tests |
 | `@suluk/visual` | **pixel-confidence by construction** — verify each primitive's pixels once; confidence propagates via content-hash | ✅ 9 tests |
 | `suluk-core` (Rust) | perf core: parse + signature + reverse-parse matcher; 2nd independent impl | ✅ 9 tests |
 | `suluk-vscode` | the cockpit's **editor face** — a thin vscode shell over `@suluk/cockpit` (Cycle + Builder TreeViews, **Environments** axis: connect/drift/live-cost, "View as", codegen, **install module**, deploy) | tsc + bundle |
 
-**Total: 20 TS packages (372 tests) + a Rust core (9 tests) = 381 green.** Shipped: npm (`@suluk/*`),
+**Total: 20 TS packages (377 tests) + a Rust core (9 tests) = 386 green.** Shipped: npm (`@suluk/*`),
 crates.io (`suluk-core`), VS Code Marketplace (`MahmoodKhalil.suluk-vscode`). Live demo: a full SaaS
 (`saasuluk`) on Cloudflare Workers + D1 at **saasuluk.saastemly.com** — auth (Better Auth/D1), CRUD,
 Scalar docs, the `/superadmin` cockpit, a durable cost ledger, and a static Astro frontend.
