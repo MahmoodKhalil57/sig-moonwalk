@@ -126,6 +126,9 @@ function downgradeOperation(
   if (req.deprecated) op.deprecated = req.deprecated;
   if (req.tags) op.tags = req.tags;
   if (req.security) op.security = req.security;
+  // carry vendor extensions (x-*) through to 3.1 — both dialects allow them, and tooling like Scalar renders
+  // them (e.g. @suluk/cost's x-suluk-cost). Without this, declared facets would vanish on the way to the docs.
+  for (const [k, v] of Object.entries(req as unknown as Record<string, unknown>)) if (k.startsWith("x-")) op[k] = v;
 
   const params: Record<string, unknown>[] = [];
   const ps: ParameterSchema = effectiveParams(shared, req.parameterSchema);
