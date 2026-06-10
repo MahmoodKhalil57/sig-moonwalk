@@ -125,6 +125,11 @@
         "icon": "$(check-all)"
       },
       {
+        "command": "suluk.generateDiagram",
+        "title": "Suluk: Generate a diagram (D2 — ERD / cycle / operations)",
+        "icon": "$(type-hierarchy)"
+      },
+      {
         "command": "suluk.generateApp",
         "title": "Suluk: Generate full app (backend + frontend)"
       },
@@ -232,6 +237,11 @@
         },
         {
           "command": "suluk.convergeContract",
+          "when": "view == suluk.cycle",
+          "group": "navigation"
+        },
+        {
+          "command": "suluk.generateDiagram",
           "when": "view == suluk.cycle",
           "group": "navigation"
         },

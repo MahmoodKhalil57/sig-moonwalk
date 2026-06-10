@@ -8,6 +8,7 @@
  * All real logic lives in ./cycle, ./codegen, ./logic (bun-tested); this file is the thin vscode wiring.
  */
 import * as vscode from "vscode";
+import { deflateSync } from "node:zlib";
 import {
   validateSource, auditSource, previewHtml, looksLikeV4, type Diagnostic,
   buildCycle, type CycleModel, type CycleLayer, type CycleItem, type LayerStatus,
@@ -18,6 +19,7 @@ import {
   installModule, previewInstall, FIRST_PARTY_REGISTRY, type ModuleEntry, type InstallPreview,
   crossCut, defaultViewers, type CrossCut,
   convergeContract, type ConvergeReport,
+  contractToD2, diagramViews, type DiagramView,
   PROVIDER_CATALOG, readProviders, swapProvider,
   parseRegistry, type RegistrySource,
   verifyRegistrySignature, isSignedEnvelope, generateSigningKeypair, signRegistry,
@@ -351,6 +353,15 @@ function convergeBody(report: ConvergeReport): string {
   return (report.clean ? `<div class="row add">✓ converges clean (no errors)</div>` : `<div class="row rem">✗ ${report.findings.filter((f) => f.severity === "error").length} contradiction(s)</div>`)
     + group("error", "contradictions") + group("warn", "warnings") + group("info", "notes");
 }
+/** Kroki renders D2 → SVG from a deflate+base64url-encoded source (constructed only; egress happens on click). */
+function krokiD2Url(d2: string): string {
+  try { return `https://kroki.io/d2/svg/${deflateSync(Buffer.from(d2, "utf8")).toString("base64url")}`; } catch { return ""; }
+}
+function diagramHtml(view: { id: DiagramView; title: string; description: string }, d2: string): string {
+  const url = krokiD2Url(d2);
+  const render = url ? ` Render it with the d2 CLI, the D2 VS Code extension, or <a href="${esc(url)}">kroki.io ↗</a> <span class="d">(sends the diagram to an external service)</span>.` : " Render it with the d2 CLI or the D2 VS Code extension.";
+  return htmlPage(`${view.title} (D2)`, `<p class="sum">${esc(view.description)} — D2 source (d2lang.com).${render}</p><pre class="k">${esc(d2)}</pre>`);
+}
 function convergeHtml(report: ConvergeReport): string {
   return htmlPage("Contract converge", `<p class="sum">a coherence audit over the whole contract — the contradictions a clean merge can still leave behind.</p>${convergeBody(report)}`);
 }
@@ -573,6 +584,19 @@ export function activate(context: vscode.ExtensionContext): void {
       panel.webview.html = convergeHtml(report);
       const errs = report.findings.filter((f) => f.severity === "error").length;
       void vscode.window.showInformationMessage(errs ? `Suluk: ${errs} contradiction(s) — see the converge panel.` : "Suluk: contract converges clean ✓");
+    } catch (e) { void vscode.window.showErrorMessage(`Suluk: ${(e as Error).message}`); }
+  });
+  // diagrams (D2): another projection from the one contract — an ERD, the declarative cycle, the operation surface
+  reg("suluk.generateDiagram", async () => {
+    const src = activeV4Source();
+    if (!src) { void vscode.window.showWarningMessage("Suluk: open a v4 contract first."); return; }
+    const pick = await vscode.window.showQuickPick(diagramViews().map((v) => ({ label: v.title, detail: v.description, v })), { placeHolder: "Generate a D2 diagram of…" });
+    if (!pick) return;
+    try {
+      const d2 = contractToD2(parseDocument(src), pick.v.id);
+      await openGenerated(d2, "plaintext"); // the .d2 source — editable, savable as .d2
+      const panel = vscode.window.createWebviewPanel("suluk.diagram", `Suluk — ${pick.v.title} (D2)`, vscode.ViewColumn.Beside, {});
+      panel.webview.html = diagramHtml(pick.v, d2);
     } catch (e) { void vscode.window.showErrorMessage(`Suluk: ${(e as Error).message}`); }
   });
   reg("suluk.runChecks", () => {

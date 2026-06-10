@@ -16,6 +16,8 @@ export { diffContracts, canonical, type ContractDiff, type ChangedOp, type OpRef
 export { crossCut, documentScopes, defaultViewers, type Viewer, type ViewerView, type GatedOp, type CrossCut } from "./crosscut";
 // converge: a coherence audit over a whole contract — the cross-cutting contradictions a clean merge leaves behind.
 export { convergeContract, type ConvergeReport, type ConvergeFinding, type ConvergeCode } from "./converge";
+// diagrams: D2 source for views of the contract (ERD / the declarative cycle / the operation surface) — another projection.
+export { contractToD2, diagramViews, type DiagramView } from "./diagram";
 // cost formatting, re-exported so the extension shell can render a live /cost ledger without a direct @suluk/cost dep.
 export { formatMicroUsd, summarize, type CostSummary } from "@suluk/cost";
 // modules (C021): install a contract fragment into the hub doc — the cockpit then re-projects it for free.
