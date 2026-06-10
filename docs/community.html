@@ -1,0 +1,30 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Community — Suluk</title>
+<link rel="stylesheet" href="style.css"/>
+</head><body>
+<header class="top">
+  <a class="brand" href="index.html">Suluk</a>
+  <nav><a href="index.html">Home</a><a href="getting-started.html">Get started</a><a href="index.html#packages">Packages</a><a href="architecture.html">Architecture</a><a href="contributing.html">Contributing</a><a href="community.html" class="on">Community</a><a class="gh" href="https://github.com/MahmoodKhalil57/sig-moonwalk">GitHub ↗</a></nav>
+</header>
+<main><article class="prose"><h1>Community</h1>
+<p>Suluk is meant to be <strong>extended and built upon</strong>. Here is where that happens.</p>
+<h2>Talk about it</h2>
+<ul>
+<li><a href="https://github.com/MahmoodKhalil57/sig-moonwalk/discussions">Discussions</a> — questions, ideas, show-and-tell.</li>
+<li><a href="https://github.com/MahmoodKhalil57/sig-moonwalk/issues">Issues</a> — bugs and concrete proposals.</li>
+</ul>
+<h2>Build community libraries</h2>
+<p>The whole stack ships in shadcn's <strong>registry</strong> format, which means <em>anything</em> — frontend components AND backend slices — can be distributed as an installable unit. <code>@suluk/builder</code>'s <code>toShadcnRegistry</code> turns a slice into a registry item bundling its UI <strong>and</strong> its routes <strong>and</strong> its schema:</p>
+<pre><code>npx shadcn add https://your-registry.example/pet-crud.json</code></pre>
+<p>Publish your own registry (a static JSON host — even GitHub Pages) and the community can install your full-stack slices with one command. A community library is just a registry of slices that consume the same v4 contract.</p>
+<h2>Extend the framework</h2>
+<ul>
+<li>A new <strong>projection</strong> package (the v4 document → some new artifact).</li>
+<li>A new <strong>DeployProvider</strong> (the deploy target is swappable by design).</li>
+<li>A new <strong>cockpit shell</strong> — the editor and <code>/superadmin</code> are two faces of <code>@suluk/cockpit</code>; add a third.</li>
+</ul>
+<p>See <a href="contributing.html">Contributing</a> for the conventions, and <a href="architecture.html">Architecture</a> for the shape of the whole thing.</p>
+<blockquote>These docs were generated from the repository by <code>@suluk/docs</code> and are hosted on GitHub Pages — the same way your fork's docs can be.</blockquote></article></main>
+<footer><span class="candidate">CANDIDATE — not official OpenAPI. Generated from source by @suluk/docs.</span></footer>
+</body></html>

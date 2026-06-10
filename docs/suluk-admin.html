@@ -1,0 +1,22 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>@suluk/admin — Suluk</title>
+<link rel="stylesheet" href="style.css"/>
+</head><body>
+<header class="top">
+  <a class="brand" href="index.html">Suluk</a>
+  <nav><a href="index.html">Home</a><a href="getting-started.html">Get started</a><a href="index.html#packages">Packages</a><a href="architecture.html">Architecture</a><a href="contributing.html">Contributing</a><a href="community.html">Community</a><a class="gh" href="https://github.com/MahmoodKhalil57/sig-moonwalk">GitHub ↗</a></nav>
+</header>
+<main>
+  <article class="package">
+    <p class="crumb"><a href="index.html#packages">Packages</a> / @suluk/admin</p>
+    <h1>@suluk/admin <span class="ver">v0.1.0</span></h1>
+    <p class="lead">The /superadmin web admin panel — the same cockpit as the vscode extension (@suluk/cockpit core), rendered as a Hono-served web UI. Superadmin-gated. CANDIDATE tooling.</p>
+    <h2>Install</h2><pre><code>bun add @suluk/admin</code></pre>
+    <h2>Overview</h2><div class="prose"><p>@suluk/admin — the /superadmin web admin panel. The SAME cockpit as the vscode extension (@suluk/cockpit core), rendered as Hono-served web pages and gated to superadmins. One brain, two faces. Mount it on your app: <code>app.route(&quot;/&quot;, adminApp({ document, authorize }))</code>. CANDIDATE tooling — NOT official OAS.</p></div>
+    <h2>Public API</h2><div class="chips"><code class="chip">adminApp</code><code class="chip">AdminOptions</code><code class="chip">esc</code><code class="chip">layout</code><code class="chip">renderBuilder</code><code class="chip">renderChecks</code><code class="chip">renderCycle</code><code class="chip">renderDeploy</code></div>
+    <h2>Depends on</h2><div class="chips"><code class="chip">@suluk/core</code><code class="chip">@suluk/cockpit</code><code class="chip">hono (peer)</code></div>
+    <h2>Modules</h2><dl class="modules"><dt><code>app.ts</code></dt><dd>adminApp — the /superadmin web panel. It mounts a small Hono app whose routes render the SAME @suluk/cockpit</dd><dt><code>render.ts</code></dt><dd>Server-rendered HTML for the admin panel — the SAME cockpit models the vscode extension shows, painted as</dd></dl>
+  </article></main>
+<footer><span class="candidate">CANDIDATE — not official OpenAPI. Generated from source by @suluk/docs.</span></footer>
+</body></html>

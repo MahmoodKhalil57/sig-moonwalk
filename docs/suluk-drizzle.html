@@ -1,0 +1,24 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>@suluk/drizzle — Suluk</title>
+<link rel="stylesheet" href="style.css"/>
+</head><body>
+<header class="top">
+  <a class="brand" href="index.html">Suluk</a>
+  <nav><a href="index.html">Home</a><a href="getting-started.html">Get started</a><a href="index.html#packages">Packages</a><a href="architecture.html">Architecture</a><a href="contributing.html">Contributing</a><a href="community.html">Community</a><a class="gh" href="https://github.com/MahmoodKhalil57/sig-moonwalk">GitHub ↗</a></nav>
+</header>
+<main>
+  <article class="package">
+    <p class="crumb"><a href="index.html#packages">Packages</a> / @suluk/drizzle</p>
+    <h1>@suluk/drizzle <span class="ver">v0.1.0</span></h1>
+    <p class="lead">Drizzle ORM schema -&gt; v4 'Suluk' contract: table -&gt; Zod (drizzle-zod) -&gt; v4 Schema Objects, DB metadata, and generated CRUD RouteContracts. CANDIDATE tooling.</p>
+    <h2>Install</h2><pre><code>bun add @suluk/drizzle</code></pre>
+    <h2>Overview</h2><div class="prose"><p>@suluk/drizzle — the DATA floor of the Suluk cycle: a Drizzle ORM table is the system of record, and this package projects it into the v4 &quot;Suluk&quot; contract. The chain is</p>
+<p>  Drizzle table     → Zod (drizzle-zod: select / insert / update)        [tableSchemas]     → v4 Schema Objects (@suluk/zod zodToV4)              [tableToV4, tableComponents]     → Hono RouteContracts (the @suluk/hono interface)    [crudRoutes]     → v4 document (@suluk/hono emitV4)                    [closes the floor-to-contract chain]</p>
+<p>Plus the honest DB metadata read straight off the column descriptors [tableMetadata]. Losses are never silent: the v4 conversion surfaces zodToV4 warnings (tableToV4Warnings) and component-name collisions (tableComponentsAudit). CANDIDATE tooling (not official OAS).</p></div>
+    <h2>Public API</h2><div class="chips"><code class="chip">AnyTable</code><code class="chip">ColumnMeta</code><code class="chip">CrudOptions</code><code class="chip">crudRoutes</code><code class="chip">pascalCase</code><code class="chip">tableComponentName</code><code class="chip">tableComponents</code><code class="chip">tableComponentsAudit</code><code class="chip">TableMeta</code><code class="chip">tableMetadata</code><code class="chip">tableSchemas</code><code class="chip">tableToV4</code><code class="chip">tableToV4Warnings</code><code class="chip">TableV4Schemas</code><code class="chip">TableZodSchemas</code></div>
+    <h2>Depends on</h2><div class="chips"><code class="chip">@suluk/core</code><code class="chip">@suluk/zod</code><code class="chip">@suluk/hono</code><code class="chip">drizzle-orm (peer)</code><code class="chip">drizzle-zod (peer)</code><code class="chip">zod (peer)</code></div>
+    <h2>Modules</h2><dl class="modules"><dt><code>crud.ts</code></dt><dd>Drizzle table → CRUD RouteContracts (the @suluk/hono shape). This closes the floor-to-contract chain:</dd><dt><code>meta.ts</code></dt><dd>Drizzle table → metadata + naming. The &quot;DATA floor&quot; reads the table's column descriptors directly</dd><dt><code>schemas.ts</code></dt><dd>Drizzle table → Zod → v4 Schema Objects. The chain is: table --drizzle-zod--&gt; Zod (select/insert/update)</dd></dl>
+  </article></main>
+<footer><span class="candidate">CANDIDATE — not official OpenAPI. Generated from source by @suluk/docs.</span></footer>
+</body></html>

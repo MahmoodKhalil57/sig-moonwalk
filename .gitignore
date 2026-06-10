@@ -6,4 +6,3 @@ tooling/**/target
 tooling/**/dist
 tooling/ts/.workflows
 
-/site

@@ -1,0 +1,41 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Contributing — Suluk</title>
+<link rel="stylesheet" href="style.css"/>
+</head><body>
+<header class="top">
+  <a class="brand" href="index.html">Suluk</a>
+  <nav><a href="index.html">Home</a><a href="getting-started.html">Get started</a><a href="index.html#packages">Packages</a><a href="architecture.html">Architecture</a><a href="contributing.html" class="on">Contributing</a><a href="community.html">Community</a><a class="gh" href="https://github.com/MahmoodKhalil57/sig-moonwalk">GitHub ↗</a></nav>
+</header>
+<main><article class="prose"><h1>Contributing</h1>
+<p>Suluk is a Bun + TypeScript monorepo of 17 small, single-purpose packages (plus a Rust core). Contributions are welcome — the architecture is designed so each package is independently understandable and testable.</p>
+<h2>Set up</h2>
+<pre><code>git clone https://github.com/MahmoodKhalil57/sig-moonwalk
+cd $(repo) &amp;&amp; bun install
+bun test            # run a package's tests from its dir</code></pre>
+<p>Every package has <code>bun test</code> and <code>tsc --noEmit</code> gates. Keep both green.</p>
+<h2>How the code is organized</h2>
+<ul>
+<li>Each package separates <strong>pure logic</strong> (unit-tested with <code>bun test</code>) from a <strong>thin adapter/host shell</strong></li>
+</ul>
+<p>  (duck-typed; type-checked). That's why coverage is high and the host bindings are trivial.</p>
+<ul>
+<li>A new conversion or projection is just a new package that consumes the v4 document (or a Zod/Drizzle</li>
+</ul>
+<p>  source) and emits an artifact — follow the shape of <code>@suluk/scalar</code> or <code>@suluk/drizzle</code>.</p>
+<ul>
+<li><strong>Enumerate every loss.</strong> If a transform can't carry something, surface it (a <code>warnings</code>/<code>diagnostics</code></li>
+</ul>
+<p>  array), never drop it silently.</p>
+<ul>
+<li>Keep the <strong>CANDIDATE</strong> labeling — nothing here is the official OpenAPI specification.</li>
+</ul>
+<h2>Good first contributions</h2>
+<ul>
+<li>A new <code>DeployProvider</code> (Vercel, Fly, a Node box) — implement the interface in <code>@suluk/deploy</code>.</li>
+<li>A new UI target alongside <code>@suluk/shadcn</code> (e.g. a different component kit).</li>
+<li>Richer <code>@suluk/docs</code> output, or a second language core (the Rust <code>suluk-core</code> is the template).</li>
+</ul>
+<p>Open a <a href="https://github.com/MahmoodKhalil57/sig-moonwalk/discussions">discussion</a> before large changes, and a <a href="https://github.com/MahmoodKhalil57/sig-moonwalk/pulls">pull request</a> when ready.</p></article></main>
+<footer><span class="candidate">CANDIDATE — not official OpenAPI. Generated from source by @suluk/docs.</span></footer>
+</body></html>

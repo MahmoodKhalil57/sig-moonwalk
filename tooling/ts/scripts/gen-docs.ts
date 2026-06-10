@@ -21,7 +21,7 @@ const fw = harvest({
   architecturePath: join(tsRoot, "..", "ARCHITECTURE.md"),     // tooling/ARCHITECTURE.md
 });
 
-const out = join(repoRoot, "site");
+const out = join(repoRoot, "docs");
 const files = generateSite(fw);
 for (const f of files) {
   const p = join(out, f.path);

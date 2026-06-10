@@ -1,0 +1,23 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>@suluk/openapi-compat — Suluk</title>
+<link rel="stylesheet" href="style.css"/>
+</head><body>
+<header class="top">
+  <a class="brand" href="index.html">Suluk</a>
+  <nav><a href="index.html">Home</a><a href="getting-started.html">Get started</a><a href="index.html#packages">Packages</a><a href="architecture.html">Architecture</a><a href="contributing.html">Contributing</a><a href="community.html">Community</a><a class="gh" href="https://github.com/MahmoodKhalil57/sig-moonwalk">GitHub ↗</a></nav>
+</header>
+<main>
+  <article class="package">
+    <p class="crumb"><a href="index.html#packages">Packages</a> / @suluk/openapi-compat</p>
+    <h1>@suluk/openapi-compat <span class="ver">v0.1.0</span></h1>
+    <p class="lead">Lossless-where-possible conversion between the OpenAPI v4 'Suluk' candidate and OpenAPI 3.1 (the dialect Scalar/Swagger consume). CANDIDATE tooling.</p>
+    <h2>Install</h2><pre><code>bun add @suluk/openapi-compat</code></pre>
+    <h2>Overview</h2><div class="prose"><p>@suluk/openapi-compat — convert between the OpenAPI v4 &quot;Suluk&quot; candidate and OpenAPI 3.1.</p>
+<p>downgrade(v4) → 3.1 is the lever for Scalar &amp; Swagger UI (they consume 3.x). upgrade(3.1) → v4 is the reverse. The pair is lossless for documents that fit 3.1's expressivity; where v4 exceeds 3.1 (notably multiple requests per method on one path, C003), downgrade() reports it in <code>diagnostics</code> rather than losing it silently. Schema Objects are shared verbatim (both are JSON Schema 2020-12). CANDIDATE tooling.</p></div>
+    <h2>Public API</h2><div class="chips"><code class="chip">Diagnostic</code><code class="chip">downgrade</code><code class="chip">DowngradeResult</code><code class="chip">upgrade</code><code class="chip">validate31</code><code class="chip">Validation31</code></div>
+    <h2>Depends on</h2><div class="chips"><code class="chip">@suluk/core</code></div>
+    <h2>Modules</h2><dl class="modules"><dt><code>downgrade.ts</code></dt><dd>v4 &quot;Suluk&quot; → OpenAPI 3.1 DOWNGRADE.</dd><dt><code>upgrade.ts</code></dt><dd>OpenAPI 3.1 → v4 &quot;Suluk&quot; UPGRADE (the reverse projection).</dd><dt><code>validate31.ts</code></dt><dd>Validate a document against the OFFICIAL OpenAPI 3.1 meta-schema (vendored, 2022-10-07 revision).</dd></dl>
+  </article></main>
+<footer><span class="candidate">CANDIDATE — not official OpenAPI. Generated from source by @suluk/docs.</span></footer>
+</body></html>

@@ -1,0 +1,23 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>@suluk/zod — Suluk</title>
+<link rel="stylesheet" href="style.css"/>
+</head><body>
+<header class="top">
+  <a class="brand" href="index.html">Suluk</a>
+  <nav><a href="index.html">Home</a><a href="getting-started.html">Get started</a><a href="index.html#packages">Packages</a><a href="architecture.html">Architecture</a><a href="contributing.html">Contributing</a><a href="community.html">Community</a><a class="gh" href="https://github.com/MahmoodKhalil57/sig-moonwalk">GitHub ↗</a></nav>
+</header>
+<main>
+  <article class="package">
+    <p class="crumb"><a href="index.html#packages">Packages</a> / @suluk/zod</p>
+    <h1>@suluk/zod <span class="ver">v0.1.0</span></h1>
+    <p class="lead">Lossless-where-representable conversion between Zod schemas and OpenAPI v4 'Suluk' Schema Objects (JSON Schema 2020-12). Zod is the source of truth; v4 is the interchange. CANDIDATE tooling.</p>
+    <h2>Install</h2><pre><code>bun add @suluk/zod</code></pre>
+    <h2>Overview</h2><div class="prose"><p>@suluk/zod — Zod ⇄ v4 &quot;Suluk&quot; Schema Object conversion.</p>
+<p>The user-facing chain is: Zod → v4 → (Scalar/Swagger render) → v4 → Zod. Zod is the source of truth and v4 (= JSON Schema 2020-12) is the interchange. zodToV4 emits a v4 Schema Object; v4ToZod rebuilds a Zod schema. The pair is LOSSLESS over the JSON-Schema-representable subset — proven by a fixpoint test (zodToV4∘v4ToZod∘zodToV4 == zodToV4). Zod runtime effects that JSON Schema cannot express (.transform, .refine) are reported by zodToV4().warnings rather than dropped silently. CANDIDATE tooling.</p></div>
+    <h2>Public API</h2><div class="chips"><code class="chip">convert</code><code class="chip">v4ToZod</code><code class="chip">V4ToZodOptions</code><code class="chip">zodToV4</code><code class="chip">ZodToV4Result</code></div>
+    <h2>Depends on</h2><div class="chips"><code class="chip">zod (peer)</code></div>
+    <h2>Modules</h2><dl class="modules"><dt><code>to-v4.ts</code></dt><dd>Zod → v4 &quot;Suluk&quot; Schema Object.</dd><dt><code>to-zod.ts</code></dt><dd>v4 &quot;Suluk&quot; Schema Object (JSON Schema 2020-12) → Zod.</dd></dl>
+  </article></main>
+<footer><span class="candidate">CANDIDATE — not official OpenAPI. Generated from source by @suluk/docs.</span></footer>
+</body></html>

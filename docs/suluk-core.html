@@ -1,0 +1,23 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>@suluk/core — Suluk</title>
+<link rel="stylesheet" href="style.css"/>
+</head><body>
+<header class="top">
+  <a class="brand" href="index.html">Suluk</a>
+  <nav><a href="index.html">Home</a><a href="getting-started.html">Get started</a><a href="index.html#packages">Packages</a><a href="architecture.html">Architecture</a><a href="contributing.html">Contributing</a><a href="community.html">Community</a><a class="gh" href="https://github.com/MahmoodKhalil57/sig-moonwalk">GitHub ↗</a></nav>
+</header>
+<main>
+  <article class="package">
+    <p class="crumb"><a href="index.html#packages">Packages</a> / @suluk/core</p>
+    <h1>@suluk/core <span class="ver">v0.1.0</span></h1>
+    <p class="lead">Core library for the OpenAPI v4.0 Suluk candidate: parse, validate, resolve, signature, ADA, match.</p>
+    <h2>Install</h2><pre><code>bun add @suluk/core</code></pre>
+    <h2>Overview</h2><div class="prose"><p>@suluk/core — the foundation library for the OpenAPI v4.0 &quot;Suluk&quot; candidate.</p>
+<p>parse → validate (meta-schema) → resolve references (by-name) → compute signatures → build the ADA → match requests. Implements the structural + behavioral contract in specification/candidate-v4/conformance/CONFORMANCE.md and the buildable grammars in SPEC Appendix A (C019). CANDIDATE tooling — provisional; the soft points (CONFIDENCE.md) are isolated here.</p></div>
+    <h2>Public API</h2><div class="chips"><code class="chip">Ada</code><code class="chip">buildAda</code><code class="chip">Callback</code><code class="chip">collide</code><code class="chip">Collision</code><code class="chip">CollisionVerdict</code><code class="chip">CompiledTemplate</code><code class="chip">compileTemplate</code><code class="chip">Components</code><code class="chip">computeSignature</code><code class="chip">deref</code><code class="chip">HttpMethod</code><code class="chip">Info</code><code class="chip">isReference</code><code class="chip">isValidDocument</code><code class="chip">matchPath</code><code class="chip">matchRequest</code><code class="chip">MatchResult</code><code class="chip">OpenAPIv4Document</code><code class="chip">Operation</code><code class="chip">ParameterSchema</code><code class="chip">parseDocument</code><code class="chip">parseQuery</code><code class="chip">PathItem</code><code class="chip">PathSegment</code><code class="chip">Reference</code><code class="chip">Request</code><code class="chip">resolveRef</code><code class="chip">Response</code><code class="chip">Schema</code><code class="chip">SchemaOrRef</code><code class="chip">SecurityRequirement</code><code class="chip">SecurityScheme</code><code class="chip">Server</code><code class="chip">Shared</code><code class="chip">SignatureTuple</code><code class="chip">Tag</code><code class="chip">validateDocument</code><code class="chip">ValidationIssue</code><code class="chip">ValidationResult</code><code class="chip">variableCount</code></div>
+    <h2>Depends on</h2><div class="chips"><code class="chip">yaml</code><code class="chip">ajv</code><code class="chip">ajv-formats</code></div>
+    <h2>Modules</h2><dl class="modules"><dt><code>ada.ts</code></dt><dd>One operation in the ADA: a request resolved with its pathItem context, signature, and compiled template.</dd><dt><code>parse.ts</code></dt><dd>Parse a Suluk v4 document from YAML or JSON source text. (YAML is a superset; JSON parses as YAML too.)</dd><dt><code>reference.ts</code></dt><dd>Structural guard for an OpenAPI Reference Object (C019 §A.1). NOTE: a JSON Schema may also carry a</dd><dt><code>signature.ts</code></dt><dd>Canonical signature tuple (C019 §A.2). The ADA's identity of a request; the matcher/collision key.</dd><dt><code>template.ts</code></dt><dd>uriTemplate compile + match + reverse-parse — the RFC6570 parseable-profile tooling default (C005, C019 §A.4).</dd><dt><code>types.ts</code></dt><dd>OpenAPI v4.0 &quot;Suluk&quot; Candidate — TypeScript type definitions for the document model.</dd><dt><code>validate.ts</code></dt><dd>Validate a document's STRUCTURE against the v4 meta-schema (SPEC §1, ADRs C003/C004/C009/C013).</dd></dl>
+  </article></main>
+<footer><span class="candidate">CANDIDATE — not official OpenAPI. Generated from source by @suluk/docs.</span></footer>
+</body></html>

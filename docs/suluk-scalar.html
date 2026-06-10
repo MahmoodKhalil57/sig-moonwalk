@@ -1,0 +1,23 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>@suluk/scalar — Suluk</title>
+<link rel="stylesheet" href="style.css"/>
+</head><body>
+<header class="top">
+  <a class="brand" href="index.html">Suluk</a>
+  <nav><a href="index.html">Home</a><a href="getting-started.html">Get started</a><a href="index.html#packages">Packages</a><a href="architecture.html">Architecture</a><a href="contributing.html">Contributing</a><a href="community.html">Community</a><a class="gh" href="https://github.com/MahmoodKhalil57/sig-moonwalk">GitHub ↗</a></nav>
+</header>
+<main>
+  <article class="package">
+    <p class="crumb"><a href="index.html#packages">Packages</a> / @suluk/scalar</p>
+    <h1>@suluk/scalar <span class="ver">v0.1.0</span></h1>
+    <p class="lead">Render an OpenAPI v4 'Suluk' document with Scalar API Reference (via the 3.1 downgrade). CANDIDATE tooling.</p>
+    <h2>Install</h2><pre><code>bun add @suluk/scalar</code></pre>
+    <h2>Overview</h2><div class="prose"><p>@suluk/scalar — render an OpenAPI v4 &quot;Suluk&quot; document with Scalar API Reference.</p>
+<p>Scalar consumes OpenAPI 3.x, so we project the v4 doc down to 3.1 (via @suluk/openapi-compat) and embed the result inline. The page is self-contained: it loads the Scalar standalone bundle from a CDN and initializes it with the spec via <code>Scalar.createApiReference('#app', { content })</code>. CANDIDATE tooling.</p></div>
+    <h2>Public API</h2><div class="chips"><code class="chip">RenderResult</code><code class="chip">scalarHtml</code><code class="chip">ScalarOptions</code><code class="chip">scalarResponse</code></div>
+    <h2>Depends on</h2><div class="chips"><code class="chip">@suluk/core</code><code class="chip">@suluk/openapi-compat</code></div>
+    
+  </article></main>
+<footer><span class="candidate">CANDIDATE — not official OpenAPI. Generated from source by @suluk/docs.</span></footer>
+</body></html>

@@ -1,0 +1,101 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Home — Suluk</title>
+<link rel="stylesheet" href="style.css"/>
+</head><body>
+<header class="top">
+  <a class="brand" href="index.html">Suluk</a>
+  <nav><a href="index.html" class="on">Home</a><a href="getting-started.html">Get started</a><a href="index.html#packages" class="on">Packages</a><a href="architecture.html">Architecture</a><a href="contributing.html">Contributing</a><a href="community.html">Community</a><a class="gh" href="https://github.com/MahmoodKhalil57/sig-moonwalk">GitHub ↗</a></nav>
+</header>
+<main>
+  <section class="hero">
+    <h1>Suluk</h1>
+    <p class="tagline">One typed contract — projected into your entire stack: API, docs, typed client, UI, tests, admin, and deploy.</p>
+    <div class="cta">
+      <a class="btn" href="getting-started.html">Get started</a>
+      <a class="btn ghost" href="architecture.html">How it works</a>
+      <a class="btn ghost" href="https://github.com/MahmoodKhalil57/sig-moonwalk">Star on GitHub</a>
+    </div>
+  </section>
+  <section class="prose"><p><strong>Suluk</strong> is a candidate exploration of OpenAPI v4 &quot;Moonwalk&quot;, built as a framework: you declare your data and routes <strong>once</strong>, and everything else — the OpenAPI v4 document, Scalar/Swagger docs, a typed Nano Stores client, generated shadcn UI, request validation, contract tests, a documentation audit, an admin panel (in your editor <em>and</em> on <code>/superadmin</code>), and a Cloudflare deploy plan — is <strong>derived</strong> from it. One source, many projections; they cannot drift because they are the same source.</p></section>
+  <section><h2>The cycle</h2><pre class="diagram">Drizzle  ──▶  contract (Hono + Zod + Better Auth)  ──▶  v4 document (the hub)
+  data                                                          │
+                       ┌──────────────────────────────────────┼─────────────────────────────┐
+                       ▼                  ▼                    ▼                ▼              ▼
+                  Scalar / Swagger   Nano Stores          shadcn UI       contract tests   doc audit
+                     (docs)         (client state)          (UI)           (the doc as a    (coverage)
+                                                                            check)
+        @suluk/builder composes it (pages → sections → blocks → components, contract-narrowing)
+        @suluk/deploy ships it to Cloudflare · @suluk/cockpit drives it (vscode + /superadmin)</pre></section>
+  <section id="packages"><h2>Packages <span class="muted">(17)</span></h2>
+    <div class="grid"><a class="card" href="suluk-admin.html">
+    <div class="card-name">@suluk/admin</div>
+    <div class="card-desc">The /superadmin web admin panel — the same cockpit as the vscode extension (@suluk/cockpit core), rendered as a Hono-served web UI. Superadmin-gated. CANDIDATE tooling.</div>
+  </a>
+<a class="card" href="suluk-better-auth.html">
+    <div class="card-name">@suluk/better-auth</div>
+    <div class="card-desc">Official Better-Auth-on-Hono support for Suluk: auth methods -&gt; v4 securitySchemes; ingest Better Auth's OpenAPI 3.0 -&gt; v4; session -&gt; principal for per-viewer docs. CANDIDATE tooling.</div>
+  </a>
+<a class="card" href="suluk-builder.html">
+    <div class="card-name">@suluk/builder</div>
+    <div class="card-desc">Tiered contract-narrowing DSL (components→blocks→sections→pages) bound to the Suluk cycle. A page composes sections; buildApp emits backend (routes+v4) AND frontend (page TSX) at once. Inspired by multivendorbuilder's DSL, rebuilt with the Suluk discipline. CANDIDATE tooling.</div>
+  </a>
+<a class="card" href="suluk-cockpit.html">
+    <div class="card-name">@suluk/cockpit</div>
+    <div class="card-desc">The pure cockpit core (cycle model · builder model · codegen · deploy planning · validate/audit/preview) shared by the vscode extension and the /superadmin web admin panel. CANDIDATE tooling.</div>
+  </a>
+<a class="card" href="suluk-core.html">
+    <div class="card-name">@suluk/core</div>
+    <div class="card-desc">Core library for the OpenAPI v4.0 Suluk candidate: parse, validate, resolve, signature, ADA, match.</div>
+  </a>
+<a class="card" href="suluk-deploy.html">
+    <div class="card-name">@suluk/deploy</div>
+    <div class="card-desc">Deploy a Suluk app behind a SWAPPABLE target interface. Cloudflare is the first provider (Workers + D1 + static assets) — an adapter, since the stack is already Cloudflare-native. CANDIDATE tooling.</div>
+  </a>
+<a class="card" href="suluk-docs.html">
+    <div class="card-name">@suluk/docs</div>
+    <div class="card-desc">Generate an intuitive static documentation site for a Bun/TS monorepo, straight from source (package.json + doc-comments + exports + README/ARCHITECTURE). Deployable to GitHub Pages. CANDIDATE tooling.</div>
+  </a>
+<a class="card" href="suluk-drizzle.html">
+    <div class="card-name">@suluk/drizzle</div>
+    <div class="card-desc">Drizzle ORM schema -&gt; v4 'Suluk' contract: table -&gt; Zod (drizzle-zod) -&gt; v4 Schema Objects, DB metadata, and generated CRUD RouteContracts. CANDIDATE tooling.</div>
+  </a>
+<a class="card" href="suluk-example-petshop.html">
+    <div class="card-name">@suluk/example-petshop <span class="tag">demo</span></div>
+    <div class="card-desc">End-to-end demo: Drizzle tables → @suluk/builder → a live validated CRUD server + Scalar docs + generated frontend, all from one source. CANDIDATE tooling.</div>
+  </a>
+<a class="card" href="suluk-hono.html">
+    <div class="card-name">@suluk/hono</div>
+    <div class="card-desc">The Suluk derivation engine: minimal Hono+Zod RouteContracts in; v4 doc (dynamic per principal+time), validation, contract tests, and doc-coverage audit out. CANDIDATE tooling.</div>
+  </a>
+<a class="card" href="suluk-nano-stores.html">
+    <div class="card-name">@suluk/nano-stores</div>
+    <div class="card-desc">v4 'Suluk' contracts -&gt; typed Nano Stores client: per-operation fetcher/mutator stores (@nanostores/query) with Zod-validated I/O. CANDIDATE tooling.</div>
+  </a>
+<a class="card" href="suluk-openapi-compat.html">
+    <div class="card-name">@suluk/openapi-compat</div>
+    <div class="card-desc">Lossless-where-possible conversion between the OpenAPI v4 'Suluk' candidate and OpenAPI 3.1 (the dialect Scalar/Swagger consume). CANDIDATE tooling.</div>
+  </a>
+<a class="card" href="suluk-scalar.html">
+    <div class="card-name">@suluk/scalar</div>
+    <div class="card-desc">Render an OpenAPI v4 'Suluk' document with Scalar API Reference (via the 3.1 downgrade). CANDIDATE tooling.</div>
+  </a>
+<a class="card" href="suluk-shadcn.html">
+    <div class="card-name">@suluk/shadcn</div>
+    <div class="card-desc">v4 'Suluk' Schema Objects -&gt; shadcn/ui form + table specs and TSX scaffolds (react-hook-form + zodResolver). Codegen, no runtime UI deps. CANDIDATE tooling.</div>
+  </a>
+<a class="card" href="suluk-swagger.html">
+    <div class="card-name">@suluk/swagger</div>
+    <div class="card-desc">Render an OpenAPI v4 'Suluk' document with Swagger UI (via the 3.1 downgrade). CANDIDATE tooling.</div>
+  </a>
+<a class="card" href="suluk-zod.html">
+    <div class="card-name">@suluk/zod</div>
+    <div class="card-desc">Lossless-where-representable conversion between Zod schemas and OpenAPI v4 'Suluk' Schema Objects (JSON Schema 2020-12). Zod is the source of truth; v4 is the interchange. CANDIDATE tooling.</div>
+  </a>
+<a class="card" href="suluk-vscode.html">
+    <div class="card-name">suluk-vscode</div>
+    <div class="card-desc">The unifying cockpit for the Suluk declarative cycle: validate, audit, preview (Scalar/Swagger), and generate stores/UI from one v4 source. CANDIDATE tooling — not official OAS.</div>
+  </a></div>
+  </section></main>
+<footer><span class="candidate">CANDIDATE — not official OpenAPI. Generated from source by @suluk/docs.</span></footer>
+</body></html>

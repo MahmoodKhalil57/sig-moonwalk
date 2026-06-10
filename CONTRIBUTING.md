@@ -25,11 +25,12 @@ cd packages/<name> && bun test          # each package has bun test + tsc gates 
 
 ## Docs
 
-The documentation site is generated **from source** by [`@suluk/docs`](tooling/ts/packages/docs) and
-published to GitHub Pages by [`.github/workflows/docs.yml`](.github/workflows/docs.yml). Regenerate locally:
+The documentation site is generated **from source** by [`@suluk/docs`](tooling/ts/packages/docs) into the
+committed [`docs/`](docs/) folder, which GitHub Pages serves directly (Settings → Pages → Deploy from a
+branch → `main` / `docs`). Regenerate **and commit** `docs/` when packages change:
 
 ```sh
-cd tooling/ts && bun run scripts/gen-docs.ts   # → ./site
+cd tooling/ts && bun run gen:docs   # → ../../docs
 ```
 
 Open a [discussion](https://github.com/MahmoodKhalil57/sig-moonwalk/discussions) before large changes.

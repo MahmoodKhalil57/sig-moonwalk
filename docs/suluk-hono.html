@@ -1,0 +1,22 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>@suluk/hono — Suluk</title>
+<link rel="stylesheet" href="style.css"/>
+</head><body>
+<header class="top">
+  <a class="brand" href="index.html">Suluk</a>
+  <nav><a href="index.html">Home</a><a href="getting-started.html">Get started</a><a href="index.html#packages">Packages</a><a href="architecture.html">Architecture</a><a href="contributing.html">Contributing</a><a href="community.html">Community</a><a class="gh" href="https://github.com/MahmoodKhalil57/sig-moonwalk">GitHub ↗</a></nav>
+</header>
+<main>
+  <article class="package">
+    <p class="crumb"><a href="index.html#packages">Packages</a> / @suluk/hono</p>
+    <h1>@suluk/hono <span class="ver">v0.1.0</span></h1>
+    <p class="lead">The Suluk derivation engine: minimal Hono+Zod RouteContracts in; v4 doc (dynamic per principal+time), validation, contract tests, and doc-coverage audit out. CANDIDATE tooling.</p>
+    <h2>Install</h2><pre><code>bun add @suluk/hono</code></pre>
+    <h2>Overview</h2><div class="prose"><p>@suluk/hono — the derivation engine. The user authors minimal RouteContracts (Hono + Zod); everything else is derived: the v4 document (dynamic per principal + time), request validation, contract tests, and a documentation-coverage audit. See tooling/ARCHITECTURE.md. CANDIDATE tooling.</p></div>
+    <h2>Public API</h2><div class="chips"><code class="chip">audit</code><code class="chip">autofill</code><code class="chip">Check</code><code class="chip">CheckRun</code><code class="chip">contract</code><code class="chip">contractChecks</code><code class="chip">coverage</code><code class="chip">EmitContext</code><code class="chip">EmitDiagnostic</code><code class="chip">EmitResult</code><code class="chip">emitV4</code><code class="chip">Finding</code><code class="chip">Method</code><code class="chip">mount</code><code class="chip">responseList</code><code class="chip">RouteContract</code><code class="chip">RouteRequest</code><code class="chip">RouteResponse</code><code class="chip">runContractChecks</code><code class="chip">SchemaCheck</code><code class="chip">validateSchema2020</code></div>
+    <h2>Depends on</h2><div class="chips"><code class="chip">@suluk/core</code><code class="chip">@suluk/zod</code><code class="chip">ajv</code><code class="chip">ajv-formats</code><code class="chip">zod (peer)</code><code class="chip">hono (peer)</code><code class="chip">@hono/zod-validator (peer)</code></div>
+    <h2>Modules</h2><dl class="modules"><dt><code>audit.ts</code></dt><dd>audit — documentation-coverage detection over a v4 document. This is the <em>ceiling</em> side of the</dd><dt><code>checks.ts</code></dt><dd>contractChecks — auto-generated tests that act as checks for mistakes (the doc/contract as an executable</dd><dt><code>contract.ts</code></dt><dd>The RouteContract — the single source of truth a user authors (minimally), from which every Derivation</dd><dt><code>emit.ts</code></dt><dd>emitV4 — the keystone Derivation: render(contracts, principal, now) -&gt; v4 Document.</dd><dt><code>mount.ts</code></dt><dd>mount — the thin Hono adapter. Wires the SAME RouteContract list that emitV4 reads onto a live Hono app,</dd><dt><code>schema-check.ts</code></dt><dd>Validate that a value is a well-formed JSON Schema 2020-12 (the dialect v4 Schema Objects must use).</dd></dl>
+  </article></main>
+<footer><span class="candidate">CANDIDATE — not official OpenAPI. Generated from source by @suluk/docs.</span></footer>
+</body></html>

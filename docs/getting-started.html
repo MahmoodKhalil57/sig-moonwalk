@@ -1,0 +1,45 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Get started — Suluk</title>
+<link rel="stylesheet" href="style.css"/>
+</head><body>
+<header class="top">
+  <a class="brand" href="index.html">Suluk</a>
+  <nav><a href="index.html">Home</a><a href="getting-started.html" class="on">Get started</a><a href="index.html#packages">Packages</a><a href="architecture.html">Architecture</a><a href="contributing.html">Contributing</a><a href="community.html">Community</a><a class="gh" href="https://github.com/MahmoodKhalil57/sig-moonwalk">GitHub ↗</a></nav>
+</header>
+<main><article class="prose"><h1>Get started</h1>
+<p>Suluk turns <strong>one source of truth</strong> — your data schema + your routes — into the whole stack. You write the contract once; the docs, the typed client, the UI, the validation, the tests, and the admin panel are all <em>derived</em> from it, so they cannot drift.</p>
+<h2>The 30-second tour</h2>
+<pre><code class="lang-ts">import { sqliteTable, text, integer } from &quot;drizzle-orm/sqlite-core&quot;;
+import { tableToV4 } from &quot;@suluk/drizzle&quot;;
+import { buildApp } from &quot;@suluk/builder&quot;;
+
+// 1. your data is the system of record (Drizzle — and sqlite-core IS Cloudflare D1)
+const pet = sqliteTable(&quot;pet&quot;, {
+  id: integer(&quot;id&quot;).primaryKey({ autoIncrement: true }),
+  name: text(&quot;name&quot;).notNull(),
+  status: text(&quot;status&quot;, { enum: [&quot;available&quot;, &quot;pending&quot;, &quot;sold&quot;] }).notNull().default(&quot;available&quot;),
+});
+
+// 2. one call derives BOTH ends
+const app = buildApp({ entities: [{ name: &quot;Pet&quot;, schema: tableToV4(pet).insert }] });
+
+app.backend.document;     // → the OpenAPI v4 document (validated)
+app.backend.routes;       // → Hono CRUD RouteContracts (mount them)
+app.frontend.components;  // → shadcn Form + Table (TSX)
+app.frontend.pages;       // → page TSX wired to the typed client</code></pre>
+<p>From that one document you get <strong>Scalar/Swagger docs</strong>, a typed <strong>Nano Stores</strong> client, generated <strong>shadcn</strong> UI, <strong>contract tests</strong>, a documentation <strong>audit</strong>, the <strong>/superadmin</strong> admin panel, and a <strong>Cloudflare</strong> deploy plan. See the <a href="https://github.com/MahmoodKhalil57/sig-moonwalk/tree/main/tooling/ts/packages/example-petshop">runnable demo</a> — it boots the entire stack from one schema.</p>
+<h2>Install</h2>
+<p>Everything is a small focused package — add only what you need:</p>
+<pre><code>bun add @suluk/core @suluk/hono @suluk/zod</code></pre>
+<p>Browse all 17 packages on the <a href="index.html#packages">home page</a>, and read <a href="architecture.html">how it fits together</a>.</p>
+<h2>The discipline (why it stays coherent)</h2>
+<ul>
+<li><strong>One source, many projections.</strong> The v4 document is the hub; everything is derived from it.</li>
+<li><strong>Honest losses are enumerated, never silent</strong> — every converter reports what it couldn't carry.</li>
+<li><strong>Schema Objects are JSON Schema 2020-12 verbatim</strong> across v4 / 3.1 / Zod / Drizzle.</li>
+<li><strong>Pure logic + thin shells</strong> — the cockpit runs identically in the editor and on <code>/superadmin</code>.</li>
+</ul>
+<blockquote>Suluk is a <strong>candidate</strong> exploration of OpenAPI v4 &quot;Moonwalk&quot; — not the official specification.</blockquote></article></main>
+<footer><span class="candidate">CANDIDATE — not official OpenAPI. Generated from source by @suluk/docs.</span></footer>
+</body></html>
