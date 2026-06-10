@@ -135,6 +135,37 @@ visible, navigable, and actionable from one place.
   principal's scopes; commands for every codegen action; Scalar/Swagger webview previews; validate/audit
   diagnostics in the Problems panel.
 
+## The builder — compose the whole stack (`@suluk/builder`)
+
+Inspired by `~/apps/multivendorbuilder`'s **page → section → block → component** DSL, rebuilt with the Suluk
+discipline. The load-bearing idea is **contract-narrowing**: *a document's `params` is EXACTLY and ONLY what
+the tier above may set.* Each tier consumes the full contract below, hardcodes most of it, and re-publishes a
+narrower `params` upward — the narrowing IS the safety surface (the same discipline as the per-viewer doc
+projection, applied to composition). "The owner can't change the form's fields" isn't a rule — `fields` just
+isn't in the section's `params`.
+
+The Suluk twist binds the tiers to the cycle: lower tiers **auto-generate** from an entity schema (Form/Table
+blocks, a CRUD section, the backend CRUD routes); a **page** composes sections. So `buildApp(spec)` emits
+**both ends from one spec** — backend (routes → `emitV4` → v4 doc) *and* frontend (shadcn components + page
+TSX). Building a page builds the front *and* the back, because each entity carries data + contract + UI.
+
+## Distribution — shadcn registry as the whole-stack package format
+
+shadcn's registry isn't UI-only: a `registry:file` item carries arbitrary files to any target. So
+`toShadcnRegistry(builtApp)` packages **each slice as one installable unit** (`npx shadcn add <item>`) bundling
+its shadcn Form/Table **and** its backend routes module **and** its v4 schema. The registry becomes the
+universal distribution format for every layer — managed from the cockpit. This is what makes the stack modular
+and installable end to end.
+
+## The deployment capstone — Cloudflare (swappable)
+
+The terminal stage: once a user logs into their Cloudflare account *through the extension*, everything deploys
+to Cloudflare — Hono → **Workers**, the frontend → **Pages**, Drizzle(sqlite) → **D1**, plus observability /
+compute. This is an *adapter, not a rewrite*: the stack is already Cloudflare-native by construction (Hono is
+the canonical Workers framework; `@suluk/drizzle` targets `sqlite-core`, which *is* D1). Kept behind a
+**swappable target interface** (`@suluk/deploy`) so Cloudflare is the first provider, not the only one — the
+services are built on good standards we can swap later. *(Planned.)*
+
 ## Invariants every package keeps
 
 - **Honest losses are enumerated, never silent** — `compat` collision diagnostics, `zod` lossy-effect
