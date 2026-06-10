@@ -1,0 +1,6 @@
+<svg width="24" height="24" viewBox="76 60 360 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Suluk">
+  <!-- VS Code activity-bar glyph: monochrome, theme-recoloured via currentColor -->
+  <path d="M 318.3 136.4 A 76 76 0 1 0 256 256 A 76 76 0 1 1 193.7 375.6"
+        fill="none" stroke="currentColor" stroke-width="60" stroke-linecap="round"/>
+  <circle cx="318.3" cy="136.4" r="22" fill="currentColor"/>
+</svg>

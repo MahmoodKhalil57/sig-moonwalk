@@ -2,6 +2,15 @@
   "name": "@suluk/core",
   "version": "0.1.6",
   "description": "Core library for the OpenAPI v4.0 Suluk candidate: parse, validate, resolve, signature, ADA, match.",
+  "publishConfig": { "access": "public" },
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MahmoodKhalil57/suluk.git",
+    "directory": "tooling/ts/packages/core"
+  },
+  "homepage": "https://github.com/MahmoodKhalil57/suluk#readme",
+  "bugs": "https://github.com/MahmoodKhalil57/suluk/issues",
   "type": "module",
   "module": "src/index.ts",
   "types": "src/index.ts",

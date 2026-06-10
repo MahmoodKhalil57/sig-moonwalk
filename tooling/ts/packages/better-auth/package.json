@@ -2,6 +2,15 @@
   "name": "@suluk/better-auth",
   "version": "0.1.1",
   "description": "Official Better-Auth-on-Hono support for Suluk: auth methods -> v4 securitySchemes; ingest Better Auth's OpenAPI 3.0 -> v4; session -> principal for per-viewer docs. CANDIDATE tooling.",
+  "publishConfig": { "access": "public" },
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MahmoodKhalil57/suluk.git",
+    "directory": "tooling/ts/packages/better-auth"
+  },
+  "homepage": "https://github.com/MahmoodKhalil57/suluk#readme",
+  "bugs": "https://github.com/MahmoodKhalil57/suluk/issues",
   "type": "module",
   "main": "src/index.ts",
   "exports": { ".": "./src/index.ts" },

@@ -2,6 +2,7 @@
   "name": "@suluk/visual",
   "version": "0.1.2",
   "description": "Pixel-confidence by construction: verify each UI primitive's pixels ONCE (a golden snapshot), and confidence propagates to every generated UI via content-hashing + the deterministic generator — re-verify a primitive only when its source changes. CANDIDATE tooling.",
+  "publishConfig": { "access": "public" },
   "license": "Apache-2.0",
   "repository": {
     "type": "git",

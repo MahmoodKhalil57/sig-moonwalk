@@ -47,6 +47,8 @@ export function scalarHtml(doc: OpenAPIv4Document, opts: ScalarOptions = {}): Re
     <title>${title}</title>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/svg+xml" href="https://raw.githubusercontent.com/MahmoodKhalil57/suluk/main/branding/export/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="https://raw.githubusercontent.com/MahmoodKhalil57/suluk/main/branding/export/icon-32.png" />
   </head>
   <body>
     <div id="app"></div>

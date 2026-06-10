@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://raw.githubusercontent.com/MahmoodKhalil57/suluk/main/branding/export/wordmark.png" alt="Suluk" width="380" />
+</p>
+
 # Suluk — OpenAPI v4 (Candidate)
 
 The unifying cockpit for the **Suluk** declarative cycle: author one OpenAPI v4 "Suluk"

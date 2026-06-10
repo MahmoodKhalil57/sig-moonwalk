@@ -1,0 +1,55 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Suluk — OpenAPI v4 candidate">
+  <title>Suluk</title>
+  <defs>
+    <linearGradient id="sc-bg" x1="0" y1="0" x2="0" y2="630" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#1b1e3a"/>
+      <stop offset="1" stop-color="#0a0c18"/>
+    </linearGradient>
+    <radialGradient id="sc-glow" cx="0.5" cy="0.34" r="0.55">
+      <stop offset="0" stop-color="#4f46e5" stop-opacity="0.30"/>
+      <stop offset="1" stop-color="#4f46e5" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="sc-tile" x1="0" y1="0" x2="0" y2="232" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#1b1e3a"/>
+      <stop offset="1" stop-color="#0c0e1f"/>
+    </linearGradient>
+    <linearGradient id="sc-stroke" x1="0" y1="0" x2="0" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#a5b4fc"/>
+      <stop offset="0.55" stop-color="#6366f1"/>
+      <stop offset="1" stop-color="#4f46e5"/>
+    </linearGradient>
+    <linearGradient id="sc-text" x1="300" y1="44" x2="680" y2="188" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#a5b4fc"/>
+      <stop offset="0.6" stop-color="#6366f1"/>
+      <stop offset="1" stop-color="#4f46e5"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#sc-bg)"/>
+  <rect width="1200" height="630" fill="url(#sc-glow)"/>
+
+  <!-- wordmark lockup (760x232), centered near the top -->
+  <g transform="translate(212,108) scale(1.02)">
+    <g transform="translate(8,4) scale(0.4375)">
+      <rect x="16" y="16" width="480" height="480" rx="116" fill="url(#sc-tile)"/>
+      <path d="M 318.3 136.4 A 76 76 0 1 0 256 256 A 76 76 0 1 1 193.7 375.6"
+            fill="none" stroke="url(#sc-stroke)" stroke-width="64" stroke-linecap="round"/>
+      <circle cx="318.3" cy="136.4" r="20" fill="#5eead4"/>
+    </g>
+    <g fill="none" stroke="url(#sc-text)" stroke-width="24" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M 355.9 93.3 A 26 26 0 1 0 336 136 A 26 26 0 1 1 316.1 178.7"/>
+      <path d="M 392 84 L 392 158 A 30 30 0 0 0 452 158 L 452 84"/>
+      <path d="M 486 44 L 486 188"/>
+      <path d="M 516 84 L 516 158 A 30 30 0 0 0 576 158 L 576 84"/>
+      <path d="M 610 44 L 610 188"/>
+      <path d="M 652 110 L 612 150 L 656 188"/>
+    </g>
+    <circle cx="392" cy="64" r="11" fill="#5eead4"/>
+  </g>
+
+  <!-- tagline -->
+  <text x="600" y="438" text-anchor="middle" font-family="Ubuntu, 'DejaVu Sans', sans-serif"
+        font-size="34" font-weight="500" fill="#c7d2fe">One typed OpenAPI&#160;v4 contract, projected into every full-stack layer.</text>
+  <text x="600" y="492" text-anchor="middle" font-family="Ubuntu, 'DejaVu Sans', sans-serif"
+        font-size="22" letter-spacing="1" fill="#6b73a8">سُلوك &#183; the walk &#183; candidate v4.0</text>
+</svg>

@@ -4,6 +4,12 @@ version = "0.1.1"
 edition = "2021"
 description = "Performance core for the OpenAPI v4.0 'Suluk' candidate: parse, signature, and reverse-parse uriTemplate matching. CANDIDATE tooling — NOT official OAS."
 license = "Apache-2.0"
+readme = "README.md"
+repository = "https://github.com/MahmoodKhalil57/suluk"
+homepage = "https://github.com/MahmoodKhalil57/suluk"
+documentation = "https://docs.rs/suluk-core"
+keywords = ["openapi", "v4", "moonwalk", "uritemplate", "routing"]
+categories = ["parsing", "web-programming", "api-bindings"]
 
 [dependencies]
 serde = { version = "1", features = ["derive"] }

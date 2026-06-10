@@ -3,6 +3,15 @@
   "version": "0.1.1",
   "private": true,
   "description": "End-to-end demo: Drizzle tables \u2192 @suluk/builder \u2192 a live validated CRUD server + Scalar docs + generated frontend, all from one source. CANDIDATE tooling.",
+  "publishConfig": { "access": "public" },
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MahmoodKhalil57/suluk.git",
+    "directory": "tooling/ts/packages/example-petshop"
+  },
+  "homepage": "https://github.com/MahmoodKhalil57/suluk#readme",
+  "bugs": "https://github.com/MahmoodKhalil57/suluk/issues",
   "type": "module",
   "main": "src/app.ts",
   "dependencies": {

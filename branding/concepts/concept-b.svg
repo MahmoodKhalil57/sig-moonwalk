@@ -1,0 +1,32 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Suluk">
+  <defs>
+    <linearGradient id="bTile" x1="0" y1="0" x2="0" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0c1a2b"/>
+      <stop offset="1" stop-color="#071019"/>
+    </linearGradient>
+    <linearGradient id="bRay" x1="150" y1="256" x2="430" y2="256" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fbbf24"/>
+      <stop offset="0.25" stop-color="#22d3ee"/>
+      <stop offset="1" stop-color="#2563eb"/>
+    </linearGradient>
+    <radialGradient id="bNode" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#fde68a"/>
+      <stop offset="1" stop-color="#fbbf24"/>
+    </radialGradient>
+  </defs>
+  <rect x="16" y="16" width="480" height="480" rx="116" fill="url(#bTile)"/>
+  <!-- projection rays from the single source into each layer -->
+  <g fill="none" stroke="url(#bRay)" stroke-width="22" stroke-linecap="round">
+    <path d="M 168 256 L 300 168"/>
+    <path d="M 168 256 L 300 256"/>
+    <path d="M 168 256 L 300 344"/>
+  </g>
+  <!-- the stacked full-stack layers -->
+  <g fill="#22d3ee">
+    <rect x="300" y="150" width="128" height="36" rx="18"/>
+    <rect x="300" y="238" width="128" height="36" rx="18" fill="#38bdf8"/>
+    <rect x="300" y="326" width="128" height="36" rx="18" fill="#2563eb"/>
+  </g>
+  <!-- the one source contract -->
+  <circle cx="168" cy="256" r="40" fill="url(#bNode)"/>
+</svg>

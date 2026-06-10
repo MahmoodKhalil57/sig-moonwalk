@@ -1,3 +1,5 @@
+#![doc(html_logo_url = "https://raw.githubusercontent.com/MahmoodKhalil57/suluk/main/branding/export/mark-256.png")]
+#![doc(html_favicon_url = "https://raw.githubusercontent.com/MahmoodKhalil57/suluk/main/branding/export/favicon.ico")]
 //! suluk-core — performance core for the OpenAPI v4.0 "Suluk" candidate.
 //!
 //! A Rust counterpart to @suluk/core's portable algorithms: parse a v4 document, compute canonical request

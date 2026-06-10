@@ -1,0 +1,7 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" color="#4f46e5" role="img" aria-label="Suluk">
+  <title>Suluk mark (monochrome)</title>
+  <!-- single-colour: inherits `currentColor`; override via CSS `color` or the root color attr -->
+  <path d="M 318.3 136.4 A 76 76 0 1 0 256 256 A 76 76 0 1 1 193.7 375.6"
+        fill="none" stroke="currentColor" stroke-width="64" stroke-linecap="round"/>
+  <circle cx="318.3" cy="136.4" r="20" fill="currentColor"/>
+</svg>

@@ -46,6 +46,8 @@ export function swaggerHtml(doc: OpenAPIv4Document, opts: SwaggerOptions = {}): 
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>${title}</title>
+    <link rel="icon" type="image/svg+xml" href="https://raw.githubusercontent.com/MahmoodKhalil57/suluk/main/branding/export/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="https://raw.githubusercontent.com/MahmoodKhalil57/suluk/main/branding/export/icon-32.png" />
     <link rel="stylesheet" href="${base}/swagger-ui.css" />
   </head>
   <body>

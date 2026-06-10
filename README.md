@@ -1,4 +1,8 @@
-# Suluk — an independent OpenAPI v4.0 candidate
+<p align="center">
+  <img src="https://raw.githubusercontent.com/MahmoodKhalil57/suluk/main/branding/export/wordmark.png" alt="Suluk" width="420" />
+</p>
+
+<h1 align="center">Suluk — an independent OpenAPI v4.0 candidate</h1>
 
 **Suluk** (سُلوك, *"the walk / wayfaring"*; substrate codename `asl-ojs`) — a journey traversed one station at a time toward a goal.
 

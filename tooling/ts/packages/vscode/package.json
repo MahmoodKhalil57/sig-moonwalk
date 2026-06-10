@@ -125,6 +125,11 @@
         "title": "Suluk: Run contract checks"
       },
       {
+        "command": "suluk.shipChecklist",
+        "title": "Suluk: Ship readiness (the round-trip checklist)",
+        "icon": "$(rocket)"
+      },
+      {
         "command": "suluk.convergeContract",
         "title": "Suluk: Converge (coherence audit of the whole contract)",
         "icon": "$(check-all)"
@@ -242,6 +247,11 @@
         },
         {
           "command": "suluk.compareViewers",
+          "when": "view == suluk.cycle",
+          "group": "navigation"
+        },
+        {
+          "command": "suluk.shipChecklist",
           "when": "view == suluk.cycle",
           "group": "navigation"
         },

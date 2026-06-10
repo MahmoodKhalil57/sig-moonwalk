@@ -2,6 +2,7 @@
   "name": "@suluk/cockpit",
   "version": "0.1.12",
   "description": "The pure cockpit core (cycle model \u00b7 builder model \u00b7 codegen \u00b7 deploy planning \u00b7 validate/audit/preview) shared by the vscode extension and the /superadmin web admin panel. CANDIDATE tooling.",
+  "publishConfig": { "access": "public" },
   "license": "Apache-2.0",
   "repository": {
     "type": "git",

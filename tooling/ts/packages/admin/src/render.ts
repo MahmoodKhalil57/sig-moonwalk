@@ -21,7 +21,14 @@ export function layout(title: string, base: string, active: string, body: string
     return `<a href="${esc(href)}"${on}>${esc(label)}</a>`;
   }).join("");
   return `<!doctype html><html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<link rel="icon" type="image/svg+xml" href="https://raw.githubusercontent.com/MahmoodKhalil57/suluk/main/branding/export/favicon.svg"/>
+<link rel="icon" type="image/png" sizes="32x32" href="https://raw.githubusercontent.com/MahmoodKhalil57/suluk/main/branding/export/icon-32.png"/>
 <title>${esc(title)} — Suluk superadmin</title>
+<meta property="og:type" content="website"/>
+<meta property="og:title" content="${esc(title)} — Suluk superadmin"/>
+<meta property="og:description" content="One typed OpenAPI v4 contract, projected into every full-stack layer."/>
+<meta property="og:image" content="https://raw.githubusercontent.com/MahmoodKhalil57/suluk/main/branding/export/social-card.png"/>
+<meta name="twitter:card" content="summary_large_image"/>
 <style>
   :root { color-scheme: dark; }
   body { font: 14px/1.5 ui-monospace, monospace; margin: 0; background: #0b0e14; color: #cdd6f4; }

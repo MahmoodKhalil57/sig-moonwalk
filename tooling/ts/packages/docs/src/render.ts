@@ -22,7 +22,15 @@ function layout(fw: FrameworkDoc, active: string, title: string, body: string): 
   }).join("");
   return `<!doctype html><html lang="en"><head>
 <meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<link rel="icon" type="image/svg+xml" href="https://raw.githubusercontent.com/MahmoodKhalil57/suluk/main/branding/export/favicon.svg"/>
+<link rel="icon" type="image/png" sizes="32x32" href="https://raw.githubusercontent.com/MahmoodKhalil57/suluk/main/branding/export/icon-32.png"/>
 <title>${escapeHtml(title)} — ${escapeHtml(fw.title)}</title>
+<meta property="og:type" content="website"/>
+<meta property="og:title" content="${escapeHtml(title)} — ${escapeHtml(fw.title)}"/>
+<meta property="og:description" content="One typed OpenAPI v4 contract, projected into every full-stack layer."/>
+<meta property="og:image" content="https://raw.githubusercontent.com/MahmoodKhalil57/suluk/main/branding/export/social-card.png"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://raw.githubusercontent.com/MahmoodKhalil57/suluk/main/branding/export/social-card.png"/>
 <link rel="stylesheet" href="style.css"/>
 </head><body>
 <header class="top">

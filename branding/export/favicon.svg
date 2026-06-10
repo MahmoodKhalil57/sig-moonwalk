@@ -1,0 +1,20 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Suluk">
+  <title>Suluk</title>
+  <defs>
+    <linearGradient id="suluk-tile" x1="0" y1="0" x2="0" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#1b1e3a"/>
+      <stop offset="1" stop-color="#0c0e1f"/>
+    </linearGradient>
+    <linearGradient id="suluk-stroke" x1="150" y1="120" x2="360" y2="392" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#a5b4fc"/>
+      <stop offset="0.55" stop-color="#6366f1"/>
+      <stop offset="1" stop-color="#4f46e5"/>
+    </linearGradient>
+  </defs>
+  <rect x="16" y="16" width="480" height="480" rx="116" fill="url(#suluk-tile)"/>
+  <!-- the walk: Suluk 'S' drawn as one continuous path -->
+  <path d="M 318.3 136.4 A 76 76 0 1 0 256 256 A 76 76 0 1 1 193.7 375.6"
+        fill="none" stroke="url(#suluk-stroke)" stroke-width="64" stroke-linecap="round"/>
+  <!-- waypoint: the start of the path -->
+  <circle cx="318.3" cy="136.4" r="20" fill="#5eead4"/>
+</svg>
