@@ -1,0 +1,12 @@
+/**
+ * @suluk/stripe — first-class Stripe behind a swappable PaymentProvider. Usage-based billing via the modern
+ * Billing Meters API (meters + meter events + metered prices), customers, subscriptions, and webhooks — plus
+ * a bridge that turns @suluk/cost events into the usage you bill on. Stripe is the reference processor; the
+ * PaymentProvider interface is the swap point for the others that follow it. CANDIDATE tooling.
+ */
+export type { PaymentProvider, StripeLike, Customer, Subscription, WebhookEvent } from "./types";
+export {
+  customerParams, productParams, meterParams, meteredPriceParams, subscriptionParams, meterEventParams,
+  setupUsageBilling, stripeProvider, usageEventsFromCost, reportCostUsage,
+  type UsageBillingConfig, type CostBillingConfig,
+} from "./stripe";

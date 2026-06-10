@@ -1,0 +1,13 @@
+{
+  "name": "@suluk/stripe",
+  "version": "0.1.0",
+  "description": "First-class Stripe via a swappable PaymentProvider: usage-based billing (Billing Meters + meter events), customers, metered prices, subscriptions, webhooks — and a bridge from @suluk/cost to Stripe usage. Other processors follow Stripe. CANDIDATE tooling.",
+  "type": "module",
+  "main": "src/index.ts",
+  "exports": { ".": "./src/index.ts" },
+  "dependencies": { "@suluk/cost": "workspace:*" },
+  "peerDependencies": { "stripe": "^17.0.0 || ^18.0.0" },
+  "peerDependenciesMeta": { "stripe": { "optional": true } },
+  "devDependencies": { "@types/bun": "latest" },
+  "scripts": { "test": "bun test", "typecheck": "tsc --noEmit -p ." }
+}
