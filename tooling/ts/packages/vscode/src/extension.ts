@@ -20,6 +20,7 @@ import {
   PROVIDER_CATALOG, readProviders, swapProvider,
   parseRegistry, type RegistrySource,
   verifyRegistrySignature, isSignedEnvelope, generateSigningKeypair, signRegistry,
+  composeModules, STACK_TEMPLATES, resolveTemplate, type ComposeResult, type StackTemplate,
 } from "@suluk/cockpit";
 import { parseDocument } from "@suluk/core";
 import { SAMPLE_V4 } from "./sample";
@@ -338,6 +339,19 @@ function crossCutHtml(cc: CrossCut, envName: string | null): string {
     + `<table class="matrix">${head}${rows}</table>`
     + (cc.gated.length ? `<div class="g"><h3>gated operations</h3>${cc.gated.map((g) => `<div class="row"><span class="k chg">${esc(g.operation)}</span><span class="d">${esc(g.detail)} — needs [${esc(g.requiredScopes.map((r) => r.join("+")).join(" | "))}], visible to ${esc(g.visibleTo.join(", "))}</span></div>`).join("")}</div>` : "");
   return htmlPage("View-as cross-cut", body);
+}
+function composeHtml(template: StackTemplate, r: ComposeResult): string {
+  const stepRow = (s: ComposeResult["steps"][number]) =>
+    `<div class="row"><span class="k ${s.installed ? "add" : "rem"}">${s.installed ? "✓" : "✗"} ${esc(s.module)}</span><span class="d">${s.installed ? `+${s.added.schemas.length} entities · +${s.added.operations.length} operations` : esc(s.conflicts[0] ?? "failed")}</span></div>`;
+  const order = r.plan.order.map((m) => m.name);
+  const installed = r.steps.filter((s) => s.installed).length;
+  const body = `<p class="sum">${esc(template.description)} — install order (${order.length} module${order.length === 1 ? "" : "s"}): ${esc(order.join(" → ")) || "(none)"}.</p>`
+    + (r.plan.unmet.length ? `<div class="g"><h3 class="rem">unmet requirements</h3>${r.plan.unmet.map((u) => `<div class="row rem">${esc(u.module)} needs <span class="k">${esc(u.requires)}</span> — add a module that provides it</div>`).join("")}</div>` : "")
+    + (r.plan.collisions.length ? `<div class="g"><h3 class="rem">collisions</h3>${r.plan.collisions.map((c) => `<div class="row rem">${esc(c)}</div>`).join("")}</div>` : "")
+    + (r.plan.unresolved.length ? `<div class="g"><h3 class="rem">could not be ordered</h3><div class="row rem">${esc(r.plan.unresolved.join(", "))} require each other (or sit behind a cycle)</div></div>` : "")
+    + `<div class="g"><h3>install steps (${installed}/${r.steps.length})</h3>${r.steps.map(stepRow).join("") || '<div class="row d">nothing orderable — see above</div>'}</div>`
+    + (r.ok ? `<div class="g"><h3 class="add">✓ composed</h3><div class="row">${Object.keys(r.doc.components?.schemas ?? {}).length} entities · ${Object.values(r.doc.paths ?? {}).reduce((n, pi) => n + Object.keys((pi as { requests?: object }).requests ?? {}).length, 0)} operations in the platform contract</div></div>` : "");
+  return htmlPage(`Compose — ${template.name}`, body);
 }
 function modulePreviewHtml(entry: ModuleEntry, p: InstallPreview, prov: { registry: string; trust: "first-party" | "signed" | "unsigned"; url?: string; publisher?: string }): string {
   const gradeCls = p.grade.grade === "A" ? "add" : p.grade.grade === "B" ? "chg" : "rem";
@@ -787,6 +801,32 @@ export function activate(context: vscode.ExtensionContext): void {
     await vscode.window.showTextDocument(out);
     cycle.refresh(); builder.refresh();
     void vscode.window.showInformationMessage(`Suluk: bound ${facet} → ${chosen.id}. The contract is unchanged; only the runtime provider binding differs.`);
+  });
+
+  // ── Compose a platform (L2): the non-developer flow — pick a stack template → its modules install in
+  //    dependency order → a whole working platform contract, no hand-wiring. ──
+  reg("suluk.composePlatform", async () => {
+    const pick = await vscode.window.showQuickPick(
+      STACK_TEMPLATES.map((t) => ({ label: `$(layers) ${t.name}`, description: t.modules.join(" + "), detail: t.description, t })),
+      { placeHolder: "Compose a platform from a stack template (creates a fresh contract)" },
+    );
+    if (!pick) return;
+    const { modules, missing } = resolveTemplate(pick.t);
+    if (missing.length) void vscode.window.showWarningMessage(`Suluk: template "${pick.t.name}" references unknown module(s): ${missing.join(", ")} — composing without them.`);
+    const base = parseDocument(JSON.stringify({ openapi: "4.0.0-candidate", info: { title: pick.t.name, version: "0.1.0" }, paths: {}, components: { schemas: {} } }));
+    const result = composeModules(base, modules);
+    const panel = vscode.window.createWebviewPanel("suluk.compose", `Suluk — compose ${pick.t.name}`, vscode.ViewColumn.Beside, {});
+    panel.webview.html = composeHtml(pick.t, result);
+    if (!result.ok) { void vscode.window.showWarningMessage(`Suluk: "${pick.t.name}" couldn't fully compose — see the panel (an unmet requirement or a conflict).`); return; }
+    const choice = await vscode.window.showInformationMessage(
+      `Compose "${pick.t.name}"? ${result.steps.length} modules install in dependency order → ${Object.keys(result.doc.components?.schemas ?? {}).length} entities, no hand-wiring.`,
+      { modal: true }, "Compose",
+    );
+    if (choice !== "Compose") return;
+    const doc = await vscode.workspace.openTextDocument({ content: JSON.stringify(result.doc, null, 2), language: "json" });
+    await vscode.window.showTextDocument(doc);
+    cycle.refresh(); builder.refresh();
+    void vscode.window.showInformationMessage(`Suluk: composed "${pick.t.name}" — the cockpit now projects the whole platform. A developer wires only the custom 20%.`);
   });
 
   const onChange = () => { cycle.refresh(); builder.refresh(); updateLens(); };

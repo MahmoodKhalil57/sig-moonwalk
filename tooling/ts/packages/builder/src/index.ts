@@ -28,8 +28,10 @@ export {
   installModule, namespaceModule, crudV4Paths, moduleOperations, gradeModule, previewInstall,
   type SulukModule, type InstallResult, type ModuleCost, type ModuleRegistry, type ModuleEntry, type ModuleGrade, type InstallPreview,
 } from "./module";
-// the curated first-party module registry (M2)
-export { ECOMMERCE, CRM, BILLING, FIRST_PARTY_REGISTRY } from "./modules";
+// the curated first-party module registry (M2) + stack templates (L2)
+export { AUTH, ECOMMERCE, CRM, BILLING, FIRST_PARTY_REGISTRY, STACK_TEMPLATES, resolveTemplate, type StackTemplate } from "./modules";
+// composition (L2): plan + install a set of modules in dependency order — the non-developer "compose a platform" flow
+export { planComposition, composeModules, type CompositionPlan, type ComposeResult, type ComposeStep } from "./compose";
 // provider slots (M3): swap a facet binding (payments/auth/email/storage) for another impl of the same interface
 export { PROVIDER_CATALOG, providerFacets, readProviders, swapProvider, type ProviderImpl, type ProviderBinding, type SwapResult } from "./providers";
 // remote registries (L1): validate an UNTRUSTED registry fetched from a URL (the open marketplace)

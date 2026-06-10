@@ -23,6 +23,8 @@ export {
   PROVIDER_CATALOG, providerFacets, readProviders, swapProvider,
   parseRegistry, validateModule,
   signRegistry, verifyRegistrySignature, generateSigningKeypair, isSignedEnvelope,
+  composeModules, planComposition, STACK_TEMPLATES, resolveTemplate,
   type SulukModule, type InstallResult, type ModuleEntry, type ModuleRegistry, type ModuleGrade, type InstallPreview,
   type ProviderImpl, type ProviderBinding, type RegistrySource, type ParsedRegistry, type SignedEnvelope,
+  type ComposeResult, type CompositionPlan, type StackTemplate,
 } from "@suluk/builder";

@@ -128,6 +128,11 @@
         "title": "Suluk: Export shadcn registry (whole-stack)"
       },
       {
+        "command": "suluk.composePlatform",
+        "title": "Suluk: Compose a platform (stack template → working contract)",
+        "icon": "$(layers)"
+      },
+      {
         "command": "suluk.installModule",
         "title": "Suluk: Browse modules (first-party or remote registry)",
         "icon": "$(package)"
@@ -227,6 +232,11 @@
         },
         {
           "command": "suluk.generateApp",
+          "when": "view == suluk.builder",
+          "group": "navigation"
+        },
+        {
+          "command": "suluk.composePlatform",
           "when": "view == suluk.builder",
           "group": "navigation"
         },

@@ -19,9 +19,11 @@ describe("FIRST_PARTY_REGISTRY", () => {
       expect(e.description.length).toBeGreaterThan(0);
     }
   });
-  test("every first-party module installs cleanly into a host that has User", () => {
+  test("every first-party module installs cleanly into a host that satisfies its requires", () => {
     for (const e of FIRST_PARTY_REGISTRY.modules) {
-      const r = installModule(host(), e.module);
+      // a host providing exactly this module's requires (empty for `auth`, which itself PROVIDES User)
+      const h: OpenAPIv4Document = { openapi: "4.0.0-candidate", info: { title: "Host", version: "1.0.0" }, paths: {}, components: { schemas: Object.fromEntries((e.module.requires ?? []).map((r) => [r, { type: "object" }])) } };
+      const r = installModule(h, e.module);
       expect(r.installed).toBe(true);
       expect(r.conflicts).toHaveLength(0);
     }
