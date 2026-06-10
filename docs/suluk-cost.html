@@ -1,0 +1,22 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>@suluk/cost — Suluk</title>
+<link rel="stylesheet" href="style.css"/>
+</head><body>
+<header class="top">
+  <a class="brand" href="index.html">Suluk</a>
+  <nav><a href="index.html">Home</a><a href="getting-started.html">Get started</a><a href="index.html#packages">Packages</a><a href="architecture.html">Architecture</a><a href="contributing.html">Contributing</a><a href="community.html">Community</a><a class="gh" href="https://github.com/MahmoodKhalil57/suluk">GitHub ↗</a></nav>
+</header>
+<main>
+  <article class="package">
+    <p class="crumb"><a href="index.html#packages">Packages</a> / @suluk/cost</p>
+    <h1>@suluk/cost <span class="ver">v0.1.1</span></h1>
+    <p class="lead">Cost as a contract facet: declare per-operation cost (incl. third-party usage), bubble it into the v4 doc/Scalar/tests, and meter the ACTUAL per-user cost at runtime (frontend action -&gt; operation -&gt; third-party). Display as-is. CANDIDATE tooling.</p>
+    <h2>Install</h2><pre><code>bun add @suluk/cost</code></pre>
+    <h2>Overview</h2><div class="prose"><p>@suluk/cost — cost as a contract facet + runtime metering. You can't price a user without knowing what they cost you. So: declare per-operation cost (incl. third-party usage) on the contract — it bubbles into the v4 doc, Scalar, and the audit; meter the ACTUAL cost per request at runtime, traced from the frontend action down to each third party; and read the raw per-user picture from the ledger. We display the data as it is and let you build pricing on top (Stripe via @suluk/stripe). CANDIDATE tooling — NOT official OAS.</p></div>
+    <h2>Public API</h2><div class="chips"><code class="chip">annotateCosts</code><code class="chip">computeCost</code><code class="chip">COST_EXT</code><code class="chip">costAudit</code><code class="chip">CostBasis</code><code class="chip">CostComponent</code><code class="chip">CostEvent</code><code class="chip">CostFinding</code><code class="chip">costMeter</code><code class="chip">CostMeterOptions</code><code class="chip">CostModel</code><code class="chip">costOf</code><code class="chip">CostSink</code><code class="chip">CostSummary</code><code class="chip">costTable</code><code class="chip">formatMicroUsd</code><code class="chip">MemoryCostSink</code><code class="chip">principalCost</code><code class="chip">recordUsage</code><code class="chip">summarize</code><code class="chip">UsageReport</code></div>
+    <h2>Depends on</h2><div class="chips"><code class="chip">@suluk/core</code><code class="chip">hono (peer)</code></div>
+    <h2>Modules</h2><dl class="modules"><dt><code>contract.ts</code></dt><dd>Cost as a CONTRACT FACET. A cost model is attached to each operation as the <code>x-suluk-cost</code> vendor</dd><dt><code>ledger.ts</code></dt><dd>The ledger — aggregate cost events into the raw picture: total, and breakdowns by principal (what each</dd><dt><code>meter.ts</code></dt><dd>The runtime meter — records what each request ACTUALLY cost, attributed all the way down: the frontend</dd><dt><code>types.ts</code></dt><dd>The cost model — what an operation declares it costs you, and what a single request actually cost.</dd></dl>
+  </article></main>
+<footer><span class="candidate">CANDIDATE — not official OpenAPI. Generated from source by @suluk/docs.</span></footer>
+</body></html>

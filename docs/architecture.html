@@ -47,7 +47,7 @@
 <tr><th>Package</th><th>Role</th><th>Status</th></tr>
 </thead>
 <tbody>
-<tr><td><code>@suluk/core</code></td><td>parse · validate(meta-schema) · resolve-by-name · signature · ADA · match</td><td>✅ 19 tests</td></tr>
+<tr><td><code>@suluk/core</code></td><td>parse · validate(meta-schema) · resolve-by-name (own-property only) · signature · ADA · match</td><td>✅ 20 tests</td></tr>
 <tr><td><code>@suluk/openapi-compat</code></td><td>v4 ⇄ 3.1 (the Scalar/Swagger lever; ingest external 3.x via <code>upgrade</code>)</td><td>✅ 12 tests</td></tr>
 <tr><td><code>@suluk/zod</code></td><td>lossless Zod ⇄ v4 Schema Objects (fixpoint-proven)</td><td>✅ 29 tests</td></tr>
 <tr><td><code>@suluk/scalar</code> / <code>@suluk/swagger</code></td><td>render a v4 doc via the 3.1 downgrade</td><td>✅ 5 + 6 tests</td></tr>
@@ -56,17 +56,22 @@
 <tr><td><code>@suluk/drizzle</code></td><td><strong>data floor</strong>: Drizzle table → Zod (drizzle-zod) → v4 schemas + DB metadata + <strong>CRUD RouteContracts</strong></td><td>✅ 17 tests</td></tr>
 <tr><td><code>@suluk/nano-stores</code></td><td><strong>state corner</strong>: v4 contracts → typed <code>@nanostores/query</code> fetcher/mutator stores (Zod-guarded I/O)</td><td>✅ 8 tests</td></tr>
 <tr><td><code>@suluk/shadcn</code></td><td><strong>UI corner</strong>: v4 Schema Objects → form/table specs + shadcn TSX (react-hook-form + zodResolver)</td><td>✅ 20 tests</td></tr>
-<tr><td><code>@suluk/builder</code></td><td><strong>the builder</strong>: tiered contract-narrowing DSL; <code>buildApp</code> (backend+frontend) + <code>toShadcnRegistry</code></td><td>✅ 16 tests</td></tr>
+<tr><td><code>@suluk/builder</code></td><td><strong>the builder</strong>: DSL; <code>buildApp</code>/<code>toShadcnRegistry</code>; <strong>modules</strong> (C021) — <code>installModule</code> (refuse-on-collision + <code>requires</code> + dangling-ref backstop + namespacing), curated + <strong>remote</strong> + <strong>signed</strong> registries, <code>gradeModule</code>/<code>previewInstall</code>, <strong>provider slots</strong> (<code>swapProvider</code>), <strong>composition</strong> (<code>planComposition</code>/<code>composeModules</code> + stack templates — the non-dev &quot;compose a platform&quot; flow)</td><td>✅ 77 tests</td></tr>
 <tr><td><code>@suluk/deploy</code></td><td><strong>the capstone</strong>: swappable <code>DeployProvider</code>; Cloudflare (Workers + D1 + assets)</td><td>✅ 8 tests</td></tr>
-<tr><td><code>@suluk/cockpit</code></td><td>the <strong>pure cockpit core</strong> (cycle · builder · codegen · deploy · validate/audit/preview) — shared brain</td><td>✅ 35 tests</td></tr>
+<tr><td><code>@suluk/cockpit</code></td><td>the <strong>pure cockpit core</strong> (10-layer cycle incl. <strong>cost · providers</strong> · builder · codegen · deploy · <strong>drift</strong> · <strong>cross-cut</strong> · <strong>converge</strong> · <strong>D2 diagrams</strong> · validate/audit/preview) — shared brain</td><td>✅ 84 tests</td></tr>
 <tr><td><code>@suluk/admin</code></td><td>the <strong>/superadmin web panel</strong> — the cockpit rendered as a Hono web UI, superadmin-gated</td><td>✅ 7 tests</td></tr>
 <tr><td><code>@suluk/example-petshop</code></td><td>runnable end-to-end demo — real Drizzle → live CRUD + Scalar + frontend + /superadmin + client round-trip</td><td>✅ 10 tests</td></tr>
 <tr><td><code>@suluk/docs</code></td><td>generate a GitHub-Pages docs site from source (Suluk documents itself)</td><td>✅ 10 tests</td></tr>
+<tr><td><code>@suluk/cost</code></td><td><strong>cost as a contract facet</strong> — declare per-op cost (x-suluk-cost, bubbles) + meter actual per-user cost</td><td>✅ 10 tests</td></tr>
+<tr><td><code>@suluk/stripe</code></td><td>first-class Stripe behind a swappable <code>PaymentProvider</code>; bridges cost → metered billing</td><td>✅ 9 tests</td></tr>
+<tr><td><code>@suluk/visual</code></td><td><strong>pixel-confidence by construction</strong> — verify each primitive's pixels once; confidence propagates via content-hash</td><td>✅ 9 tests</td></tr>
 <tr><td><code>suluk-core</code> (Rust)</td><td>perf core: parse + signature + reverse-parse matcher; 2nd independent impl</td><td>✅ 9 tests</td></tr>
-<tr><td><code>suluk-vscode</code></td><td>the cockpit's <strong>editor face</strong> — a thin vscode shell over <code>@suluk/cockpit</code> (Cycle + Builder TreeViews, &quot;View as&quot;, codegen, deploy)</td><td>tsc + bundle</td></tr>
+<tr><td><code>suluk-vscode</code></td><td>the cockpit's <strong>editor face</strong> — a thin vscode shell over <code>@suluk/cockpit</code> (Cycle + Builder TreeViews, <strong>Environments</strong> axis: connect/drift/live-cost, &quot;View as&quot;, codegen, <strong>install module</strong>, deploy)</td><td>tsc + bundle</td></tr>
 </tbody>
 </table>
-<p><strong>Total: 17 TS packages (228 tests) + a Rust core (9 tests) = 237 green.</strong></p>
+<p><strong>Total: 20 TS packages (372 tests) + a Rust core (9 tests) = 381 green.</strong> Shipped: npm (<code>@suluk/*</code>), crates.io (<code>suluk-core</code>), VS Code Marketplace (<code>MahmoodKhalil.suluk-vscode</code>). Live demo: a full SaaS (<code>saasuluk</code>) on Cloudflare Workers + D1 at <strong>saasuluk.saastemly.com</strong> — auth (Better Auth/D1), CRUD, Scalar docs, the <code>/superadmin</code> cockpit, a durable cost ledger, and a static Astro frontend.</p>
+<h2>Pixel confidence by construction (<code>@suluk/visual</code>)</h2>
+<p>You shouldn't re-verify every pixel every time. Verify each UI <strong>primitive</strong> once (render it in isolation, screenshot it, approve it); the approval is recorded against the primitive's <strong>content hash</strong>. Thereafter any generated UI is pixel-confident <em>without a new screenshot</em> iff every primitive it uses is approved + unchanged — decided by hashing, not rendering. A primitive is re-verified only when its source changes (the hash drifts). Confidence propagates up the component → block → section → page tiers — the same verify-the-source- once discipline as the v4 ledger and the conformance grade.</p>
 <h2>One brain, two faces</h2>
 <p>The cockpit's logic lives once, in <strong><code>@suluk/cockpit</code></strong> (pure: <code>buildCycle</code>, <code>buildBuilderModel</code>, codegen, <code>deployPlan</code>, validate/audit/preview — no host API). Two shells render it:</p>
 <ul>
@@ -142,6 +147,9 @@
 <p>shadcn's registry isn't UI-only: a <code>registry:file</code> item carries arbitrary files to any target. So <code>toShadcnRegistry(builtApp)</code> packages <strong>each slice as one installable unit</strong> (<code>npx shadcn add &lt;item&gt;</code>) bundling its shadcn Form/Table <strong>and</strong> its backend routes module <strong>and</strong> its v4 schema. The registry becomes the universal distribution format for every layer — managed from the cockpit. This is what makes the stack modular and installable end to end.</p>
 <h2>The deployment capstone — Cloudflare (swappable)</h2>
 <p>The terminal stage: once a user logs into their Cloudflare account <em>through the extension</em>, everything deploys to Cloudflare — Hono → <strong>Workers</strong>, the frontend → <strong>Pages</strong>, Drizzle(sqlite) → <strong>D1</strong>, plus observability / compute. This is an <em>adapter, not a rewrite</em>: the stack is already Cloudflare-native by construction (Hono is the canonical Workers framework; <code>@suluk/drizzle</code> targets <code>sqlite-core</code>, which <em>is</em> D1). Kept behind a <strong>swappable target interface</strong> (<code>@suluk/deploy</code>) so Cloudflare is the first provider, not the only one — the services are built on good standards we can swap later. <strong>Built</strong> as <code>@suluk/deploy</code>: <code>cloudflare.generate()</code> emits <code>wrangler.jsonc</code> (D1 binding + static <code>assets</code> SPA-fallback + observability) + <code>worker.ts</code> (<code>export default app</code>) + <code>schema.sql</code> (from the entities) + an ordered plan (login → d1 create → apply → deploy). The extension's &quot;Deploy to Cloudflare&quot; command writes these + a <code>DEPLOY.md</code> and opens a terminal — it never runs <code>wrangler</code> for you (deploys are consequential; OAuth login happens in your terminal).</p>
+<h2>Cost &amp; billing — you can't price what you can't measure</h2>
+<p>Cost is just another facet of the contract. <strong><code>@suluk/cost</code></strong> lets an operation declare what it costs you (per-call + metered third-party usage, in raw µ$); <code>annotateCosts</code> writes it as <code>x-suluk-cost</code> on the operation, so it <strong>bubbles</strong> like everything else — through the 3.1 downgrade (the converter now passes <code>x-*</code> through), into Scalar, into the cockpit's <strong>Cost layer</strong>, and into a coverage audit (which operations declared nothing). At runtime, <code>costMeter</code> (Hono middleware) records what each request <strong>actually</strong> cost, attributed all the way down: the <strong>frontend action</strong> (<code>@suluk/nano-stores</code> tags requests with <code>x-suluk-action</code>) → the operation → each source. The ledger shows the raw per-user picture; you display it as it is and build pricing on top.</p>
+<p><strong><code>@suluk/stripe</code></strong> is the reference <code>PaymentProvider</code> (swappable — other processors follow Stripe). It models the modern usage-based stack (Billing Meters + meter events + metered prices, customers, subscriptions, webhooks) as pure param-builders over a duck-typed client, and a bridge turns <code>@suluk/cost</code> events into Stripe usage — one meter event per principal. You meter usage; the price + your markup = revenue.</p>
 <h2>Invariants every package keeps</h2>
 <ul>
 <li><strong>Honest losses are enumerated, never silent</strong> — <code>compat</code> collision diagnostics, <code>zod</code> lossy-effect</li>
@@ -161,6 +169,10 @@
 <p>  (<code>hono.mount</code>, <code>better-auth.mountAuth</code>, the vscode shell). That is why coverage is high and the host   bindings are trivial.</p>
 <ul>
 <li><strong>CANDIDATE labeling</strong> stays on every artifact; nothing here is official OAS.</li>
-</ul></article></main>
+</ul>
+<h2>How the tools compose</h2>
+<p>Each package derives one facet from the single v4 contract; here is how they depend on each other.</p>
+<p><img src="https://kroki.io/d2/svg/eJx1k01u5CAQhfd9ilLPJrPwBTrSKHeYE9BQslETygKcKB6NlFUOEM0Jc5IR4MZFd2Vj6T1_VUD9_IDfi1su8PX-DyZ6hTQhJCIXQdPzTBHhAZWeYFb6okaEr49PsCnCUyxhBmf0Br22GH8ejA2okyV_gmDHKR0Oyjxbf4I_Tp3RneBY9PER4qRmPEHGlR8d_j0cz5gShkEtaTqyCG5LcefFOoOBR1RHpDXpy2wTozfnGzpghwb8hot9yijnMzg7emNkNWSWdOQk6Shzwa6r49fcHJGeyBNDs5S74ZWnISYKGHk3uC3G0YxezXbI06MSD735I0VHrZzirayGzE7KaD5a1ZDZFGy2drYYMvuqxrGbp80R6RcbF-UYXA2RXckwcCUjV7As1vASNRnk9et8KbIuGwy_IA8qV2XC-w1r2J1726jrhrUIplcyXOZx4rq25Lp0LQHTJYLp2vDOqdXvrLu025ncqqvVnx1TWdV2kcrssi6OpPNDmSzXzp_GXkUGuy2BVuhbtyS5rXbDayUEedefWo6dLLPdHrzVb_-967tMdXgbusut4v0M7i8T7FL1_zFUMJw" alt="Suluk package architecture" loading="lazy"></p>
+<p><a href="architecture.d2">D2 source</a> — render with the d2 CLI or <a href="https://d2lang.com">d2lang.com</a>.</p></article></main>
 <footer><span class="candidate">CANDIDATE — not official OpenAPI. Generated from source by @suluk/docs.</span></footer>
 </body></html>

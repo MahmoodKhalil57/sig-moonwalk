@@ -27,7 +27,7 @@
                                                                             check)
         @suluk/builder composes it (pages → sections → blocks → components, contract-narrowing)
         @suluk/deploy ships it to Cloudflare · @suluk/cockpit drives it (vscode + /superadmin)</pre></section>
-  <section id="packages"><h2>Packages <span class="muted">(17)</span></h2>
+  <section id="packages"><h2>Packages <span class="muted">(20)</span></h2>
     <div class="grid"><a class="card" href="suluk-admin.html">
     <div class="card-name">@suluk/admin</div>
     <div class="card-desc">The /superadmin web admin panel — the same cockpit as the vscode extension (@suluk/cockpit core), rendered as a Hono-served web UI. Superadmin-gated. CANDIDATE tooling.</div>
@@ -47,6 +47,10 @@
 <a class="card" href="suluk-core.html">
     <div class="card-name">@suluk/core</div>
     <div class="card-desc">Core library for the OpenAPI v4.0 Suluk candidate: parse, validate, resolve, signature, ADA, match.</div>
+  </a>
+<a class="card" href="suluk-cost.html">
+    <div class="card-name">@suluk/cost</div>
+    <div class="card-desc">Cost as a contract facet: declare per-operation cost (incl. third-party usage), bubble it into the v4 doc/Scalar/tests, and meter the ACTUAL per-user cost at runtime (frontend action -&gt; operation -&gt; third-party). Display as-is. CANDIDATE tooling.</div>
   </a>
 <a class="card" href="suluk-deploy.html">
     <div class="card-name">@suluk/deploy</div>
@@ -84,9 +88,17 @@
     <div class="card-name">@suluk/shadcn</div>
     <div class="card-desc">v4 'Suluk' Schema Objects -&gt; shadcn/ui form + table specs and TSX scaffolds (react-hook-form + zodResolver). Codegen, no runtime UI deps. CANDIDATE tooling.</div>
   </a>
+<a class="card" href="suluk-stripe.html">
+    <div class="card-name">@suluk/stripe</div>
+    <div class="card-desc">First-class Stripe via a swappable PaymentProvider: usage-based billing (Billing Meters + meter events), customers, metered prices, subscriptions, webhooks — and a bridge from @suluk/cost to Stripe usage. Other processors follow Stripe. CANDIDATE tooling.</div>
+  </a>
 <a class="card" href="suluk-swagger.html">
     <div class="card-name">@suluk/swagger</div>
     <div class="card-desc">Render an OpenAPI v4 'Suluk' document with Swagger UI (via the 3.1 downgrade). CANDIDATE tooling.</div>
+  </a>
+<a class="card" href="suluk-visual.html">
+    <div class="card-name">@suluk/visual</div>
+    <div class="card-desc">Pixel-confidence by construction: verify each UI primitive's pixels ONCE (a golden snapshot), and confidence propagates to every generated UI via content-hashing + the deterministic generator — re-verify a primitive only when its source changes. CANDIDATE tooling.</div>
   </a>
 <a class="card" href="suluk-zod.html">
     <div class="card-name">@suluk/zod</div>

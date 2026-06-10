@@ -1,0 +1,59 @@
+# Suluk — how the tools compose (each package → its @suluk dependencies)
+direction: right
+
+admin: {label: "admin"; shape: rectangle}
+"better-auth": {label: "better-auth"; shape: rectangle}
+builder: {label: "builder"; shape: rectangle}
+cockpit: {label: "cockpit"; shape: rectangle}
+core: {label: "core"; shape: rectangle}
+cost: {label: "cost"; shape: rectangle}
+deploy: {label: "deploy"; shape: rectangle}
+docs: {label: "docs"; shape: rectangle}
+drizzle: {label: "drizzle"; shape: rectangle}
+hono: {label: "hono"; shape: rectangle}
+"nano-stores": {label: "nano-stores"; shape: rectangle}
+"openapi-compat": {label: "openapi-compat"; shape: rectangle}
+scalar: {label: "scalar"; shape: rectangle}
+shadcn: {label: "shadcn"; shape: rectangle}
+stripe: {label: "stripe"; shape: rectangle}
+swagger: {label: "swagger"; shape: rectangle}
+visual: {label: "visual"; shape: rectangle}
+zod: {label: "zod"; shape: rectangle}
+"suluk-vscode": {label: "suluk-vscode"; shape: rectangle}
+
+admin -> core
+admin -> cockpit
+"better-auth" -> core
+"better-auth" -> "openapi-compat"
+builder -> core
+builder -> zod
+builder -> hono
+builder -> shadcn
+cockpit -> core
+cockpit -> hono
+cockpit -> scalar
+cockpit -> swagger
+cockpit -> shadcn
+cockpit -> builder
+cockpit -> deploy
+cockpit -> cost
+cost -> core
+deploy -> core
+drizzle -> core
+drizzle -> zod
+drizzle -> hono
+hono -> core
+hono -> zod
+"nano-stores" -> core
+"nano-stores" -> hono
+"openapi-compat" -> core
+scalar -> core
+scalar -> "openapi-compat"
+shadcn -> core
+stripe -> cost
+swagger -> core
+swagger -> "openapi-compat"
+visual -> core
+visual -> shadcn
+"suluk-vscode" -> core
+"suluk-vscode" -> cockpit

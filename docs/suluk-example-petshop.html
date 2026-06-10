@@ -10,12 +10,12 @@
 <main>
   <article class="package">
     <p class="crumb"><a href="index.html#packages">Packages</a> / @suluk/example-petshop</p>
-    <h1>@suluk/example-petshop <span class="ver">v0.1.0</span></h1>
+    <h1>@suluk/example-petshop <span class="ver">v0.1.1</span></h1>
     <p class="lead">End-to-end demo: Drizzle tables → @suluk/builder → a live validated CRUD server + Scalar docs + generated frontend, all from one source. CANDIDATE tooling.</p>
     
     <h2>Overview</h2><div class="prose"><p>_No overview._</p></div>
     
-    <h2>Depends on</h2><div class="chips"><code class="chip">@suluk/builder</code><code class="chip">@suluk/drizzle</code><code class="chip">@suluk/core</code><code class="chip">@suluk/hono</code><code class="chip">@suluk/scalar</code><code class="chip">@suluk/admin</code></div>
+    <h2>Depends on</h2><div class="chips"><code class="chip">@suluk/builder</code><code class="chip">@suluk/drizzle</code><code class="chip">@suluk/core</code><code class="chip">@suluk/hono</code><code class="chip">@suluk/scalar</code><code class="chip">@suluk/admin</code><code class="chip">@suluk/cost</code></div>
     <h2>Modules</h2><dl class="modules"><dt><code>app.ts</code></dt><dd>The whole app, from ONE source. buildApp(entities) derives the backend CRUD routes (+ the v4 document) and</dd><dt><code>entities.ts</code></dt><dd>The DATA floor — real Drizzle tables (the system of record). @suluk/drizzle projects each table to a v4</dd><dt><code>main.ts</code></dt><dd>Runnable entry — <code>bun run build:frontend &amp;&amp; bun run start</code>. Serves the generated frontend (static) AND the</dd><dt><code>store.ts</code></dt><dd>The DATA floor at runtime — REAL Drizzle over bun:sqlite. bun:sqlite IS SQLite, which IS Cloudflare D1, so</dd></dl>
   </article></main>
 <footer><span class="candidate">CANDIDATE — not official OpenAPI. Generated from source by @suluk/docs.</span></footer>

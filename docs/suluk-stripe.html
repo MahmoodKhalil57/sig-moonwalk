@@ -1,0 +1,22 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>@suluk/stripe — Suluk</title>
+<link rel="stylesheet" href="style.css"/>
+</head><body>
+<header class="top">
+  <a class="brand" href="index.html">Suluk</a>
+  <nav><a href="index.html">Home</a><a href="getting-started.html">Get started</a><a href="index.html#packages">Packages</a><a href="architecture.html">Architecture</a><a href="contributing.html">Contributing</a><a href="community.html">Community</a><a class="gh" href="https://github.com/MahmoodKhalil57/suluk">GitHub ↗</a></nav>
+</header>
+<main>
+  <article class="package">
+    <p class="crumb"><a href="index.html#packages">Packages</a> / @suluk/stripe</p>
+    <h1>@suluk/stripe <span class="ver">v0.1.1</span></h1>
+    <p class="lead">First-class Stripe via a swappable PaymentProvider: usage-based billing (Billing Meters + meter events), customers, metered prices, subscriptions, webhooks — and a bridge from @suluk/cost to Stripe usage. Other processors follow Stripe. CANDIDATE tooling.</p>
+    <h2>Install</h2><pre><code>bun add @suluk/stripe</code></pre>
+    <h2>Overview</h2><div class="prose"><p>@suluk/stripe — first-class Stripe behind a swappable PaymentProvider. Usage-based billing via the modern Billing Meters API (meters + meter events + metered prices), customers, subscriptions, and webhooks — plus a bridge that turns @suluk/cost events into the usage you bill on. Stripe is the reference processor; the PaymentProvider interface is the swap point for the others that follow it. CANDIDATE tooling.</p></div>
+    <h2>Public API</h2><div class="chips"><code class="chip">CostBillingConfig</code><code class="chip">Customer</code><code class="chip">customerParams</code><code class="chip">meteredPriceParams</code><code class="chip">meterEventParams</code><code class="chip">meterParams</code><code class="chip">PaymentProvider</code><code class="chip">productParams</code><code class="chip">reportCostUsage</code><code class="chip">setupUsageBilling</code><code class="chip">StripeLike</code><code class="chip">stripeProvider</code><code class="chip">Subscription</code><code class="chip">subscriptionParams</code><code class="chip">UsageBillingConfig</code><code class="chip">usageEventsFromCost</code><code class="chip">WebhookEvent</code></div>
+    <h2>Depends on</h2><div class="chips"><code class="chip">@suluk/cost</code><code class="chip">stripe (peer)</code></div>
+    <h2>Modules</h2><dl class="modules"><dt><code>stripe.ts</code></dt><dd>First-class Stripe. The param builders are PURE (exact Stripe API payloads, testable with no SDK); the</dd><dt><code>types.ts</code></dt><dd>The payment abstraction — SWAPPABLE by design. Stripe is the first (and reference) provider because the</dd></dl>
+  </article></main>
+<footer><span class="candidate">CANDIDATE — not official OpenAPI. Generated from source by @suluk/docs.</span></footer>
+</body></html>
