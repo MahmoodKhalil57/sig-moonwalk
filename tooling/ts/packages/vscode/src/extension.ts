@@ -17,6 +17,7 @@ import {
   diffContracts, formatMicroUsd, type ContractDiff,
   installModule, previewInstall, FIRST_PARTY_REGISTRY, type ModuleEntry, type InstallPreview,
   crossCut, defaultViewers, type CrossCut,
+  convergeContract, type ConvergeReport,
   PROVIDER_CATALOG, readProviders, swapProvider,
   parseRegistry, type RegistrySource,
   verifyRegistrySignature, isSignedEnvelope, generateSigningKeypair, signRegistry,
@@ -340,6 +341,19 @@ function crossCutHtml(cc: CrossCut, envName: string | null): string {
     + (cc.gated.length ? `<div class="g"><h3>gated operations</h3>${cc.gated.map((g) => `<div class="row"><span class="k chg">${esc(g.operation)}</span><span class="d">${esc(g.detail)} — needs [${esc(g.requiredScopes.map((r) => r.join("+")).join(" | "))}], visible to ${esc(g.visibleTo.join(", "))}</span></div>`).join("")}</div>` : "");
   return htmlPage("View-as cross-cut", body);
 }
+function convergeBody(report: ConvergeReport): string {
+  if (report.clean && !report.findings.length) return `<div class="row add">✓ converges clean — no coherence issues.</div>`;
+  const cls = (sev: string) => (sev === "error" ? "rem" : sev === "warn" ? "chg" : "d");
+  const group = (sev: "error" | "warn" | "info", title: string) => {
+    const fs = report.findings.filter((f) => f.severity === sev);
+    return fs.length ? `<div class="g"><h3 class="${sev === "info" ? "" : cls(sev)}">${esc(title)}</h3>${fs.map((f) => `<div class="row"><span class="k ${cls(sev)}">${esc(f.code)}</span><span class="d">${esc(f.message)}</span></div>`).join("")}</div>` : "";
+  };
+  return (report.clean ? `<div class="row add">✓ converges clean (no errors)</div>` : `<div class="row rem">✗ ${report.findings.filter((f) => f.severity === "error").length} contradiction(s)</div>`)
+    + group("error", "contradictions") + group("warn", "warnings") + group("info", "notes");
+}
+function convergeHtml(report: ConvergeReport): string {
+  return htmlPage("Contract converge", `<p class="sum">a coherence audit over the whole contract — the contradictions a clean merge can still leave behind.</p>${convergeBody(report)}`);
+}
 function composeHtml(template: StackTemplate, r: ComposeResult): string {
   const stepRow = (s: ComposeResult["steps"][number]) =>
     `<div class="row"><span class="k ${s.installed ? "add" : "rem"}">${s.installed ? "✓" : "✗"} ${esc(s.module)}</span><span class="d">${s.installed ? `+${s.added.schemas.length} entities · +${s.added.operations.length} operations` : esc(s.conflicts[0] ?? "failed")}</span></div>`;
@@ -350,7 +364,8 @@ function composeHtml(template: StackTemplate, r: ComposeResult): string {
     + (r.plan.collisions.length ? `<div class="g"><h3 class="rem">collisions</h3>${r.plan.collisions.map((c) => `<div class="row rem">${esc(c)}</div>`).join("")}</div>` : "")
     + (r.plan.unresolved.length ? `<div class="g"><h3 class="rem">could not be ordered</h3><div class="row rem">${esc(r.plan.unresolved.join(", "))} require each other (or sit behind a cycle)</div></div>` : "")
     + `<div class="g"><h3>install steps (${installed}/${r.steps.length})</h3>${r.steps.map(stepRow).join("") || '<div class="row d">nothing orderable — see above</div>'}</div>`
-    + (r.ok ? `<div class="g"><h3 class="add">✓ composed</h3><div class="row">${Object.keys(r.doc.components?.schemas ?? {}).length} entities · ${Object.values(r.doc.paths ?? {}).reduce((n, pi) => n + Object.keys((pi as { requests?: object }).requests ?? {}).length, 0)} operations in the platform contract</div></div>` : "");
+    + (r.ok ? `<div class="g"><h3 class="add">✓ composed</h3><div class="row">${Object.keys(r.doc.components?.schemas ?? {}).length} entities · ${Object.values(r.doc.paths ?? {}).reduce((n, pi) => n + Object.keys((pi as { requests?: object }).requests ?? {}).length, 0)} operations in the platform contract</div></div>` : "")
+    + (r.ok ? `<div class="g"><h3>coherence (converge)</h3>${convergeBody(convergeContract(r.doc))}</div>` : "");
   return htmlPage(`Compose — ${template.name}`, body);
 }
 function modulePreviewHtml(entry: ModuleEntry, p: InstallPreview, prov: { registry: string; trust: "first-party" | "signed" | "unsigned"; url?: string; publisher?: string }): string {
@@ -547,6 +562,18 @@ export function activate(context: vscode.ExtensionContext): void {
   reg("suluk.exportV4", async () => {
     const src = activeV4Source(); if (!src) { void vscode.window.showWarningMessage("Suluk: open an OpenAPI v4 document first."); return; }
     await openGenerated(exportV4Json(src), "json");
+  });
+  // converge: a coherence audit over the whole contract — the contradictions a clean merge can leave behind
+  reg("suluk.convergeContract", () => {
+    const src = activeV4Source();
+    if (!src) { void vscode.window.showWarningMessage("Suluk: open a v4 contract first."); return; }
+    try {
+      const report = convergeContract(parseDocument(src));
+      const panel = vscode.window.createWebviewPanel("suluk.converge", "Suluk — contract converge", vscode.ViewColumn.Beside, {});
+      panel.webview.html = convergeHtml(report);
+      const errs = report.findings.filter((f) => f.severity === "error").length;
+      void vscode.window.showInformationMessage(errs ? `Suluk: ${errs} contradiction(s) — see the converge panel.` : "Suluk: contract converges clean ✓");
+    } catch (e) { void vscode.window.showErrorMessage(`Suluk: ${(e as Error).message}`); }
   });
   reg("suluk.runChecks", () => {
     const src = activeV4Source(); if (!src) return;

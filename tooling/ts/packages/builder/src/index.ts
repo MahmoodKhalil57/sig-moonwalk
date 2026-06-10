@@ -25,7 +25,7 @@ export {
 export { toShadcnRegistry, type RegistryItem, type RegistryFile } from "./registry-shadcn";
 // modules (C021): a module is a mergeable v4 contract fragment; installModule refuses on collision / unmet requires.
 export {
-  installModule, namespaceModule, crudV4Paths, moduleOperations, gradeModule, previewInstall,
+  installModule, namespaceModule, crudV4Paths, moduleOperations, gradeModule, previewInstall, schemaRefName,
   type SulukModule, type InstallResult, type ModuleCost, type ModuleRegistry, type ModuleEntry, type ModuleGrade, type InstallPreview,
 } from "./module";
 // the curated first-party module registry (M2) + stack templates (L2)

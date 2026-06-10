@@ -120,6 +120,11 @@
         "title": "Suluk: Run contract checks"
       },
       {
+        "command": "suluk.convergeContract",
+        "title": "Suluk: Converge (coherence audit of the whole contract)",
+        "icon": "$(check-all)"
+      },
+      {
         "command": "suluk.generateApp",
         "title": "Suluk: Generate full app (backend + frontend)"
       },
@@ -222,6 +227,11 @@
         },
         {
           "command": "suluk.compareViewers",
+          "when": "view == suluk.cycle",
+          "group": "navigation"
+        },
+        {
+          "command": "suluk.convergeContract",
           "when": "view == suluk.cycle",
           "group": "navigation"
         },

@@ -75,11 +75,26 @@ export function crudV4Paths(entity: string): Record<string, PathItem> {
 // dangling $ref to a JS builtin could be installed as if satisfied. hasOwn closes that whole class.
 const hasOwn = (o: object, k: string) => Object.prototype.hasOwnProperty.call(o, k);
 
+const unescapePtr = (t: string) => t.replace(/~1/g, "/").replace(/~0/g, "~");
+const escapePtr = (t: string) => t.replace(/~/g, "~0").replace(/\//g, "~1");
+
+/**
+ * The ROOT schema NAME a $ref targets, or null if it isn't a components/schemas reference. Parses the
+ * JSON-Pointer by tokens (RFC 6901, matching @suluk/core's resolveRef) so a DEEP ref (.../Order/properties/id)
+ * still resolves to its root "Order", and an escaped name (.../v2~1Order) unescapes to the real key "v2/Order"
+ * — a flat /(.+)/ regex would mis-capture the whole tail and false-flag a legitimate ref as dangling.
+ */
+export function schemaRefName(ref: string): string | null {
+  if (!ref.startsWith("#/")) return null;
+  const toks = ref.slice(2).split("/").map(unescapePtr);
+  return toks.length >= 3 && toks[0] === "components" && toks[1] === "schemas" ? toks[2] : null;
+}
+
 function opNamesOf(paths: Record<string, PathItem>): string[] {
   return Object.values(paths).flatMap((pi) => Object.keys((pi && typeof pi === "object" ? pi.requests : undefined) ?? {}));
 }
 
-/** $ref targets (#/components/schemas/X) that point at a name with NO own schema — a dangling reference. */
+/** $ref targets (#/components/schemas/X) whose ROOT schema has NO own definition — a dangling reference. */
 function danglingRefs(doc: OpenAPIv4Document): string[] {
   const schemas = (doc.components?.schemas ?? {}) as Record<string, unknown>;
   const missing = new Set<string>();
@@ -88,8 +103,8 @@ function danglingRefs(doc: OpenAPIv4Document): string[] {
     if (v && typeof v === "object") {
       const o = v as Record<string, unknown>;
       if (typeof o.$ref === "string") {
-        const m = o.$ref.match(/^#\/components\/schemas\/(.+)$/);
-        if (m && !hasOwn(schemas, m[1])) missing.add(m[1]);
+        const name = schemaRefName(o.$ref);
+        if (name && !hasOwn(schemas, name)) missing.add(name);
       }
       for (const val of Object.values(o)) walk(val);
     }
@@ -209,9 +224,13 @@ export function namespaceModule(mod: SulukModule, prefix: string): SulukModule {
     if (Array.isArray(v)) return v.map(rewriteRefs);
     if (v && typeof v === "object") {
       const o = v as Record<string, unknown>;
-      if (typeof o.$ref === "string") {
-        const m = o.$ref.match(/^#\/components\/schemas\/(.+)$/);
-        if (m && owned.has(m[1])) return { ...o, $ref: `#/components/schemas/${rename(m[1])}` };
+      if (typeof o.$ref === "string" && o.$ref.startsWith("#/")) {
+        const toks = o.$ref.slice(2).split("/");
+        // rename the ROOT schema token if owned, preserving any deeper JSON-Pointer tail (and its escaping)
+        if (toks.length >= 3 && toks[0] === "components" && toks[1] === "schemas" && owned.has(unescapePtr(toks[2]))) {
+          toks[2] = escapePtr(rename(unescapePtr(toks[2])));
+          return { ...o, $ref: "#/" + toks.join("/") };
+        }
       }
       return Object.fromEntries(Object.entries(o).map(([k, val]) => [k, rewriteRefs(val)]));
     }
