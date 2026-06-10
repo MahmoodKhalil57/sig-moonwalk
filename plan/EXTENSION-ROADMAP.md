@@ -151,5 +151,9 @@ builder — so the extension can fetch it and **diff local-contract vs deployed-
     requires; stack templates (SaaS starter / Storefront / Everything) + a "Compose a platform" command turn a
     fresh contract into a whole working platform, no hand-wiring. Reviewed (6 findings fixed — the planner now
     models install collisions, classifies unmet vs cycle correctly, and reports dropped template names).
+  - **✓ Converge — coherence audit (commit 0237f1d)** — the `burhan-converge` pass. `convergeContract(doc)` finds
+    the cross-cutting contradictions a clean merge leaves behind (dangling `$ref`, orphan scope, undeclared
+    scheme, empty path, unreferenced entity); a Converge command + an automatic check in the Compose panel.
+    Reviewed (5 false-positive/negative findings fixed — openIdConnect scopes, deep/escaped `$ref`s, webhooks).
   - **Still optional, operator's call (additive):** live role-previews via a preview deployment (the richer M1);
-    a `burhan-converge` pass over a merged contract; the originated L3 (round-trip lifecycle management).
+    the originated L3 (round-trip lifecycle management).

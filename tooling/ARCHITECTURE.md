@@ -74,7 +74,7 @@ A static export is just `render(contracts, publicPrincipal, now)`. Nothing speci
 | `@suluk/shadcn` | **UI corner**: v4 Schema Objects → form/table specs + shadcn TSX (react-hook-form + zodResolver) | ✅ 20 tests |
 | `@suluk/builder` | **the builder**: DSL; `buildApp`/`toShadcnRegistry`; **modules** (C021) — `installModule` (refuse-on-collision + `requires` + dangling-ref backstop + namespacing), curated + **remote** + **signed** registries, `gradeModule`/`previewInstall`, **provider slots** (`swapProvider`), **composition** (`planComposition`/`composeModules` + stack templates — the non-dev "compose a platform" flow) | ✅ 77 tests |
 | `@suluk/deploy` | **the capstone**: swappable `DeployProvider`; Cloudflare (Workers + D1 + assets) | ✅ 8 tests |
-| `@suluk/cockpit` | the **pure cockpit core** (10-layer cycle incl. **cost · providers** · builder · codegen · deploy · **drift** · **cross-cut** · validate/audit/preview) — shared brain | ✅ 64 tests |
+| `@suluk/cockpit` | the **pure cockpit core** (10-layer cycle incl. **cost · providers** · builder · codegen · deploy · **drift** · **cross-cut** · **converge** coherence audit · validate/audit/preview) — shared brain | ✅ 75 tests |
 | `@suluk/admin` | the **/superadmin web panel** — the cockpit rendered as a Hono web UI, superadmin-gated | ✅ 7 tests |
 | `@suluk/example-petshop` | runnable end-to-end demo — real Drizzle → live CRUD + Scalar + frontend + /superadmin + client round-trip | ✅ 10 tests |
 | `@suluk/docs` | generate a GitHub-Pages docs site from source (Suluk documents itself) | ✅ 10 tests |
@@ -84,7 +84,7 @@ A static export is just `render(contracts, publicPrincipal, now)`. Nothing speci
 | `suluk-core` (Rust) | perf core: parse + signature + reverse-parse matcher; 2nd independent impl | ✅ 9 tests |
 | `suluk-vscode` | the cockpit's **editor face** — a thin vscode shell over `@suluk/cockpit` (Cycle + Builder TreeViews, **Environments** axis: connect/drift/live-cost, "View as", codegen, **install module**, deploy) | tsc + bundle |
 
-**Total: 20 TS packages (352 tests) + a Rust core (9 tests) = 361 green.** Shipped: npm (`@suluk/*`),
+**Total: 20 TS packages (363 tests) + a Rust core (9 tests) = 372 green.** Shipped: npm (`@suluk/*`),
 crates.io (`suluk-core`), VS Code Marketplace (`MahmoodKhalil.suluk-vscode`). Live demo: a full SaaS
 (`saasuluk`) on Cloudflare Workers + D1 at **saasuluk.saastemly.com** — auth (Better Auth/D1), CRUD,
 Scalar docs, the `/superadmin` cockpit, a durable cost ledger, and a static Astro frontend.
