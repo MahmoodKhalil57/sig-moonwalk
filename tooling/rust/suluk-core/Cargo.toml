@@ -1,0 +1,15 @@
+[package]
+name = "suluk-core"
+version = "0.1.0"
+edition = "2021"
+description = "Performance core for the OpenAPI v4.0 'Suluk' candidate: parse, signature, and reverse-parse uriTemplate matching. CANDIDATE tooling — NOT official OAS."
+license = "Apache-2.0"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_yaml = "0.9"
+
+[lib]
+name = "suluk_core"
+path = "src/lib.rs"
