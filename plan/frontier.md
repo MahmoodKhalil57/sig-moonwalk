@@ -72,7 +72,7 @@ push LOW-prior (Originated) questions to the long horizon.
 ## Mechanical upgrade (3.x→4.0) — LOWEST prior → fully Originated (long horizon)
 
 - RESOLVED(C017) — mechanical 3.x→4.0 upgrade → semi-automated transformer (Principle 6) → `plan/facts/0upgrade-mechanical.bn`
-- OPEN **#gap callbacks/webhooks** — surfaced by the C017 capstone; unresolved by any ADR, absent from the 4.0 corpus.
+- RESOLVED(C018) **callbacks/webhooks** → reuse existing machinery (webhooks top-level map; callbacks runtime-expr-keyed) → `plan/facts/0callbacks-webhooks.bn`
 
 ## Resolved
 

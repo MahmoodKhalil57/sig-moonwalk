@@ -1,0 +1,28 @@
+# Frontier gap (surfaced by the C017 capstone): callbacks + webhooks. ORIGINATED — no SIG design
+# (callback 1x, webhook 7x mostly in meeting agendas; absent from the proposal). Clean-room extension
+# of our existing machinery. Pairs with ADR C018. Low Originated ceilings.
+
+# WEBHOOKS: a top-level `webhooks` NAME-keyed MAP (C009) of INCOMING operations the API receives but does
+# not host at its own paths (the sender owns the URL). Each entry REUSES the Request/Response machinery
+# (method, contentType, contentSchema, parameterSchema, responses) and carries a signature (C003). It is a
+# pathItem-shaped structure NOT keyed by a uriTemplate (no own-server URL).
+claim cbwh_webhooks_toplevel_named_map: Bool @>=0.55 = True
+falsified_when cbwh_webhooks_toplevel_named_map == False
+
+# CALLBACKS: a per-operation `callbacks` NAME-keyed MAP; each callback is a RUNTIME-EXPRESSION-keyed
+# collection of pathItem-shaped definitions (the operation triggers an out-of-band request to a URL derived
+# at runtime from request/response data). REUSES pathItem/requests/responses; the C005 uriTemplate applies
+# to the callback URL's path-portion. The runtime-expression key (e.g. {$request.body#/callbackUrl}) is
+# DISTINCT from a static uriTemplate and is resolved at runtime, NOT in the static matcher (D1-consistent).
+claim cbwh_callbacks_runtime_expr_keyed: Bool @>=0.55 = True
+falsified_when cbwh_callbacks_runtime_expr_keyed == False
+
+# Both reuse existing primitives -> NO new core object kinds; consistent with C009 (named maps), C003
+# (signatures), C004 (parameterSchema), C005 (uriTemplate for the static path-portion).
+claim cbwh_reuse_existing_primitives: Bool @>=0.6 = True
+falsified_when cbwh_reuse_existing_primitives == False
+
+# DEFERRED: the exact runtime-expression grammar for callback URLs (3.x had {$request.body#/x}); and the
+# broader async/event-driven/streaming space (AsyncAPI overlap) is OUT-OF-SCOPE for this candidate's HTTP core.
+claim cbwh_runtime_expr_grammar_and_async_deferred: Bool @>=0.6 = True
+falsified_when cbwh_runtime_expr_grammar_and_async_deferred == False

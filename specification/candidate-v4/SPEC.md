@@ -4169,3 +4169,47 @@ Neither collision verdict fires because the methods differ; a tool can determini
 
 ---
 
+## 14. Callbacks & Webhooks
+
+*(Logically extends §4 Requests and §5 Responses. Resolves the gap surfaced by the upgrade capstone — see [C018].)*
+
+> ⚠ **Candidate @0.55–0.6**: Originated — the SIG never designed this; it is a clean-room extension of the existing machinery. Provisional.
+
+### 14.1 Webhooks
+
+A **webhook** is an *incoming* operation the described API receives but does not host at one of its own paths (the sender owns the URL). Webhooks are a top-level `webhooks` map keyed by a friendly **name** (§1, C009), each entry a Request/Response shape (§4–5) carrying a signature (§3).
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `webhooks` | Map[name → Webhook Object] | MAY | Incoming operations not bound to a server uriTemplate. |
+
+A Webhook Object reuses the Operation shape (§1.4) — `method`, `parameterSchema`, `contentType`/`contentSchema`, `responses` — but has no uriTemplate key (the recipient does not own the URL).
+
+```yaml
+webhooks:
+  newSpeaker:
+    method: post
+    contentType: application/json
+    contentSchema: { $ref: "#/components/schemas/speaker" }
+    responses:
+      ok: { status: 200 }
+```
+
+### 14.2 Callbacks
+
+A **callback** is an out-of-band request the API *sends* in response to an operation, to a URL supplied at runtime. Each operation MAY carry a `callbacks` map keyed by a friendly **name**; each callback is keyed internally by a **runtime expression** (e.g. `{$request.body#/callbackUrl}`) whose value is a pathItem-shaped definition (§1.3). The runtime-expression key is resolved at runtime from request/response data — it is **not** part of the static signature matcher (§3; D1-consistent).
+
+```yaml
+operations:
+  createSubscription:
+    method: post
+    callbacks:
+      onEvent:
+        "{$request.body#/callbackUrl}":
+          requests:
+            event: { method: post, contentSchema: { $ref: "#/components/schemas/event" } }
+```
+
+> ⚠ **Deferred**: the exact runtime-expression grammar (3.x used `{$request.body#/x}`); and the broader async/event-driven/streaming space (AsyncAPI overlap) is **out of scope** for this candidate's HTTP core.
+
+---
