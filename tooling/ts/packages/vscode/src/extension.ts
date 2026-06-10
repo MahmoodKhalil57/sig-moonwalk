@@ -16,6 +16,7 @@ import {
   deployPlan, deployMarkdown,
   diffContracts, formatMicroUsd, type ContractDiff,
   installModule, previewInstall, FIRST_PARTY_REGISTRY, type ModuleEntry, type InstallPreview,
+  crossCut, defaultViewers, type CrossCut,
 } from "@suluk/cockpit";
 import { parseDocument } from "@suluk/core";
 import { SAMPLE_V4 } from "./sample";
@@ -31,6 +32,14 @@ function isV4Source(text: string): boolean {
 // (which opens a .tsx/.ts beside and steals focus) does NOT blank the trees. They keep showing the API.
 let pinnedV4Source: string | null = null;
 let pinnedV4IsFile = false; // was the pinned source a real on-disk file (vs a fetched/connected untitled doc)?
+let connectedEnvName: string | null = null; // the environment whose live contract was last connected
+let connectedDocUri: string | null = null; // the document that holds that fetched contract
+/** The env label ONLY while the active editor is the connected env's fetched contract — else null, so the lens
+ *  and cross-cut header never claim a live environment while the cockpit is actually projecting a local file. */
+function activeEnvName(): string | null {
+  if (!connectedEnvName || !connectedDocUri) return null;
+  return vscode.window.activeTextEditor?.document.uri.toString() === connectedDocUri ? connectedEnvName : null;
+}
 function activeV4Source(): string | null {
   const ed = vscode.window.activeTextEditor;
   if (ed && SUPPORTED.has(ed.document.languageId)) {
@@ -256,6 +265,8 @@ function htmlPage(title: string, body: string): string {
  .row{padding:2px 0} .k{font-family:var(--vscode-editor-font-family)} .d{color:var(--vscode-descriptionForeground);margin-left:8px}
  .add{color:var(--vscode-charts-green)} .rem{color:var(--vscode-charts-red)} .chg{color:var(--vscode-charts-yellow)}
  table{border-collapse:collapse} td{padding:2px 16px 2px 0} pre{white-space:pre-wrap}
+ th{text-align:left;padding:3px 14px 3px 0;font-weight:600;color:var(--vscode-descriptionForeground)}
+ .matrix td{padding:3px 16px 3px 0;text-align:center} .matrix td:first-child,.matrix th:first-child{text-align:left}
 </style></head><body><h2>${esc(title)}</h2>${body}</body></html>`;
 }
 function driftHtml(d: ContractDiff, env: SulukEnv): string {
@@ -287,6 +298,17 @@ function costHtml(data: unknown, env: SulukEnv): string {
     return htmlPage(`Cost — ${env.name}`, body);
   }
   return htmlPage(`Cost — ${env.name}`, `<p class="sum">live /cost response from ${esc(env.baseUrl)}</p><pre class="k">${esc(JSON.stringify(data, null, 2))}</pre>`);
+}
+function crossCutHtml(cc: CrossCut, envName: string | null): string {
+  const head = `<tr><th>operation</th>${cc.viewers.map((v) => `<th>${esc(v.label)}</th>`).join("")}</tr>`;
+  const rows = cc.operations.map((o) => {
+    const cells = cc.viewers.map((v) => (v.visible.includes(o.name) ? `<td class="add">✓</td>` : `<td class="d">·</td>`)).join("");
+    return `<tr><td><span class="k">${esc(o.name)}</span><span class="d">${esc(o.detail)}</span></td>${cells}</tr>`;
+  }).join("");
+  const body = `<p class="sum">one contract${envName ? ` (deployed at ${esc(envName)})` : ""} — ${cc.operations.length} operations × ${cc.viewers.length} viewers · ${cc.gated.length} scope-gated. ✓ = this viewer can call it.</p>`
+    + `<table class="matrix">${head}${rows}</table>`
+    + (cc.gated.length ? `<div class="g"><h3>gated operations</h3>${cc.gated.map((g) => `<div class="row"><span class="k chg">${esc(g.operation)}</span><span class="d">${esc(g.detail)} — needs [${esc(g.requiredScopes.map((r) => r.join("+")).join(" | "))}], visible to ${esc(g.visibleTo.join(", "))}</span></div>`).join("")}</div>` : "");
+  return htmlPage("View-as cross-cut", body);
 }
 function modulePreviewHtml(entry: ModuleEntry, p: InstallPreview): string {
   const gradeCls = p.grade.grade === "A" ? "add" : p.grade.grade === "B" ? "chg" : "rem";
@@ -355,6 +377,19 @@ export function activate(context: vscode.ExtensionContext): void {
 
   const reg = (id: string, fn: (...a: never[]) => unknown) => context.subscriptions.push(vscode.commands.registerCommand(id, fn));
 
+  // ── the LENS (M1): a status-bar indicator of the active {environment · viewer} the cockpit is projecting ──
+  const lens = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
+  lens.command = "suluk.viewAs";
+  context.subscriptions.push(lens);
+  const updateLens = () => {
+    if (!activeV4Source()) { lens.hide(); return; }
+    const who = cycle.viewLabel();
+    const env = activeEnvName();
+    lens.text = `$(eye) Suluk: ${env ? `${env} · ` : ""}as ${who}`;
+    lens.tooltip = `The cockpit is projecting every layer for the "${who}" viewer${env ? ` against the ${env} environment` : ""}.\nClick to change viewer (View as scopes); use "Compare viewers" for the full cross-cut.`;
+    lens.show();
+  };
+
   // ── onboarding: get a v4 document in front of the cockpit so the views fill up ──
   reg("suluk.openSample", async () => {
     const doc = await vscode.workspace.openTextDocument({ content: SAMPLE_V4, language: "yaml" });
@@ -408,7 +443,20 @@ export function activate(context: vscode.ExtensionContext): void {
     if (trimmed === "") cycle.setPrincipal(undefined);
     else if (trimmed.toLowerCase() === "anonymous") cycle.setPrincipal([]);
     else cycle.setPrincipal(trimmed.split(",").map((s) => s.trim()).filter(Boolean));
+    updateLens();
     void vscode.window.showInformationMessage(`Suluk: viewing as ${cycle.viewLabel()}.`);
+  });
+
+  // ── Compare viewers (M1): one contract refracted through every viewer — the scope-gated matrix (the moat) ──
+  reg("suluk.compareViewers", () => {
+    const src = activeV4Source();
+    if (!src) { void vscode.window.showWarningMessage("Suluk: open a v4 contract first."); return; }
+    try {
+      const doc = parseDocument(src);
+      const cc = crossCut(doc, defaultViewers(doc));
+      const panel = vscode.window.createWebviewPanel("suluk.crossCut", "Suluk — View-as cross-cut", vscode.ViewColumn.Beside, {});
+      panel.webview.html = crossCutHtml(cc, activeEnvName());
+    } catch (e) { void vscode.window.showErrorMessage(`Suluk: ${(e as Error).message}`); }
   });
 
   // jump to where a thing (entity/operation/scheme) is DEFINED in the active source — the tree as a map.
@@ -515,6 +563,7 @@ export function activate(context: vscode.ExtensionContext): void {
   });
   reg("suluk.removeEnvironment", async (env?: SulukEnv) => {
     env = env ?? await pickEnv(); if (!env) return;
+    if (env.name === connectedEnvName) { connectedEnvName = null; connectedDocUri = null; updateLens(); }
     let dropped = false; // drop only ONE matching entry, not every env that happens to share a baseUrl
     await envs.save(envs.list().filter((e) => {
       if (!dropped && e.name === env!.name && e.baseUrl === env!.baseUrl) { dropped = true; return false; }
@@ -528,7 +577,9 @@ export function activate(context: vscode.ExtensionContext): void {
       const text = await fetchText(`${env.baseUrl}/openapi.json`);
       const doc = await vscode.workspace.openTextDocument({ content: text, language: "json" });
       await vscode.window.showTextDocument(doc);
-      cycle.refresh(); builder.refresh();
+      connectedEnvName = env.name;
+      connectedDocUri = doc.uri.toString();
+      cycle.refresh(); builder.refresh(); updateLens();
       if (!isV4Source(text)) void vscode.window.showWarningMessage(`Suluk: ${env.baseUrl}/openapi.json loaded but doesn't look like v4.`);
       else void vscode.window.showInformationMessage(`Suluk: connected to ${env.name} — the cockpit now projects the live contract from ${env.baseUrl}.`);
     } catch (e) { void vscode.window.showErrorMessage(`Suluk: couldn't reach ${env.baseUrl}/openapi.json — ${(e as Error).message}`); }
@@ -596,13 +647,14 @@ export function activate(context: vscode.ExtensionContext): void {
     } catch (e) { void vscode.window.showErrorMessage(`Suluk: install of ${entry.module.name} failed — ${(e as Error).message}`); }
   });
 
-  const onChange = () => { cycle.refresh(); builder.refresh(); };
+  const onChange = () => { cycle.refresh(); builder.refresh(); updateLens(); };
   context.subscriptions.push(
     vscode.workspace.onDidOpenTextDocument((doc) => { refreshDiagnostics(doc, collection); onChange(); }),
     vscode.workspace.onDidSaveTextDocument((doc) => { refreshDiagnostics(doc, collection); onChange(); }),
     vscode.window.onDidChangeActiveTextEditor(onChange),
   );
   for (const doc of vscode.workspace.textDocuments) refreshDiagnostics(doc, collection);
+  updateLens();
 }
 
 export function deactivate(): void { /* subscriptions disposed via context */ }

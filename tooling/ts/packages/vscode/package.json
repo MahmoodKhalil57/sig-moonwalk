@@ -95,6 +95,11 @@
         "icon": "$(account)"
       },
       {
+        "command": "suluk.compareViewers",
+        "title": "Suluk: Compare viewers (View-as cross-cut)",
+        "icon": "$(table)"
+      },
+      {
         "command": "suluk.generateForm",
         "title": "Suluk: Generate shadcn form for entity\u2026"
       },
@@ -192,6 +197,11 @@
         },
         {
           "command": "suluk.viewAs",
+          "when": "view == suluk.cycle",
+          "group": "navigation"
+        },
+        {
+          "command": "suluk.compareViewers",
           "when": "view == suluk.cycle",
           "group": "navigation"
         },
