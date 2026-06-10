@@ -180,5 +180,15 @@ builder — so the extension can fetch it and **diff local-contract vs deployed-
     zero-operation contract can't read "ready", and a stale-served-but-dead deploy reads `warn` not green. A new
     non-blocking `info` gate status surfaces n/a conditions without ever making a clean contract look not-ready.
     **The originated L3 is now shipped — the whole arc, authored → deployed, is legible on one screen.**
-  - **Still optional, operator's call (additive):** live role-previews via a preview deployment (the one
-    credentialed surface, charter-bounded). This is the only roadmap item left.
+  - **✓ Live role-preview (commit pending, builder 0.1.10 · better-auth+deploy 0.1.2 · cockpit+vscode 0.1.14)** —
+    the LAST roadmap item, charter-bounded. Open the running app AS any role (anonymous/user/admin/superadmin)
+    against an EPHEMERAL preview deployment. The extension holds NO token: `suluk.previewAsRole` deep-links the
+    preview deploy's own `/preview/login?role=…` in the BROWSER (pure, unit-tested `previewLaunchUrl`; targets
+    ONLY a `kind:"preview"` env, default `"prod"` so all existing envs are fail-closed). The credentialed mint
+    happens server-side in `previewLoginHandler`, FAIL-CLOSED behind two independent locks (`SULUK_PREVIEW="1"`
+    AND a `PREVIEW_DB` binding), bound to a seeded demo user. A first-party `preview` module carries the op
+    (`x-suluk-preview-only`), EXCLUDED from the registry + templates; `previewDeployPlan` is terminal-gated like
+    prod; a converge WARN + a ship-gate + a prod-deploy modal keep the backdoor from leaking silently. Designed by
+    a 9-agent council/recon/security workflow, then hardened by an 8-dimension adversarial review (22 findings
+    examined, 10 fixed — incl. a HIGH supply-chain hole where a remote module could smuggle the op and still read
+    "ready to ship"). **The roadmap now has NO items left — every horizon is shipped + reviewed.**

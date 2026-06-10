@@ -68,13 +68,13 @@ A static export is just `render(contracts, publicPrincipal, now)`. Nothing speci
 | `@suluk/zod` | lossless Zod ⇄ v4 Schema Objects (fixpoint-proven) | ✅ 29 tests |
 | `@suluk/scalar` / `@suluk/swagger` | render a v4 doc via the 3.1 downgrade | ✅ 5 + 6 tests |
 | `@suluk/hono` | the derivation engine: `render(routes, principal, now) -> v4`; validation middleware; **audit**; **contract-test generation** | ✅ 14 tests |
-| `@suluk/better-auth` | official Better-Auth-on-Hono: auth settings → securitySchemes/security; ingest its `openAPI()` output via `compat.upgrade`; session → principal | ✅ 12 tests |
+| `@suluk/better-auth` | official Better-Auth-on-Hono: auth settings → securitySchemes/security; ingest its `openAPI()` output via `compat.upgrade`; session → principal; **the fail-closed `previewLoginHandler` (role-preview)** | ✅ 21 tests |
 | `@suluk/drizzle` | **data floor**: Drizzle table → Zod (drizzle-zod) → v4 schemas + DB metadata + **CRUD RouteContracts** | ✅ 17 tests |
 | `@suluk/nano-stores` | **state corner**: v4 contracts → typed `@nanostores/query` fetcher/mutator stores (Zod-guarded I/O) | ✅ 8 tests |
 | `@suluk/shadcn` | **UI corner**: v4 Schema Objects → form/table specs + shadcn TSX (react-hook-form + zodResolver) | ✅ 20 tests |
 | `@suluk/builder` | **the builder**: DSL; `buildApp`/`toShadcnRegistry`; **modules** (C021) — `installModule` (refuse-on-collision + `requires` + dangling-ref backstop + namespacing), curated + **remote** + **signed** registries, `gradeModule`/`previewInstall`, **provider slots** (`swapProvider`), **composition** (`planComposition`/`composeModules` + stack templates — the non-dev "compose a platform" flow) | ✅ 77 tests |
-| `@suluk/deploy` | **the capstone**: swappable `DeployProvider`; Cloudflare (Workers + D1 + assets) | ✅ 8 tests |
-| `@suluk/cockpit` | the **pure cockpit core** (10-layer cycle · builder · codegen+**diagrams** · deploy · **drift** · **cross-cut** · **converge** · **D2 diagrams** · **component pixel-confidence** · **ship-readiness gates (L3)** · validate/audit/preview) — shared brain | ✅ 98 tests |
+| `@suluk/deploy` | **the capstone**: swappable `DeployProvider`; Cloudflare (Workers + D1 + assets); **a fail-closed `preview` variant (two locks + seed)** | ✅ 12 tests |
+| `@suluk/cockpit` | the **pure cockpit core** (10-layer cycle · builder · codegen+**diagrams** · deploy · **drift** · **cross-cut** · **converge** · **D2 diagrams** · **component pixel-confidence** · **ship-readiness gates (L3)** · **role-preview** · validate/audit/preview) — shared brain | ✅ 115 tests |
 | `@suluk/admin` | the **/superadmin web panel** — the cockpit rendered as a Hono web UI, superadmin-gated | ✅ 7 tests |
 | `@suluk/example-petshop` | runnable end-to-end demo — real Drizzle → live CRUD + Scalar + frontend + /superadmin + client round-trip | ✅ 10 tests |
 | `@suluk/docs` | generate a GitHub-Pages docs site from source (Suluk documents itself); **`packageGraphD2`** — the "how the tools compose" diagram on the Architecture page | ✅ 14 tests |
@@ -82,9 +82,9 @@ A static export is just `render(contracts, publicPrincipal, now)`. Nothing speci
 | `@suluk/stripe` | first-class Stripe behind a swappable `PaymentProvider`; bridges cost → metered billing | ✅ 9 tests |
 | `@suluk/visual` | **pixel-confidence by construction** — verify each primitive's pixels once; confidence propagates via content-hash | ✅ 9 tests |
 | `suluk-core` (Rust) | perf core: parse + signature + reverse-parse matcher; 2nd independent impl | ✅ 9 tests |
-| `suluk-vscode` | the cockpit's **editor face** — a thin vscode shell over `@suluk/cockpit` (Cycle + Builder TreeViews, **Environments** axis: connect/drift/live-cost, "View as", codegen, **install module**, **ship-readiness checklist**, deploy) | tsc + bundle |
+| `suluk-vscode` | the cockpit's **editor face** — a thin vscode shell over `@suluk/cockpit` (Cycle + Builder TreeViews, **Environments** axis: connect/drift/live-cost, "View as", codegen, **install module**, **ship-readiness checklist**, **preview as role**, deploy) | ✅ 6 tests (+ tsc + bundle) |
 
-**Total: 20 TS packages (390 tests) + a Rust core (9 tests) = 399 green.** Shipped: npm (`@suluk/*`),
+**Total: 20 TS packages (432 tests) + a Rust core (9 tests) = 441 green.** Shipped: npm (`@suluk/*`),
 crates.io (`suluk-core`), VS Code Marketplace (`MahmoodKhalil.suluk-vscode`). Live demo: a full SaaS
 (`saasuluk`) on Cloudflare Workers + D1 at **saasuluk.saastemly.com** — auth (Better Auth/D1), CRUD,
 Scalar docs, the `/superadmin` cockpit, a durable cost ledger, and a static Astro frontend.
