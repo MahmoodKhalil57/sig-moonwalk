@@ -1,0 +1,25 @@
+{
+  "name": "@suluk/better-auth",
+  "version": "0.1.0",
+  "description": "Official Better-Auth-on-Hono support for Suluk: auth methods -> v4 securitySchemes; ingest Better Auth's OpenAPI 3.0 -> v4; session -> principal for per-viewer docs. CANDIDATE tooling.",
+  "type": "module",
+  "main": "src/index.ts",
+  "exports": { ".": "./src/index.ts" },
+  "dependencies": {
+    "@suluk/core": "workspace:*",
+    "@suluk/openapi-compat": "workspace:*"
+  },
+  "peerDependencies": {
+    "better-auth": "^1.0.0",
+    "hono": "^4.0.0"
+  },
+  "peerDependenciesMeta": {
+    "better-auth": { "optional": true },
+    "hono": { "optional": true }
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@suluk/hono": "workspace:*"
+  },
+  "scripts": { "test": "bun test", "typecheck": "tsc --noEmit -p ." }
+}
