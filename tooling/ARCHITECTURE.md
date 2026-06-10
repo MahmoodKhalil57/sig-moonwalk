@@ -76,11 +76,12 @@ A static export is just `render(contracts, publicPrincipal, now)`. Nothing speci
 | `@suluk/deploy` | **the capstone**: swappable `DeployProvider`; Cloudflare (Workers + D1 + assets) | ✅ 8 tests |
 | `@suluk/cockpit` | the **pure cockpit core** (cycle · builder · codegen · deploy · validate/audit/preview) — shared brain | ✅ 35 tests |
 | `@suluk/admin` | the **/superadmin web panel** — the cockpit rendered as a Hono web UI, superadmin-gated | ✅ 7 tests |
-| `@suluk/example-petshop` | runnable end-to-end demo — Drizzle → live CRUD + Scalar + frontend + /superadmin | ✅ 6 tests |
+| `@suluk/example-petshop` | runnable end-to-end demo — real Drizzle → live CRUD + Scalar + frontend + /superadmin + client round-trip | ✅ 10 tests |
+| `@suluk/docs` | generate a GitHub-Pages docs site from source (Suluk documents itself) | ✅ 10 tests |
 | `suluk-core` (Rust) | perf core: parse + signature + reverse-parse matcher; 2nd independent impl | ✅ 9 tests |
 | `suluk-vscode` | the cockpit's **editor face** — a thin vscode shell over `@suluk/cockpit` (Cycle + Builder TreeViews, "View as", codegen, deploy) | tsc + bundle |
 
-**Total: 16 TS packages (214 tests) + a Rust core (9 tests) = 223 green.**
+**Total: 17 TS packages (228 tests) + a Rust core (9 tests) = 237 green.**
 
 ## One brain, two faces
 
