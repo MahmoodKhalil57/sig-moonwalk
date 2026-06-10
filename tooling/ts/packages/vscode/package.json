@@ -2,7 +2,7 @@
   "name": "suluk-vscode",
   "displayName": "Suluk \u2014 OpenAPI v4 (Candidate)",
   "description": "The unifying cockpit for the Suluk declarative cycle: validate, audit, preview (Scalar/Swagger), and generate stores/UI from one v4 source. CANDIDATE tooling \u2014 not official OAS.",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "publisher": "MahmoodKhalil",
   "license": "Apache-2.0",
   "repository": {
