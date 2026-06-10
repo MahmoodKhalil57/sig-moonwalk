@@ -11,6 +11,8 @@ import type { ModuleEntry, SulukModule } from "./module";
 export interface RegistrySource {
   name: string;
   url: string;
+  /** optional pinned publisher public key (JWK) — when set, the registry's signature is verified on every fetch */
+  publicKey?: JsonWebKey;
 }
 
 export interface ParsedRegistry {

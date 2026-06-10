@@ -138,6 +138,11 @@
         "icon": "$(globe)"
       },
       {
+        "command": "suluk.signRegistry",
+        "title": "Suluk: Sign this registry (publisher — emit a signed envelope + keypair)",
+        "icon": "$(key)"
+      },
+      {
         "command": "suluk.swapProvider",
         "title": "Suluk: Swap a provider (payments/auth/email/storage)",
         "icon": "$(plug)"

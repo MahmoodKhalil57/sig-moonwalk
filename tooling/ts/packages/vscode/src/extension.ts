@@ -19,6 +19,7 @@ import {
   crossCut, defaultViewers, type CrossCut,
   PROVIDER_CATALOG, readProviders, swapProvider,
   parseRegistry, type RegistrySource,
+  verifyRegistrySignature, isSignedEnvelope, generateSigningKeypair, signRegistry,
 } from "@suluk/cockpit";
 import { parseDocument } from "@suluk/core";
 import { SAMPLE_V4 } from "./sample";
@@ -338,11 +339,13 @@ function crossCutHtml(cc: CrossCut, envName: string | null): string {
     + (cc.gated.length ? `<div class="g"><h3>gated operations</h3>${cc.gated.map((g) => `<div class="row"><span class="k chg">${esc(g.operation)}</span><span class="d">${esc(g.detail)} — needs [${esc(g.requiredScopes.map((r) => r.join("+")).join(" | "))}], visible to ${esc(g.visibleTo.join(", "))}</span></div>`).join("")}</div>` : "");
   return htmlPage("View-as cross-cut", body);
 }
-function modulePreviewHtml(entry: ModuleEntry, p: InstallPreview, prov: { registry: string; trusted: boolean; url?: string }): string {
+function modulePreviewHtml(entry: ModuleEntry, p: InstallPreview, prov: { registry: string; trust: "first-party" | "signed" | "unsigned"; url?: string; publisher?: string }): string {
   const gradeCls = p.grade.grade === "A" ? "add" : p.grade.grade === "B" ? "chg" : "rem";
-  const banner = prov.trusted
+  const banner = prov.trust === "first-party"
     ? `<div class="row"><span class="k add">✓ ${esc(prov.registry)}</span><span class="d">first-party — reviewed</span></div>`
-    : `<div class="g"><h3 class="rem">⚠ third-party module</h3><div class="row rem">From <span class="k">${esc(prov.registry)}</span>${prov.url ? ` (${esc(prov.url)})` : ""}. It will merge the entities + operations below into your contract. Review them, then install — the merge still refuses on any collision.</div></div>`;
+    : prov.trust === "signed"
+      ? `<div class="row"><span class="k add">✓ signed${prov.publisher ? ` by ${esc(prov.publisher)}` : ""}</span><span class="d">${esc(prov.registry)}${prov.url ? ` (${esc(prov.url)})` : ""} — signature verified against your pinned key</span></div>`
+      : `<div class="g"><h3 class="rem">⚠ third-party module (unverified)</h3><div class="row rem">From <span class="k">${esc(prov.registry)}</span>${prov.url ? ` (${esc(prov.url)})` : ""}. It will merge the entities + operations below into your contract. Review them, then install — the merge still refuses on any collision. Pin the publisher's key to verify provenance.</div></div>`;
   const list = (cls: string, title: string, items: string[]) =>
     items.length ? `<div class="g"><h3 class="${cls === "d" ? "" : cls}">${esc(title)}</h3>${items.map((i) => `<div class="row"><span class="k ${cls === "d" ? "d" : cls}">${esc(i)}</span></div>`).join("")}</div>` : "";
   const body = `<p class="sum">${esc(entry.description)}<br><span class="${gradeCls}">grade ${esc(p.grade.grade)}</span>${p.grade.notes.length ? ` · ${esc(p.grade.notes.join(" · "))}` : " · every operation costed, no documentation warnings"}</p>`
@@ -645,24 +648,60 @@ export function activate(context: vscode.ExtensionContext): void {
 
   // ── Modules (C021 / M2 / L1): browse a registry (first-party OR a remote URL) → PREVIEW (contract-diff +
   // grade + provenance) → install through the refuse-on-collision gate. Remote registries are UNTRUSTED. ──
-  interface ResolvedReg { name: string; modules: ModuleEntry[]; trusted: boolean; url?: string }
+  interface ResolvedReg { name: string; modules: ModuleEntry[]; trust: "first-party" | "signed" | "unsigned"; url?: string; publisher?: string }
   const addRegistryFlow = async (): Promise<RegistrySource | undefined> => {
-    const url = await vscode.window.showInputBox({ prompt: "Registry URL — a JSON ModuleRegistry", placeHolder: "https://example.com/suluk-registry.json", value: "https://" });
+    const url = await vscode.window.showInputBox({ prompt: "Registry URL — a JSON ModuleRegistry (or a { registry, signature } envelope)", placeHolder: "https://example.com/suluk-registry.json", value: "https://" });
     if (!url || url === "https://") return undefined;
     const name = (await vscode.window.showInputBox({ prompt: "A name for this registry", value: url.replace(/^https?:\/\//, "").split("/")[0] })) || url;
-    const src: RegistrySource = { name, url: url.replace(/\/+$/, "") };
+    const keyJson = await vscode.window.showInputBox({ prompt: "Pin the publisher's public key (JWK) to verify the signature — leave blank for an unsigned registry", placeHolder: '{"kty":"EC","crv":"P-256",...}' });
+    let publicKey: JsonWebKey | undefined;
+    if (keyJson && keyJson.trim()) { try { publicKey = JSON.parse(keyJson) as JsonWebKey; } catch { void vscode.window.showWarningMessage("Suluk: the pinned key wasn't valid JSON — saving the registry without signature verification."); } }
+    const src: RegistrySource = { name, url: url.replace(/\/+$/, ""), publicKey };
     const list = context.workspaceState.get<RegistrySource[]>("suluk.registries", []);
     await context.workspaceState.update("suluk.registries", [...list.filter((r) => r.url !== src.url), src]);
     return src;
   };
   const resolveRemote = async (s: RegistrySource): Promise<ResolvedReg | undefined> => {
     try {
-      const parsed = parseRegistry(await fetchJson(s.url)); // validate the UNTRUSTED payload, rejecting malformed entries
+      const payload: unknown = await fetchJson(s.url);
+      let registryValue: unknown = payload;
+      let trust: "signed" | "unsigned" = "unsigned";
+      let publisher: string | undefined;
+      if (isSignedEnvelope(payload)) {
+        registryValue = payload.registry;
+        publisher = payload.publisher;
+        if (s.publicKey) {
+          if (!(await verifyRegistrySignature(payload.registry, payload.signature, s.publicKey))) {
+            void vscode.window.showErrorMessage(`Suluk: ${s.name} — SIGNATURE INVALID (tampered, or signed by a different key). Refusing to load it.`);
+            return undefined;
+          }
+          trust = "signed";
+        } else {
+          void vscode.window.showWarningMessage(`Suluk: ${s.name} is signed but you pinned no public key — treating it as unverified. Re-add it with the publisher's key to verify.`);
+        }
+      }
+      const parsed = parseRegistry(registryValue); // validate the UNTRUSTED payload, rejecting malformed entries
       if (parsed.rejected.length) void vscode.window.showWarningMessage(`Suluk: ${parsed.name} — ${parsed.rejected.length} module(s) rejected as malformed (${parsed.rejected.map((r) => r.title).join(", ")}).`);
-      return { name: parsed.name, modules: parsed.modules, trusted: false, url: s.url };
+      return { name: parsed.name, modules: parsed.modules, trust, url: s.url, publisher };
     } catch (e) { void vscode.window.showErrorMessage(`Suluk: couldn't load registry ${s.url} — ${(e as Error).message}`); return undefined; }
   };
-  reg("suluk.addRegistry", async () => { const s = await addRegistryFlow(); if (s) void vscode.window.showInformationMessage(`Suluk: added registry "${s.name}". Browse modules to install from it.`); });
+  reg("suluk.addRegistry", async () => { const s = await addRegistryFlow(); if (s) void vscode.window.showInformationMessage(`Suluk: added registry "${s.name}"${s.publicKey ? " (signature-verified)" : ""}. Browse modules to install from it.`); });
+  // publisher tool: sign the active ModuleRegistry → emit the { registry, signature } envelope + the public key to publish
+  reg("suluk.signRegistry", async () => {
+    const ed = vscode.window.activeTextEditor;
+    if (!ed) { void vscode.window.showWarningMessage("Suluk: open a ModuleRegistry JSON ({ name, modules }) to sign."); return; }
+    let registryValue: unknown;
+    try { registryValue = JSON.parse(ed.document.getText()); } catch { void vscode.window.showErrorMessage("Suluk: the active document isn't valid JSON."); return; }
+    const { publicKey, privateKey } = await generateSigningKeypair();
+    const signature = await signRegistry(registryValue, privateKey);
+    const out = {
+      "// serve this envelope at your registry URL": "↓", signed: { registry: registryValue, signature, publisher: "me" },
+      "// consumers pin THIS public key when adding your registry": "↓", publicKey,
+      "// keep THIS private key secret — re-sign with it after every change": "↓", privateKey,
+    };
+    await openGenerated(JSON.stringify(out, null, 2), "json");
+    void vscode.window.showInformationMessage("Suluk: signed. Serve the `signed` envelope at your URL; consumers pin `publicKey`. Keep the private key secret.");
+  });
   reg("suluk.installModule", async () => {
     const local = activeV4Source();
     if (!local) { void vscode.window.showWarningMessage("Suluk: open your v4 contract first, then install a module into it."); return; }
@@ -678,7 +717,7 @@ export function activate(context: vscode.ExtensionContext): void {
     const srcPick = await vscode.window.showQuickPick(srcItems, { placeHolder: "Choose a module registry" });
     if (!srcPick) return;
     let resolved: ResolvedReg | undefined;
-    if (srcPick.srcKind === "fp") resolved = { name: FIRST_PARTY_REGISTRY.name, modules: FIRST_PARTY_REGISTRY.modules, trusted: true };
+    if (srcPick.srcKind === "fp") resolved = { name: FIRST_PARTY_REGISTRY.name, modules: FIRST_PARTY_REGISTRY.modules, trust: "first-party" };
     else if (srcPick.srcKind === "remote") resolved = await resolveRemote(srcPick.src);
     else { const s = await addRegistryFlow(); if (!s) return; resolved = await resolveRemote(s); }
     if (!resolved) return;
@@ -687,7 +726,7 @@ export function activate(context: vscode.ExtensionContext): void {
     //    (a hostile name can't forge $(verified)) and the grade is computed crash-safe (one bad entry ≠ dead list).
     const safeGrade = (e: ModuleEntry): string => { try { return previewInstall(doc, e.module).grade.grade; } catch { return "?"; } };
     const modPick = await vscode.window.showQuickPick(
-      resolved.modules.map((e) => ({ label: `$(package) ${safeLabel(e.module.name)}`, description: `grade ${safeGrade(e)}${resolved!.trusted ? "" : " · remote"}`, detail: e.description, entry: e })),
+      resolved.modules.map((e) => ({ label: `$(package) ${safeLabel(e.module.name)}`, description: `grade ${safeGrade(e)}${resolved!.trust === "first-party" ? "" : resolved!.trust === "signed" ? " · signed ✓" : " · remote"}`, detail: e.description, entry: e })),
       { placeHolder: `${resolved.name} — preview before installing`, matchOnDescription: true },
     );
     if (!modPick) return;
@@ -696,15 +735,14 @@ export function activate(context: vscode.ExtensionContext): void {
       const preview = previewInstall(doc, entry.module);
       // 3. the trust gate — always show the contract-diff + grade + provenance before installing
       const panel = vscode.window.createWebviewPanel("suluk.modulePreview", `Suluk — ${entry.module.name}`, vscode.ViewColumn.Beside, {});
-      panel.webview.html = modulePreviewHtml(entry, preview, { registry: resolved.name, trusted: resolved.trusted, url: resolved.url });
+      panel.webview.html = modulePreviewHtml(entry, preview, { registry: resolved.name, trust: resolved.trust, url: resolved.url, publisher: resolved.publisher });
       if (!preview.willInstall) {
         void vscode.window.showWarningMessage(`Suluk: ${entry.module.name} can't be installed into this contract yet — ${preview.missingRequires.length ? `it needs ${preview.missingRequires.join(", ")}` : "see the preview for the conflicts"}.`);
         return;
       }
+      const provenance = resolved.trust === "first-party" ? "" : resolved.trust === "signed" ? ` (signed${resolved.publisher ? ` by ${resolved.publisher}` : ""})` : ` from ${resolved.name} (third-party, unverified)`;
       const choice = await vscode.window.showInformationMessage(
-        resolved.trusted
-          ? `Install ${entry.module.name}? Adds ${preview.addsSchemas.length} entities + ${preview.addsOperations.length} operations · grade ${preview.grade.grade}.`
-          : `Install ${entry.module.name} from ${resolved.name} (third-party)? It will merge ${preview.addsSchemas.length} entities + ${preview.addsOperations.length} operations into your contract · grade ${preview.grade.grade}. Review the preview first.`,
+        `Install ${entry.module.name}${provenance}? It merges ${preview.addsSchemas.length} entities + ${preview.addsOperations.length} operations into your contract · grade ${preview.grade.grade}.${resolved.trust === "unsigned" ? " Review the preview first." : ""}`,
         { modal: true }, "Install",
       );
       if (choice !== "Install") return;

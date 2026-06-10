@@ -22,6 +22,7 @@ export {
   ECOMMERCE, CRM, BILLING, FIRST_PARTY_REGISTRY,
   PROVIDER_CATALOG, providerFacets, readProviders, swapProvider,
   parseRegistry, validateModule,
+  signRegistry, verifyRegistrySignature, generateSigningKeypair, isSignedEnvelope,
   type SulukModule, type InstallResult, type ModuleEntry, type ModuleRegistry, type ModuleGrade, type InstallPreview,
-  type ProviderImpl, type ProviderBinding, type RegistrySource, type ParsedRegistry,
+  type ProviderImpl, type ProviderBinding, type RegistrySource, type ParsedRegistry, type SignedEnvelope,
 } from "@suluk/builder";

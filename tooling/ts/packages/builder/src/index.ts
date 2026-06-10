@@ -34,3 +34,5 @@ export { ECOMMERCE, CRM, BILLING, FIRST_PARTY_REGISTRY } from "./modules";
 export { PROVIDER_CATALOG, providerFacets, readProviders, swapProvider, type ProviderImpl, type ProviderBinding, type SwapResult } from "./providers";
 // remote registries (L1): validate an UNTRUSTED registry fetched from a URL (the open marketplace)
 export { parseRegistry, validateModule, type RegistrySource, type ParsedRegistry } from "./registry-remote";
+// signed registries (L1+): verify a publisher signature → provenance for the open marketplace
+export { signRegistry, verifyRegistrySignature, generateSigningKeypair, isSignedEnvelope, type SignedEnvelope } from "./signing";
