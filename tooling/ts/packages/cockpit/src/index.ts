@@ -21,6 +21,8 @@ export { contractToD2, diagramViews, type DiagramView } from "./diagram";
 // component preview + pixel-confidence (surfaces @suluk/visual): decompose generated UI into primitives, check vs a baseline.
 export { componentReport, approveComponents, type ComponentReport } from "./visual";
 export { type Baseline, primitiveCss } from "@suluk/visual";
+// lifecycle / ship-readiness (L3): the round-trip loop as one checklist — authored → coherent → confident → generated → deployed.
+export { contractGates, shipSummary, type Gate, type GateStatus } from "./lifecycle";
 // cost formatting, re-exported so the extension shell can render a live /cost ledger without a direct @suluk/cost dep.
 export { formatMicroUsd, summarize, type CostSummary } from "@suluk/cost";
 // modules (C021): install a contract fragment into the hub doc — the cockpit then re-projects it for free.

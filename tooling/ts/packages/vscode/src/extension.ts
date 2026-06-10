@@ -21,6 +21,7 @@ import {
   convergeContract, type ConvergeReport,
   contractToD2, diagramViews, type DiagramView,
   componentReport, approveComponents, primitiveCss, type ComponentReport, type Baseline,
+  contractGates, shipSummary, type Gate,
   PROVIDER_CATALOG, readProviders, swapProvider,
   parseRegistry, type RegistrySource,
   verifyRegistrySignature, isSignedEnvelope, generateSigningKeypair, signRegistry,
@@ -265,7 +266,9 @@ class EnvironmentsProvider implements vscode.TreeDataProvider<SulukEnv> {
       ? new vscode.ThemeIcon("circle-filled", new vscode.ThemeColor("charts.green"))
       : h === "down"
         ? new vscode.ThemeIcon("circle-outline", new vscode.ThemeColor("charts.red"))
-        : new vscode.ThemeIcon("loading~spin");
+        : h === "checking"
+          ? new vscode.ThemeIcon("loading~spin")
+          : new vscode.ThemeIcon("circle-outline"); // never probed ⇒ neutral, not a permanent spinner
     ti.contextValue = "suluk.env";
     ti.command = { command: "suluk.connectEnvironment", title: "Connect", arguments: [env] };
     return ti;
@@ -362,6 +365,12 @@ function diagramHtml(view: { id: DiagramView; title: string; description: string
   const url = krokiD2Url(d2);
   const render = url ? ` Render it with the d2 CLI, the D2 VS Code extension, or <a href="${esc(url)}">kroki.io ↗</a> <span class="d">(sends the diagram to an external service)</span>.` : " Render it with the d2 CLI or the D2 VS Code extension.";
   return htmlPage(`${view.title} (D2)`, `<p class="sum">${esc(view.description)} — D2 source (d2lang.com).${render}</p><pre class="k">${esc(d2)}</pre>`);
+}
+function checklistHtml(gates: Gate[], summary: { ready: boolean; line: string }): string {
+  const icon = (s: Gate["status"]) => s === "ok" ? '<span class="add">✓</span>' : s === "error" ? '<span class="rem">✗</span>' : s === "warn" ? '<span class="chg">~</span>' : s === "info" ? '<span class="d">–</span>' : '<span class="d">○</span>';
+  const rows = gates.map((g) => `<div class="row">${icon(g.status)} <span class="k">${esc(g.title)}</span> <span class="d">${esc(g.detail)}</span>${g.action ? ` <a href="command:${esc(g.action)}">→ fix</a>` : ""}</div>`).join("");
+  const head = summary.ready ? `<span class="add">✓ ${esc(summary.line)}</span>` : `<span class="rem">${esc(summary.line)}</span>`;
+  return htmlPage("Ship readiness", `<p class="sum">${head}</p><div class="g"><h3>the round-trip: authored → coherent → confident → generated → deployed</h3>${rows}</div>`);
 }
 function componentsHtml(report: ComponentReport): string {
   const c = report.confidence;
@@ -608,6 +617,51 @@ export function activate(context: vscode.ExtensionContext): void {
     await vscode.workspace.fs.writeFile(uri, new TextEncoder().encode(JSON.stringify(approveComponents(report, baseline, Date.now()), null, 2)));
     void vscode.window.showInformationMessage("Suluk: approved — components are now pixel-confident. Commit suluk-visual-baseline.json so the team shares the verification.");
   });
+  // ship readiness (L3): the round-trip loop as a checklist — contract gates + the host gates (generated/deployed sync)
+  reg("suluk.shipChecklist", async () => {
+    const src = activeV4Source();
+    if (!src) { void vscode.window.showWarningMessage("Suluk: open a v4 contract first."); return; }
+    const doc = parseDocument(src);
+    const gates: Gate[] = [...contractGates(doc, await readBaseline())];
+    // generated-in-sync (fs): does suluk-generated/openapi.json still match the contract?
+    const folder = vscode.workspace.workspaceFolders?.[0];
+    if (folder) {
+      try {
+        const gen = parseDocument(new TextDecoder().decode(await vscode.workspace.fs.readFile(vscode.Uri.joinPath(folder.uri, "suluk-generated", "openapi.json"))));
+        const d = diffContracts(doc, gen);
+        gates.push({ id: "generated", title: "Generated app in sync", status: d.identical ? "ok" : "warn", detail: d.identical ? "matches the contract" : `drifted — ${d.summary}`, action: d.identical ? undefined : "suluk.generateApp" });
+      } catch { gates.push({ id: "generated", title: "Generated app in sync", status: "todo", detail: "not generated yet", action: "suluk.generateApp" }); }
+    } else {
+      // no workspace folder ⇒ nothing on disk to compare; show it honestly as n/a rather than silently dropping the gate
+      gates.push({ id: "generated", title: "Generated app in sync", status: "info", detail: "n/a — no workspace folder open" });
+    }
+    // deployed-in-sync (network): does an EXPLICITLY-configured environment's live contract match — and is it actually up?
+    // Only probe an environment the user actually saved; never reach out to the default demo host unprompted (no silent egress).
+    const env = context.workspaceState.get<SulukEnv[]>("suluk.environments", [])[0];
+    if (!env) {
+      gates.push({ id: "deployed", title: "Deployed in sync", status: "info", detail: "n/a — no environment configured", action: "suluk.addEnvironment" });
+    } else {
+      try {
+        const deployed = await fetchText(`${env.baseUrl}/openapi.json`, 5000);
+        if (!isV4Source(deployed)) {
+          gates.push({ id: "deployed", title: `Deployed in sync (${env.name})`, status: "todo", detail: "no v4 contract served there", action: "suluk.deployCloudflare" });
+        } else {
+          const d = diffContracts(doc, parseDocument(deployed));
+          // a served contract can be stale while the runtime is down — probe health too, so "in sync" can't read green over a dead app
+          let healthy = true;
+          try { await fetchJson(`${env.baseUrl}/api/health`, 5000); } catch { healthy = false; }
+          const status = !d.identical || !healthy ? "warn" : "ok";
+          const detail = !d.identical ? `drifted — ${d.summary}` : healthy ? `${env.name} matches local + healthy` : "matches local, but /api/health is down";
+          gates.push({ id: "deployed", title: `Deployed in sync (${env.name})`, status, detail, action: status === "ok" ? undefined : "suluk.deployCloudflare" });
+        }
+      } catch { gates.push({ id: "deployed", title: `Deployed in sync (${env.name})`, status: "todo", detail: "not reachable / not deployed", action: "suluk.deployCloudflare" }); }
+    }
+    const summary = shipSummary(gates);
+    const panel = vscode.window.createWebviewPanel("suluk.ship", "Suluk — ship readiness", vscode.ViewColumn.Beside, { enableCommandUris: true });
+    panel.webview.html = checklistHtml(gates, summary);
+    void vscode.window.showInformationMessage(`Suluk: ${summary.line}`);
+  });
+
   // converge: a coherence audit over the whole contract — the contradictions a clean merge can leave behind
   reg("suluk.convergeContract", () => {
     const src = activeV4Source();
@@ -743,7 +797,9 @@ export function activate(context: vscode.ExtensionContext): void {
   reg("suluk.openLiveApp", async (env?: SulukEnv) => { env = env ?? await pickEnv(); if (env) void vscode.env.openExternal(vscode.Uri.parse(env.baseUrl)); });
   reg("suluk.openSuperadmin", async (env?: SulukEnv) => { env = env ?? await pickEnv(); if (env) void vscode.env.openExternal(vscode.Uri.parse(`${env.baseUrl}/superadmin`)); });
   reg("suluk.openScalarLive", async (env?: SulukEnv) => { env = env ?? await pickEnv(); if (env) void vscode.env.openExternal(vscode.Uri.parse(`${env.baseUrl}/scalar`)); });
-  void envs.checkAll(); // initial health probe
+  // initial health probe — ONLY for environments the user explicitly saved. A fresh install must not silently
+  // reach out to the default demo host (no unsolicited egress); those defaults stay neutral until the user refreshes.
+  if (context.workspaceState.get<SulukEnv[]>("suluk.environments", []).length) void envs.checkAll();
 
   // ── Modules (C021 / M2 / L1): browse a registry (first-party OR a remote URL) → PREVIEW (contract-diff +
   // grade + provenance) → install through the refuse-on-collision gate. Remote registries are UNTRUSTED. ──
