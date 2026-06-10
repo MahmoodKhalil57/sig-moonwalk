@@ -80,10 +80,23 @@ A static export is just `render(contracts, publicPrincipal, now)`. Nothing speci
 | `@suluk/docs` | generate a GitHub-Pages docs site from source (Suluk documents itself) | ✅ 10 tests |
 | `@suluk/cost` | **cost as a contract facet** — declare per-op cost (x-suluk-cost, bubbles) + meter actual per-user cost | ✅ 10 tests |
 | `@suluk/stripe` | first-class Stripe behind a swappable `PaymentProvider`; bridges cost → metered billing | ✅ 9 tests |
+| `@suluk/visual` | **pixel-confidence by construction** — verify each primitive's pixels once; confidence propagates via content-hash | ✅ 9 tests |
 | `suluk-core` (Rust) | perf core: parse + signature + reverse-parse matcher; 2nd independent impl | ✅ 9 tests |
 | `suluk-vscode` | the cockpit's **editor face** — a thin vscode shell over `@suluk/cockpit` (Cycle + Builder TreeViews, "View as", codegen, deploy) | tsc + bundle |
 
-**Total: 19 TS packages (253 tests) + a Rust core (9 tests) = 262 green.**
+**Total: 20 TS packages (262 tests) + a Rust core (9 tests) = 271 green.** Shipped: npm (`@suluk/*`),
+crates.io (`suluk-core`), VS Code Marketplace (`MahmoodKhalil.suluk-vscode`). Live demo: a full SaaS
+(`saasuluk`) on Cloudflare Workers + D1 at **saasuluk.saastemly.com** — auth (Better Auth/D1), CRUD,
+Scalar docs, the `/superadmin` cockpit, a durable cost ledger, and a static Astro frontend.
+
+## Pixel confidence by construction (`@suluk/visual`)
+
+You shouldn't re-verify every pixel every time. Verify each UI **primitive** once (render it in isolation,
+screenshot it, approve it); the approval is recorded against the primitive's **content hash**. Thereafter any
+generated UI is pixel-confident *without a new screenshot* iff every primitive it uses is approved + unchanged
+— decided by hashing, not rendering. A primitive is re-verified only when its source changes (the hash
+drifts). Confidence propagates up the component → block → section → page tiers — the same verify-the-source-
+once discipline as the v4 ledger and the conformance grade.
 
 ## One brain, two faces
 
