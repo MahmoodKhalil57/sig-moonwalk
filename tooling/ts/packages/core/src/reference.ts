@@ -24,7 +24,9 @@ export function resolveRef(doc: OpenAPIv4Document, ref: string): unknown {
   const tokens = ref.slice(2).split("/").map(unescapeToken);
   let cur: unknown = doc;
   for (const tok of tokens) {
-    if (cur == null || typeof cur !== "object" || Array.isArray(cur) || !(tok in (cur as object))) {
+    // own-property only — `tok in cur` would walk the prototype chain, so a $ref to a builtin name
+    // ("constructor"/"toString") would resolve to a JS function instead of throwing "reference not found".
+    if (cur == null || typeof cur !== "object" || Array.isArray(cur) || !Object.prototype.hasOwnProperty.call(cur, tok)) {
       throw new Error(`reference not found: ${ref} (missing key '${tok}')`);
     }
     cur = (cur as Record<string, unknown>)[tok];

@@ -129,8 +129,13 @@
       },
       {
         "command": "suluk.installModule",
-        "title": "Suluk: Browse modules (preview + install a contract fragment)",
+        "title": "Suluk: Browse modules (first-party or remote registry)",
         "icon": "$(package)"
+      },
+      {
+        "command": "suluk.addRegistry",
+        "title": "Suluk: Add a module registry (remote URL)",
+        "icon": "$(globe)"
       },
       {
         "command": "suluk.swapProvider",

@@ -21,6 +21,7 @@ export {
   installModule, namespaceModule, previewInstall, gradeModule,
   ECOMMERCE, CRM, BILLING, FIRST_PARTY_REGISTRY,
   PROVIDER_CATALOG, providerFacets, readProviders, swapProvider,
+  parseRegistry, validateModule,
   type SulukModule, type InstallResult, type ModuleEntry, type ModuleRegistry, type ModuleGrade, type InstallPreview,
-  type ProviderImpl, type ProviderBinding,
+  type ProviderImpl, type ProviderBinding, type RegistrySource, type ParsedRegistry,
 } from "@suluk/builder";

@@ -32,3 +32,5 @@ export {
 export { ECOMMERCE, CRM, BILLING, FIRST_PARTY_REGISTRY } from "./modules";
 // provider slots (M3): swap a facet binding (payments/auth/email/storage) for another impl of the same interface
 export { PROVIDER_CATALOG, providerFacets, readProviders, swapProvider, type ProviderImpl, type ProviderBinding, type SwapResult } from "./providers";
+// remote registries (L1): validate an UNTRUSTED registry fetched from a URL (the open marketplace)
+export { parseRegistry, validateModule, type RegistrySource, type ParsedRegistry } from "./registry-remote";

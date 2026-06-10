@@ -18,6 +18,7 @@ import {
   installModule, previewInstall, FIRST_PARTY_REGISTRY, type ModuleEntry, type InstallPreview,
   crossCut, defaultViewers, type CrossCut,
   PROVIDER_CATALOG, readProviders, swapProvider,
+  parseRegistry, type RegistrySource,
 } from "@suluk/cockpit";
 import { parseDocument } from "@suluk/core";
 import { SAMPLE_V4 } from "./sample";
@@ -205,11 +206,24 @@ type Health = "ok" | "down" | "checking";
 async function fetchText(url: string, ms = 7000): Promise<string> {
   const ctl = new AbortController();
   const timer = setTimeout(() => ctl.abort(), ms);
+  const CAP = 16_000_000;
   try {
     const res = await fetch(url, { signal: ctl.signal });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    if (Number(res.headers.get("content-length") ?? 0) > 16_000_000) throw new Error("response too large (> 16 MB)");
-    return await res.text();
+    if (Number(res.headers.get("content-length") ?? 0) > CAP) throw new Error("response too large (> 16 MB)");
+    if (!res.body) return await res.text();
+    // enforce the cap on BYTES ACTUALLY READ — a hostile server can omit content-length and stream forever
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let text = "", total = 0;
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > CAP) { ctl.abort(); throw new Error("response too large (> 16 MB)"); }
+      text += decoder.decode(value, { stream: true });
+    }
+    return text + decoder.decode();
   } finally { clearTimeout(timer); }
 }
 async function fetchJson(url: string, ms = 7000): Promise<unknown> { return JSON.parse(await fetchText(url, ms)); }
@@ -256,6 +270,11 @@ class EnvironmentsProvider implements vscode.TreeDataProvider<SulukEnv> {
 // ── webview rendering (host-rendered HTML, no scripts → enableScripts stays off; all values escaped) ──
 function esc(s: string): string {
   return s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c] as string));
+}
+// codicons ($(id)) render inside QuickPick/Tree labels — neutralize them in UNTRUSTED text (e.g. a remote
+// module's name) so a hostile registry can't forge the $(verified) first-party trust badge in the picker.
+function safeLabel(s: string): string {
+  return s.replace(/\$\(/g, "\\$(");
 }
 function htmlPage(title: string, body: string): string {
   return `<!doctype html><html><head><meta charset="utf-8">
@@ -319,11 +338,15 @@ function crossCutHtml(cc: CrossCut, envName: string | null): string {
     + (cc.gated.length ? `<div class="g"><h3>gated operations</h3>${cc.gated.map((g) => `<div class="row"><span class="k chg">${esc(g.operation)}</span><span class="d">${esc(g.detail)} — needs [${esc(g.requiredScopes.map((r) => r.join("+")).join(" | "))}], visible to ${esc(g.visibleTo.join(", "))}</span></div>`).join("")}</div>` : "");
   return htmlPage("View-as cross-cut", body);
 }
-function modulePreviewHtml(entry: ModuleEntry, p: InstallPreview): string {
+function modulePreviewHtml(entry: ModuleEntry, p: InstallPreview, prov: { registry: string; trusted: boolean; url?: string }): string {
   const gradeCls = p.grade.grade === "A" ? "add" : p.grade.grade === "B" ? "chg" : "rem";
+  const banner = prov.trusted
+    ? `<div class="row"><span class="k add">✓ ${esc(prov.registry)}</span><span class="d">first-party — reviewed</span></div>`
+    : `<div class="g"><h3 class="rem">⚠ third-party module</h3><div class="row rem">From <span class="k">${esc(prov.registry)}</span>${prov.url ? ` (${esc(prov.url)})` : ""}. It will merge the entities + operations below into your contract. Review them, then install — the merge still refuses on any collision.</div></div>`;
   const list = (cls: string, title: string, items: string[]) =>
     items.length ? `<div class="g"><h3 class="${cls === "d" ? "" : cls}">${esc(title)}</h3>${items.map((i) => `<div class="row"><span class="k ${cls === "d" ? "d" : cls}">${esc(i)}</span></div>`).join("")}</div>` : "";
   const body = `<p class="sum">${esc(entry.description)}<br><span class="${gradeCls}">grade ${esc(p.grade.grade)}</span>${p.grade.notes.length ? ` · ${esc(p.grade.notes.join(" · "))}` : " · every operation costed, no documentation warnings"}</p>`
+    + banner
     + (p.willInstall ? "" : `<div class="g"><h3 class="rem">cannot install yet</h3>${p.conflicts.map((c) => `<div class="row rem">• ${esc(c)}</div>`).join("")}</div>`)
     + list("rem", "requires (missing — install its provider first)", p.missingRequires)
     + list("d", "requires", p.requires.filter((r) => !p.missingRequires.includes(r)))
@@ -620,28 +643,68 @@ export function activate(context: vscode.ExtensionContext): void {
   reg("suluk.openScalarLive", async (env?: SulukEnv) => { env = env ?? await pickEnv(); if (env) void vscode.env.openExternal(vscode.Uri.parse(`${env.baseUrl}/scalar`)); });
   void envs.checkAll(); // initial health probe
 
-  // ── Modules (C021 / M2): browse the curated registry → PREVIEW (contract-diff + grade) → install ──
+  // ── Modules (C021 / M2 / L1): browse a registry (first-party OR a remote URL) → PREVIEW (contract-diff +
+  // grade + provenance) → install through the refuse-on-collision gate. Remote registries are UNTRUSTED. ──
+  interface ResolvedReg { name: string; modules: ModuleEntry[]; trusted: boolean; url?: string }
+  const addRegistryFlow = async (): Promise<RegistrySource | undefined> => {
+    const url = await vscode.window.showInputBox({ prompt: "Registry URL — a JSON ModuleRegistry", placeHolder: "https://example.com/suluk-registry.json", value: "https://" });
+    if (!url || url === "https://") return undefined;
+    const name = (await vscode.window.showInputBox({ prompt: "A name for this registry", value: url.replace(/^https?:\/\//, "").split("/")[0] })) || url;
+    const src: RegistrySource = { name, url: url.replace(/\/+$/, "") };
+    const list = context.workspaceState.get<RegistrySource[]>("suluk.registries", []);
+    await context.workspaceState.update("suluk.registries", [...list.filter((r) => r.url !== src.url), src]);
+    return src;
+  };
+  const resolveRemote = async (s: RegistrySource): Promise<ResolvedReg | undefined> => {
+    try {
+      const parsed = parseRegistry(await fetchJson(s.url)); // validate the UNTRUSTED payload, rejecting malformed entries
+      if (parsed.rejected.length) void vscode.window.showWarningMessage(`Suluk: ${parsed.name} — ${parsed.rejected.length} module(s) rejected as malformed (${parsed.rejected.map((r) => r.title).join(", ")}).`);
+      return { name: parsed.name, modules: parsed.modules, trusted: false, url: s.url };
+    } catch (e) { void vscode.window.showErrorMessage(`Suluk: couldn't load registry ${s.url} — ${(e as Error).message}`); return undefined; }
+  };
+  reg("suluk.addRegistry", async () => { const s = await addRegistryFlow(); if (s) void vscode.window.showInformationMessage(`Suluk: added registry "${s.name}". Browse modules to install from it.`); });
   reg("suluk.installModule", async () => {
     const local = activeV4Source();
     if (!local) { void vscode.window.showWarningMessage("Suluk: open your v4 contract first, then install a module into it."); return; }
     const doc = parseDocument(local);
-    const pick = await vscode.window.showQuickPick(
-      FIRST_PARTY_REGISTRY.modules.map((e) => ({ label: `$(package) ${e.module.name}`, description: `grade ${previewInstall(doc, e.module).grade.grade}`, detail: e.description, entry: e })),
-      { placeHolder: `Browse ${FIRST_PARTY_REGISTRY.name} — preview before installing`, matchOnDescription: true },
+    // 1. choose a registry source (first-party, a configured remote registry, or add a new URL)
+    const registries = context.workspaceState.get<RegistrySource[]>("suluk.registries", []);
+    type SrcItem = vscode.QuickPickItem & ({ srcKind: "fp" } | { srcKind: "remote"; src: RegistrySource } | { srcKind: "add" });
+    const srcItems: SrcItem[] = [
+      { label: "$(verified) Suluk first-party", detail: FIRST_PARTY_REGISTRY.name, srcKind: "fp" },
+      ...registries.map((r): SrcItem => ({ label: `$(globe) ${safeLabel(r.name)}`, detail: r.url, srcKind: "remote", src: r })),
+      { label: "$(add) Add a registry URL…", detail: "browse + install from a community / remote registry", srcKind: "add" },
+    ];
+    const srcPick = await vscode.window.showQuickPick(srcItems, { placeHolder: "Choose a module registry" });
+    if (!srcPick) return;
+    let resolved: ResolvedReg | undefined;
+    if (srcPick.srcKind === "fp") resolved = { name: FIRST_PARTY_REGISTRY.name, modules: FIRST_PARTY_REGISTRY.modules, trusted: true };
+    else if (srcPick.srcKind === "remote") resolved = await resolveRemote(srcPick.src);
+    else { const s = await addRegistryFlow(); if (!s) return; resolved = await resolveRemote(s); }
+    if (!resolved) return;
+    if (!resolved.modules.length) { void vscode.window.showWarningMessage(`Suluk: ${resolved.name} has no installable modules.`); return; }
+    // 2. pick a module (grade in the list; a "remote" badge for untrusted sources). Names are codicon-sanitized
+    //    (a hostile name can't forge $(verified)) and the grade is computed crash-safe (one bad entry ≠ dead list).
+    const safeGrade = (e: ModuleEntry): string => { try { return previewInstall(doc, e.module).grade.grade; } catch { return "?"; } };
+    const modPick = await vscode.window.showQuickPick(
+      resolved.modules.map((e) => ({ label: `$(package) ${safeLabel(e.module.name)}`, description: `grade ${safeGrade(e)}${resolved!.trusted ? "" : " · remote"}`, detail: e.description, entry: e })),
+      { placeHolder: `${resolved.name} — preview before installing`, matchOnDescription: true },
     );
-    if (!pick) return;
-    const entry = pick.entry;
+    if (!modPick) return;
+    const entry = modPick.entry;
     try {
       const preview = previewInstall(doc, entry.module);
-      // always show the contract-diff-on-install preview (what it adds, requires, grade, conflicts)
+      // 3. the trust gate — always show the contract-diff + grade + provenance before installing
       const panel = vscode.window.createWebviewPanel("suluk.modulePreview", `Suluk — ${entry.module.name}`, vscode.ViewColumn.Beside, {});
-      panel.webview.html = modulePreviewHtml(entry, preview);
+      panel.webview.html = modulePreviewHtml(entry, preview, { registry: resolved.name, trusted: resolved.trusted, url: resolved.url });
       if (!preview.willInstall) {
         void vscode.window.showWarningMessage(`Suluk: ${entry.module.name} can't be installed into this contract yet — ${preview.missingRequires.length ? `it needs ${preview.missingRequires.join(", ")}` : "see the preview for the conflicts"}.`);
         return;
       }
       const choice = await vscode.window.showInformationMessage(
-        `Install ${entry.module.name}? Adds ${preview.addsSchemas.length} entities + ${preview.addsOperations.length} operations · grade ${preview.grade.grade}.`,
+        resolved.trusted
+          ? `Install ${entry.module.name}? Adds ${preview.addsSchemas.length} entities + ${preview.addsOperations.length} operations · grade ${preview.grade.grade}.`
+          : `Install ${entry.module.name} from ${resolved.name} (third-party)? It will merge ${preview.addsSchemas.length} entities + ${preview.addsOperations.length} operations into your contract · grade ${preview.grade.grade}. Review the preview first.`,
         { modal: true }, "Install",
       );
       if (choice !== "Install") return;

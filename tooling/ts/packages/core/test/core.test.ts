@@ -35,6 +35,11 @@ describe("reference resolution (by name, C019 §A.1)", () => {
   test("throws on a missing key (never positional fallback)", () => {
     expect(() => resolveRef(petstore, "#/components/schemas/Nope")).toThrow();
   });
+  test("a $ref to a JS builtin name (constructor/toString) throws — own-property only, no prototype walk", () => {
+    expect(() => resolveRef(petstore, "#/components/schemas/constructor")).toThrow();
+    expect(() => resolveRef(petstore, "#/components/schemas/toString")).toThrow();
+    expect(() => resolveRef(petstore, "#/components/schemas/__proto__")).toThrow();
+  });
 });
 
 describe("ADA + matching", () => {
