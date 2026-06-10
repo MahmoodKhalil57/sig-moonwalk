@@ -2,5 +2,8 @@
   "name": "suluk-tooling",
   "private": true,
   "workspaces": ["packages/*"],
-  "description": "Reference tooling for the OpenAPI v4.0 Suluk candidate."
+  "description": "Reference tooling for the OpenAPI v4.0 Suluk candidate.",
+  "dependencies": {
+    "zod": "^4.4.3"
+  }
 }

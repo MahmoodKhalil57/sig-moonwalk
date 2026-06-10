@@ -1,0 +1,19 @@
+{
+  "name": "@suluk/zod",
+  "version": "0.1.0",
+  "description": "Lossless-where-representable conversion between Zod schemas and OpenAPI v4 'Suluk' Schema Objects (JSON Schema 2020-12). Zod is the source of truth; v4 is the interchange. CANDIDATE tooling.",
+  "type": "module",
+  "main": "src/index.ts",
+  "exports": { ".": "./src/index.ts" },
+  "peerDependencies": {
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "zod": "^4.4.3"
+  },
+  "scripts": {
+    "test": "bun test",
+    "typecheck": "tsc --noEmit -p ."
+  }
+}
