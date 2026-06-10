@@ -16,6 +16,7 @@ import {
   deployPlan, deployMarkdown,
 } from "@suluk/cockpit";
 import { parseDocument } from "@suluk/core";
+import { SAMPLE_V4 } from "./sample";
 
 const SUPPORTED = new Set(["yaml", "json", "yml"]);
 
@@ -174,6 +175,33 @@ export function activate(context: vscode.ExtensionContext): void {
   );
 
   const reg = (id: string, fn: (...a: never[]) => unknown) => context.subscriptions.push(vscode.commands.registerCommand(id, fn));
+
+  // ── onboarding: get a v4 document in front of the cockpit so the views fill up ──
+  reg("suluk.openSample", async () => {
+    const doc = await vscode.workspace.openTextDocument({ content: SAMPLE_V4, language: "yaml" });
+    await vscode.window.showTextDocument(doc);
+    cycle.refresh(); builder.refresh();
+    void vscode.window.showInformationMessage("Suluk: sample loaded — open the Suluk sidebar to explore the Cycle & Builder. Try 'View as' and the Generate actions.");
+  });
+  reg("suluk.openFromUrl", async () => {
+    const url = await vscode.window.showInputBox({
+      prompt: "URL of an OpenAPI v4 document (e.g. a running app's /openapi.json)",
+      placeHolder: "https://saasuluk.saastemly.com/openapi.json",
+      value: "https://saasuluk.saastemly.com/openapi.json",
+    });
+    if (!url) return;
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const text = await res.text();
+      const doc = await vscode.workspace.openTextDocument({ content: text, language: url.endsWith(".yaml") || url.endsWith(".yml") ? "yaml" : "json" });
+      await vscode.window.showTextDocument(doc);
+      cycle.refresh(); builder.refresh();
+      if (!isV4Source(text)) void vscode.window.showWarningMessage("Suluk: loaded, but it doesn't look like an OpenAPI v4 document (its `openapi` should start with \"4\").");
+    } catch (e) {
+      void vscode.window.showErrorMessage(`Suluk: couldn't load ${url} — ${(e as Error).message}`);
+    }
+  });
 
   reg("suluk.validate", () => {
     const ed = vscode.window.activeTextEditor; if (!ed) return;

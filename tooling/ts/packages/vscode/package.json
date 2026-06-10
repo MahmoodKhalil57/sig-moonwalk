@@ -1,63 +1,160 @@
 {
   "name": "suluk-vscode",
-  "displayName": "Suluk — OpenAPI v4 (Candidate)",
-  "description": "The unifying cockpit for the Suluk declarative cycle: validate, audit, preview (Scalar/Swagger), and generate stores/UI from one v4 source. CANDIDATE tooling — not official OAS.",
-  "version": "0.1.0",
+  "displayName": "Suluk \u2014 OpenAPI v4 (Candidate)",
+  "description": "The unifying cockpit for the Suluk declarative cycle: validate, audit, preview (Scalar/Swagger), and generate stores/UI from one v4 source. CANDIDATE tooling \u2014 not official OAS.",
+  "version": "0.1.1",
   "publisher": "MahmoodKhalil",
   "license": "Apache-2.0",
-  "repository": { "type": "git", "url": "https://github.com/MahmoodKhalil57/suluk" },
-  "engines": { "vscode": "^1.85.0" },
-  "categories": ["Linters", "Other"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MahmoodKhalil57/suluk"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Linters",
+    "Other"
+  ],
   "main": "./dist/extension.js",
-  "activationEvents": ["onStartupFinished"],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "contributes": {
     "viewsContainers": {
       "activitybar": [
-        { "id": "suluk", "title": "Suluk", "icon": "$(symbol-namespace)" }
+        {
+          "id": "suluk",
+          "title": "Suluk",
+          "icon": "$(symbol-namespace)"
+        }
       ]
     },
     "views": {
       "suluk": [
-        { "id": "suluk.cycle", "name": "Cycle", "contextualTitle": "Suluk Cycle" },
-        { "id": "suluk.builder", "name": "Builder", "contextualTitle": "Suluk Builder" }
+        {
+          "id": "suluk.cycle",
+          "name": "Cycle",
+          "contextualTitle": "Suluk Cycle"
+        },
+        {
+          "id": "suluk.builder",
+          "name": "Builder",
+          "contextualTitle": "Suluk Builder"
+        }
       ]
     },
     "viewsWelcome": [
       {
         "view": "suluk.cycle",
-        "contents": "Welcome to the **Suluk cockpit**.\n\nIt shows every layer of an API — data, contract, auth, docs, state, UI, cost, tests — all derived from one OpenAPI v4 document.\n\nNothing is loaded yet. Light it up:\n[▶  Open a sample API](command:suluk.openSample)\n[🌐  Load from a URL…](command:suluk.openFromUrl)\n\nAlready have a contract? Open a `.yaml`/`.json` file whose `openapi:` starts with `4`.\n\n[📖  Read the docs](https://mahmoodkhalil57.github.io/suluk/)"
+        "contents": "Welcome to the **Suluk cockpit**.\n\nIt shows every layer of an API \u2014 data, contract, auth, docs, state, UI, cost, tests \u2014 all derived from one OpenAPI v4 document.\n\nNothing is loaded yet. Light it up:\n[\u25b6  Open a sample API](command:suluk.openSample)\n[\ud83c\udf10  Load from a URL\u2026](command:suluk.openFromUrl)\n\nAlready have a contract? Open a `.yaml`/`.json` file whose `openapi:` starts with `4`.\n\n[\ud83d\udcd6  Read the docs](https://mahmoodkhalil57.github.io/suluk/)"
       },
       {
         "view": "suluk.builder",
-        "contents": "The **Builder** composes a full stack from your entities — pages → sections → blocks → components — and generates the app + a shadcn registry.\n\nLoad a v4 document first:\n[▶  Open a sample API](command:suluk.openSample)\n[🌐  Load from a URL…](command:suluk.openFromUrl)\n\nThen use **Generate full app** from the view toolbar."
+        "contents": "The **Builder** composes a full stack from your entities \u2014 pages \u2192 sections \u2192 blocks \u2192 components \u2014 and generates the app + a shadcn registry.\n\nLoad a v4 document first:\n[\u25b6  Open a sample API](command:suluk.openSample)\n[\ud83c\udf10  Load from a URL\u2026](command:suluk.openFromUrl)\n\nThen use **Generate full app** from the view toolbar."
       }
     ],
     "commands": [
-      { "command": "suluk.openSample", "title": "Suluk: Open a sample API" },
-      { "command": "suluk.openFromUrl", "title": "Suluk: Load a v4 document from a URL…" },
-      { "command": "suluk.validate", "title": "Suluk: Validate v4 document" },
-      { "command": "suluk.audit", "title": "Suluk: Audit documentation coverage" },
-      { "command": "suluk.previewScalar", "title": "Suluk: Preview in Scalar" },
-      { "command": "suluk.previewSwagger", "title": "Suluk: Preview in Swagger UI" },
-      { "command": "suluk.refreshCycle", "title": "Suluk: Refresh Cycle", "icon": "$(refresh)" },
-      { "command": "suluk.viewAs", "title": "Suluk: View as (principal scopes)…", "icon": "$(account)" },
-      { "command": "suluk.generateForm", "title": "Suluk: Generate shadcn form for entity…" },
-      { "command": "suluk.generateTable", "title": "Suluk: Generate shadcn table for entity…" },
-      { "command": "suluk.generateStores", "title": "Suluk: Generate Nano Stores client" },
-      { "command": "suluk.exportV4", "title": "Suluk: Export v4 document (JSON)" },
-      { "command": "suluk.runChecks", "title": "Suluk: Run contract checks" },
-      { "command": "suluk.generateApp", "title": "Suluk: Generate full app (backend + frontend)" },
-      { "command": "suluk.exportRegistry", "title": "Suluk: Export shadcn registry (whole-stack)" },
-      { "command": "suluk.refreshBuilder", "title": "Suluk: Refresh Builder", "icon": "$(refresh)" },
-      { "command": "suluk.deployCloudflare", "title": "Suluk: Deploy to Cloudflare (Workers + D1 + assets)", "icon": "$(cloud-upload)" }
+      {
+        "command": "suluk.openSample",
+        "title": "Suluk: Open a sample API"
+      },
+      {
+        "command": "suluk.openFromUrl",
+        "title": "Suluk: Load a v4 document from a URL\u2026"
+      },
+      {
+        "command": "suluk.validate",
+        "title": "Suluk: Validate v4 document"
+      },
+      {
+        "command": "suluk.audit",
+        "title": "Suluk: Audit documentation coverage"
+      },
+      {
+        "command": "suluk.previewScalar",
+        "title": "Suluk: Preview in Scalar"
+      },
+      {
+        "command": "suluk.previewSwagger",
+        "title": "Suluk: Preview in Swagger UI"
+      },
+      {
+        "command": "suluk.refreshCycle",
+        "title": "Suluk: Refresh Cycle",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "suluk.viewAs",
+        "title": "Suluk: View as (principal scopes)\u2026",
+        "icon": "$(account)"
+      },
+      {
+        "command": "suluk.generateForm",
+        "title": "Suluk: Generate shadcn form for entity\u2026"
+      },
+      {
+        "command": "suluk.generateTable",
+        "title": "Suluk: Generate shadcn table for entity\u2026"
+      },
+      {
+        "command": "suluk.generateStores",
+        "title": "Suluk: Generate Nano Stores client"
+      },
+      {
+        "command": "suluk.exportV4",
+        "title": "Suluk: Export v4 document (JSON)"
+      },
+      {
+        "command": "suluk.runChecks",
+        "title": "Suluk: Run contract checks"
+      },
+      {
+        "command": "suluk.generateApp",
+        "title": "Suluk: Generate full app (backend + frontend)"
+      },
+      {
+        "command": "suluk.exportRegistry",
+        "title": "Suluk: Export shadcn registry (whole-stack)"
+      },
+      {
+        "command": "suluk.refreshBuilder",
+        "title": "Suluk: Refresh Builder",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "suluk.deployCloudflare",
+        "title": "Suluk: Deploy to Cloudflare (Workers + D1 + assets)",
+        "icon": "$(cloud-upload)"
+      }
     ],
     "menus": {
       "view/title": [
-        { "command": "suluk.refreshCycle", "when": "view == suluk.cycle", "group": "navigation" },
-        { "command": "suluk.viewAs", "when": "view == suluk.cycle", "group": "navigation" },
-        { "command": "suluk.refreshBuilder", "when": "view == suluk.builder", "group": "navigation" },
-        { "command": "suluk.generateApp", "when": "view == suluk.builder", "group": "navigation" },
-        { "command": "suluk.deployCloudflare", "when": "view == suluk.builder", "group": "navigation" }
+        {
+          "command": "suluk.refreshCycle",
+          "when": "view == suluk.cycle",
+          "group": "navigation"
+        },
+        {
+          "command": "suluk.viewAs",
+          "when": "view == suluk.cycle",
+          "group": "navigation"
+        },
+        {
+          "command": "suluk.refreshBuilder",
+          "when": "view == suluk.builder",
+          "group": "navigation"
+        },
+        {
+          "command": "suluk.generateApp",
+          "when": "view == suluk.builder",
+          "group": "navigation"
+        },
+        {
+          "command": "suluk.deployCloudflare",
+          "when": "view == suluk.builder",
+          "group": "navigation"
+        }
       ]
     }
   },
