@@ -5,6 +5,7 @@
  */
 import { renderIndex, renderPackage, renderMarkdownPage, STYLE, type SiteFile } from "./render";
 import type { FrameworkDoc } from "./harvest";
+import { packageGraphD2, krokiD2Url } from "./diagram";
 
 export interface SiteOptions {
   /** Markdown overrides for the curated pages. */
@@ -16,7 +17,12 @@ export interface SiteOptions {
 export function generateSite(fw: FrameworkDoc, opts: SiteOptions = {}): SiteFile[] {
   const files: SiteFile[] = [{ path: "index.html", content: renderIndex(fw) }];
   for (const p of fw.packages) files.push({ path: `${p.slug}.html`, content: renderPackage(fw, p) });
-  if (fw.architecture) files.push({ path: "architecture.html", content: renderMarkdownPage(fw, "architecture.html", "Architecture", fw.architecture) });
+  // the "how the tools compose" D2 — committed as source + rendered on the Architecture page (another projection)
+  const archD2 = packageGraphD2(fw.packages);
+  files.push({ path: "architecture.d2", content: archD2 });
+  const diagramMd = `\n\n## How the tools compose\n\nEach package derives one facet from the single v4 contract; here is how they depend on each other.\n\n![Suluk package architecture](${krokiD2Url(archD2)})\n\n[D2 source](architecture.d2) — render with the d2 CLI or [d2lang.com](https://d2lang.com).\n`;
+  const archContent = (fw.architecture ?? `# Architecture\n\nSuluk derives a whole stack from one v4 contract.`) + diagramMd;
+  files.push({ path: "architecture.html", content: renderMarkdownPage(fw, "architecture.html", "Architecture", archContent) });
   files.push({ path: "getting-started.html", content: renderMarkdownPage(fw, "getting-started.html", "Get started", opts.gettingStarted ?? defaultGettingStarted(fw)) });
   files.push({ path: "contributing.html", content: renderMarkdownPage(fw, "contributing.html", "Contributing", opts.contributing ?? defaultContributing(fw)) });
   files.push({ path: "community.html", content: renderMarkdownPage(fw, "community.html", "Community", opts.community ?? defaultCommunity(fw)) });

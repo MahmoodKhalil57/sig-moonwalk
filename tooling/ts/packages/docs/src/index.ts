@@ -7,3 +7,4 @@ export { harvest, harvestPackage, firstBlockComment, parseExports, type Framewor
 export { generateSite, type SiteOptions } from "./site";
 export { renderIndex, renderPackage, renderMarkdownPage, STYLE, type SiteFile } from "./render";
 export { mdToHtml, inline, escapeHtml } from "./md";
+export { packageGraphD2, krokiD2Url } from "./diagram";

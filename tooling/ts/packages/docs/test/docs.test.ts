@@ -1,6 +1,6 @@
 import { test, expect, describe } from "bun:test";
 import { join } from "node:path";
-import { harvest, generateSite, mdToHtml, parseExports, firstBlockComment } from "../src/index";
+import { harvest, generateSite, mdToHtml, parseExports, firstBlockComment, packageGraphD2 } from "../src/index";
 
 const packagesDir = join(import.meta.dir, "..", ".."); // tooling/ts/packages
 
@@ -78,5 +78,35 @@ describe("generateSite — a complete static site", () => {
   });
   test("links are relative (GitHub-Pages-subpath safe)", () => {
     expect(byPath.get("index.html")!).not.toContain('href="/');
+  });
+});
+
+describe("packageGraphD2 — the 'how the tools compose' diagram (D2)", () => {
+  test("emits a node per visible package and edges to its @suluk deps", () => {
+    const d2 = packageGraphD2(fw.packages);
+    expect(d2).toContain("cockpit: {"); // a node for @suluk/cockpit
+    expect(d2).toContain("core: {");
+    // cockpit depends on core → an edge (short ids, @suluk/ stripped)
+    expect(d2).toMatch(/cockpit -> core/);
+    expect(d2).not.toContain("@suluk/"); // ids are the short names
+  });
+  test("the site commits architecture.d2 and renders the diagram on the Architecture page", () => {
+    const byPath = new Map(generateSite(fw).map((f) => [f.path, f.content]));
+    expect(byPath.has("architecture.d2")).toBe(true);
+    expect(byPath.get("architecture.d2")!).toContain("how the tools compose");
+    const arch = byPath.get("architecture.html")!;
+    expect(arch).toContain("How the tools compose");
+    expect(arch).toMatch(/<img[^>]+src="https:\/\/kroki\.io\/d2\/svg\//); // the diagram is a real <img>, not a stray link
+  });
+});
+
+describe("mdToHtml — image rule (regression)", () => {
+  test("![alt](url) renders an <img>, not a stray ! + link", () => {
+    const html = mdToHtml("![A diagram](https://example.com/x.svg)");
+    expect(html).toMatch(/<img[^>]+src="https:\/\/example\.com\/x\.svg"/);
+    expect(html).not.toContain("!<a"); // no stray bang before a link
+  });
+  test("a normal [text](url) link still works alongside the image rule", () => {
+    expect(mdToHtml("see [docs](https://d2lang.com)")).toContain('<a href="https://d2lang.com">docs</a>');
   });
 });

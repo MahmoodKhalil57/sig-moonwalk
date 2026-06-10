@@ -8,6 +8,7 @@
 import type { OpenAPIv4Document, SchemaOrRef } from "@suluk/core";
 import { buildApp, toShadcnRegistry, type Entity, type BuiltApp, type DslDocument, type ParamSpec } from "@suluk/builder";
 import type { Registry } from "@suluk/builder";
+import { contractToD2, diagramViews } from "./diagram";
 
 export interface BuilderNode {
   tier: "page" | "section" | "block" | "component";
@@ -88,7 +89,25 @@ export function generateAppFiles(doc: OpenAPIv4Document): GeneratedFile[] {
   const reg = toShadcnRegistry(app, { name: (doc.info?.title ?? "app").toLowerCase().replace(/\s+/g, "-") });
   files.push({ path: "registry.json", content: JSON.stringify(reg.index, null, 2) });
   for (const item of reg.items) files.push({ path: `registry/${item.name}.json`, content: JSON.stringify(item, null, 2) });
+  // diagrams — another projection: the app ships D2 of its own data model, cycle, and operation surface
+  for (const v of diagramViews()) files.push({ path: `docs/${v.id}.d2`, content: contractToD2(doc, v.id) });
+  files.push({ path: "docs/README.md", content: diagramsReadme(doc) });
   return files;
+}
+
+function diagramsReadme(doc: OpenAPIv4Document): string {
+  const title = doc.info?.title ?? "this app";
+  return [
+    `# ${title} — diagrams`,
+    "",
+    "Generated from the v4 contract by Suluk. Each is [D2](https://d2lang.com) source — render with the d2 CLI",
+    "(`d2 erd.d2 erd.svg`), the D2 VS Code extension, or paste into <https://play.d2lang.com>.",
+    "",
+    ...diagramViews().map((v) => `- **[\`${v.id}.d2\`](./${v.id}.d2)** — ${v.description}`),
+    "",
+    "Regenerate after the contract changes: re-run **Generate full app** in the Suluk extension.",
+    "",
+  ].join("\n");
 }
 
 /** The shadcn registry (index + items) as a pretty JSON string — the "Export shadcn registry" action. */

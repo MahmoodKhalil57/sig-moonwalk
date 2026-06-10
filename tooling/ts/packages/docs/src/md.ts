@@ -8,10 +8,11 @@ export function escapeHtml(s: string): string {
   return s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
 }
 
-/** Inline spans: `code`, **bold**, *italic*, [text](url). Escapes first, then injects safe tags. */
+/** Inline spans: `code`, ![alt](url) image, [text](url), **bold**, *italic*. Escapes first, then injects safe tags. */
 export function inline(text: string): string {
   let s = escapeHtml(text);
   s = s.replace(/`([^`]+)`/g, (_, c) => `<code>${c}</code>`);
+  s = s.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (_, a, u) => `<img src="${u}" alt="${a}" loading="lazy">`); // before the link rule, so `!` is consumed
   s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, t, u) => `<a href="${u}">${t}</a>`);
   s = s.replace(/\*\*([^*]+)\*\*/g, (_, b) => `<strong>${b}</strong>`);
   s = s.replace(/(^|[^*])\*([^*]+)\*/g, (_, pre, i) => `${pre}<em>${i}</em>`);

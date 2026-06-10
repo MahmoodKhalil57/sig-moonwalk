@@ -2,6 +2,7 @@ import { test, expect, describe } from "bun:test";
 import { parseDocument } from "@suluk/core";
 import { installModule, ECOMMERCE } from "@suluk/builder";
 import { contractToD2, diagramViews } from "../src/diagram";
+import { generateAppFiles } from "../src/builder";
 
 const host = () => parseDocument(`openapi: 4.0.0-candidate
 info: { title: Shop, version: 1.0.0 }
@@ -63,6 +64,14 @@ components: { schemas: { Box: { type: object, properties: { shape: { type: strin
     expect(d2).toContain("shape: package");
     expect(d2).toContain("listProduct");
     expect(d2).toContain("POST"); // createProduct etc.
+  });
+  test("the GENERATED APP ships the contract's diagrams (docs/*.d2 + a README)", () => {
+    const files = generateAppFiles(doc);
+    const paths = files.map((f) => f.path);
+    for (const v of diagramViews()) expect(paths).toContain(`docs/${v.id}.d2`);
+    expect(paths).toContain("docs/README.md");
+    const erd = files.find((f) => f.path === "docs/erd.d2")!;
+    expect(erd.content).toContain("shape: sql_table"); // the app's own data model, as D2
   });
   test("an empty contract still produces valid (non-empty) D2 for every view", () => {
     const empty = parseDocument(`openapi: 4.0.0-candidate
