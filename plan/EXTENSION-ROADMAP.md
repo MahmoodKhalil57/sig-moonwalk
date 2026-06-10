@@ -155,5 +155,10 @@ builder — so the extension can fetch it and **diff local-contract vs deployed-
     the cross-cutting contradictions a clean merge leaves behind (dangling `$ref`, orphan scope, undeclared
     scheme, empty path, unreferenced entity); a Converge command + an automatic check in the Compose panel.
     Reviewed (5 false-positive/negative findings fixed — openIdConnect scopes, deep/escaped `$ref`s, webhooks).
-  - **Still optional, operator's call (additive):** live role-previews via a preview deployment (the richer M1);
-    the originated L3 (round-trip lifecycle management).
+  - **✓ D2 diagrams (commit 64183a6)** — `contractToD2(doc, view)`: a diagram is another projection from the
+    one contract. ERD (entities + `$ref` edges), the declarative cycle, the operation surface; a Generate-diagram
+    command (D2 source + opt-in kroki.io render). Reviewed against the real d2 CLI (2 syntax findings fixed —
+    hub/layer collision, reserved-keyword quoting). Reusable into the docs + generated UI (a natural follow-up).
+  - **Still optional, operator's call (additive):** the D2 generator wired into `@suluk/docs` + the generated app;
+    component-preview surfacing `@suluk/visual` (pixel-confidence); live role-previews via a preview deployment;
+    the originated L3 (round-trip lifecycle).
