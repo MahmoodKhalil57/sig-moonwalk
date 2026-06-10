@@ -1,9 +1,11 @@
-import { test, expect, describe } from "bun:test";
+import { test, expect, describe, beforeAll } from "bun:test";
 import { validateDocument } from "@suluk/core";
 import { validate31, downgrade } from "@suluk/openapi-compat";
-import { app, built } from "../src/app";
+import { app, built , resetDemo } from "../src/app";
 
 const json = (body: unknown) => ({ method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+
+beforeAll(resetDemo);
 
 describe("petshop — one source (Drizzle entities) boots the whole stack", () => {
   test("the composition is sound (no DSL contract violations)", () => {

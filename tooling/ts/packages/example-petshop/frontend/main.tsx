@@ -21,12 +21,13 @@ function App() {
   const [pets, reloadPets] = useResource("/pet");
   const [categories, reloadCats] = useResource("/category");
 
+  // x-suluk-action ties this button click to the cost the server meters; x-user attributes it (demo only).
   const addPet = async () => {
-    await fetch("/pet", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: "Pet " + Math.floor(performance.now()) % 1000, status: "available" }) });
+    await fetch("/pet", { method: "POST", headers: { "content-type": "application/json", "x-suluk-action": "add-pet-button", "x-user": "demo-user" }, body: JSON.stringify({ name: "Pet " + Math.floor(performance.now()) % 1000, status: "available" }) });
     reloadPets();
   };
   const addCat = async () => {
-    await fetch("/category", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: "Category " + Math.floor(performance.now()) % 1000 }) });
+    await fetch("/category", { method: "POST", headers: { "content-type": "application/json", "x-suluk-action": "add-category-button", "x-user": "demo-user" }, body: JSON.stringify({ name: "Category " + Math.floor(performance.now()) % 1000 }) });
     reloadCats();
   };
 

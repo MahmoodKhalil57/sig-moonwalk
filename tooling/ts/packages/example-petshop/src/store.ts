@@ -24,6 +24,12 @@ sqlite.run(`CREATE TABLE category (
 
 export const db: BunSQLiteDatabase = drizzle(sqlite);
 
+/** Clear all rows (test isolation — bun caches the module, so the DB is shared across test files). */
+export function resetDb(): void {
+  sqlite.run("DELETE FROM pet");
+  sqlite.run("DELETE FROM category");
+}
+
 export interface CrudHandlers {
   list: (c: Context) => Response | Promise<Response>;
   get: (c: Context) => Response | Promise<Response>;

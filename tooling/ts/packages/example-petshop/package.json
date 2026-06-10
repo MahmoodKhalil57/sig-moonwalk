@@ -11,7 +11,8 @@
     "@suluk/core": "workspace:*",
     "@suluk/hono": "workspace:*",
     "@suluk/scalar": "workspace:*",
-    "@suluk/admin": "workspace:*"
+    "@suluk/admin": "workspace:*",
+    "@suluk/cost": "workspace:*"
   },
   "devDependencies": {
     "@types/bun": "latest",

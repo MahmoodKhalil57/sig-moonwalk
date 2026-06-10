@@ -1,7 +1,7 @@
-import { test, expect, describe } from "bun:test";
+import { test, expect, describe, beforeAll } from "bun:test";
 import { keepMount, allTasks } from "nanostores";
 import { createApiStores } from "@suluk/nano-stores";
-import { app, built } from "../src/app";
+import { app, built , resetDemo } from "../src/app";
 
 // route the generated client's fetch at the LIVE Hono app (in a browser this is a real network fetch).
 const BASE = "http://petshop.test";
@@ -9,6 +9,8 @@ const appFetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
   const url = typeof input === "string" ? input : (input as Request).url;
   return app.request(url.replace(BASE, ""), init);
 }) as unknown as typeof fetch;
+
+beforeAll(resetDemo);
 
 describe("the generated Nano Stores client round-trips against the LIVE backend (state corner)", () => {
   const api = createApiStores(built.backend.routes, { baseUrl: BASE, fetch: appFetch });
