@@ -1,0 +1,20 @@
+{
+  "name": "@suluk/openapi-compat",
+  "version": "0.1.0",
+  "description": "Lossless-where-possible conversion between the OpenAPI v4 'Suluk' candidate and OpenAPI 3.1 (the dialect Scalar/Swagger consume). CANDIDATE tooling.",
+  "type": "module",
+  "main": "src/index.ts",
+  "exports": { ".": "./src/index.ts" },
+  "dependencies": {
+    "@suluk/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1"
+  },
+  "scripts": {
+    "test": "bun test",
+    "typecheck": "tsc --noEmit -p ."
+  }
+}
