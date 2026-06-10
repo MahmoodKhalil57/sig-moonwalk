@@ -123,6 +123,11 @@
         "title": "Suluk: Export shadcn registry (whole-stack)"
       },
       {
+        "command": "suluk.installModule",
+        "title": "Suluk: Install a module (merge a contract fragment)",
+        "icon": "$(package)"
+      },
+      {
         "command": "suluk.refreshBuilder",
         "title": "Suluk: Refresh Builder",
         "icon": "$(refresh)"
@@ -197,6 +202,11 @@
         },
         {
           "command": "suluk.generateApp",
+          "when": "view == suluk.builder",
+          "group": "navigation"
+        },
+        {
+          "command": "suluk.installModule",
           "when": "view == suluk.builder",
           "group": "navigation"
         },

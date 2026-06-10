@@ -15,6 +15,7 @@ import {
   buildBuilderModel, generateAppFiles, generateRegistryJson, type BuilderNode,
   deployPlan, deployMarkdown,
   diffContracts, formatMicroUsd, type ContractDiff,
+  installModule, ECOMMERCE, type SulukModule,
 } from "@suluk/cockpit";
 import { parseDocument } from "@suluk/core";
 import { SAMPLE_V4 } from "./sample";
@@ -545,6 +546,30 @@ export function activate(context: vscode.ExtensionContext): void {
   reg("suluk.openSuperadmin", async (env?: SulukEnv) => { env = env ?? await pickEnv(); if (env) void vscode.env.openExternal(vscode.Uri.parse(`${env.baseUrl}/superadmin`)); });
   reg("suluk.openScalarLive", async (env?: SulukEnv) => { env = env ?? await pickEnv(); if (env) void vscode.env.openExternal(vscode.Uri.parse(`${env.baseUrl}/scalar`)); });
   void envs.checkAll(); // initial health probe
+
+  // ── Modules (C021): install a contract fragment into the active hub doc → the cockpit re-projects it ──
+  const MODULES: { label: string; detail: string; mod: SulukModule }[] = [
+    { label: "ecommerce", detail: "Product, Order (→ User), checkout, per-op cost, a swappable payments slot", mod: ECOMMERCE },
+  ];
+  reg("suluk.installModule", async () => {
+    const local = activeV4Source();
+    if (!local) { void vscode.window.showWarningMessage("Suluk: open your v4 contract first, then install a module into it."); return; }
+    const pick = await vscode.window.showQuickPick(MODULES.map((m) => ({ label: m.label, detail: m.detail, mod: m.mod })), { placeHolder: "Install a Suluk module — merges its contract fragment into the open document" });
+    if (!pick) return;
+    try {
+      const result = installModule(parseDocument(local), pick.mod);
+      if (!result.installed) {
+        // the merge was REFUSED to protect the contract — show exactly why (the install-time discipline, C021)
+        const panel = vscode.window.createWebviewPanel("suluk.moduleConflicts", `Suluk — ${pick.mod.name} not installed`, vscode.ViewColumn.Beside, {});
+        panel.webview.html = htmlPage(`${pick.mod.name} — install refused`, `<p class="sum">The merge was refused so your contract stays consistent:</p>${result.conflicts.map((c) => `<div class="row rem">• ${esc(c)}</div>`).join("")}`);
+        return;
+      }
+      const doc = await vscode.workspace.openTextDocument({ content: JSON.stringify(result.doc, null, 2), language: "json" });
+      await vscode.window.showTextDocument(doc);
+      cycle.refresh(); builder.refresh();
+      void vscode.window.showInformationMessage(`Suluk: installed ${pick.mod.name} — +${result.added.schemas.length} entities, +${result.added.operations.length} operations. The cockpit now projects the merged contract.`);
+    } catch (e) { void vscode.window.showErrorMessage(`Suluk: install of ${pick.mod.name} failed — ${(e as Error).message}`); }
+  });
 
   const onChange = () => { cycle.refresh(); builder.refresh(); };
   context.subscriptions.push(

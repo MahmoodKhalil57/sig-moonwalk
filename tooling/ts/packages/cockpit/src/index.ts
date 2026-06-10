@@ -14,3 +14,5 @@ export type { DeployPlan, DeployStep, DeployProvider } from "@suluk/deploy";
 export { diffContracts, canonical, type ContractDiff, type ChangedOp, type OpRef } from "./drift";
 // cost formatting, re-exported so the extension shell can render a live /cost ledger without a direct @suluk/cost dep.
 export { formatMicroUsd, summarize, type CostSummary } from "@suluk/cost";
+// modules (C021): install a contract fragment into the hub doc — the cockpit then re-projects it for free.
+export { installModule, namespaceModule, ECOMMERCE, type SulukModule, type InstallResult } from "@suluk/builder";

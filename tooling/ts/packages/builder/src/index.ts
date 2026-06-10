@@ -23,3 +23,6 @@ export {
   type Entity, type AppSpec, type BuiltApp,
 } from "./fullstack";
 export { toShadcnRegistry, type RegistryItem, type RegistryFile } from "./registry-shadcn";
+// modules (C021): a module is a mergeable v4 contract fragment; installModule refuses on collision / unmet requires.
+export { installModule, namespaceModule, crudV4Paths, type SulukModule, type InstallResult, type ModuleCost } from "./module";
+export { ECOMMERCE } from "./modules/ecommerce";
