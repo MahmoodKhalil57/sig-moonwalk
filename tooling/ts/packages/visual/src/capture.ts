@@ -34,3 +34,13 @@ export function renderPrimitiveHtml(opts: { widget: string; css?: string }): str
 export function knownWidgets(): string[] {
   return Object.keys(CONTROLS);
 }
+
+/** Just the control fragment (no surrounding page) — for an inline preview in a host UI (the cockpit webview). */
+export function primitiveControl(widget: string): string {
+  return CONTROLS[widget] ?? `<div class="ctl">${widget}</div>`;
+}
+
+/** A small stylesheet for the control fragments above — so a host can render `primitiveControl` inline. */
+export function primitiveCss(): string {
+  return DEFAULT_CSS;
+}

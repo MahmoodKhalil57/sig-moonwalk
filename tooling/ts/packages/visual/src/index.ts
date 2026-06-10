@@ -13,4 +13,4 @@ export {
   type Baseline, type BaselineEntry, type UsedPrimitive, type ConfidenceReport, type Capture,
 } from "./baseline";
 export { formPrimitives, tablePrimitives, type PrimitiveSources } from "./shadcn";
-export { renderPrimitiveHtml, knownWidgets } from "./capture";
+export { renderPrimitiveHtml, knownWidgets, primitiveControl, primitiveCss } from "./capture";

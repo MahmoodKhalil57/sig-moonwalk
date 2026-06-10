@@ -2,6 +2,14 @@
   "name": "@suluk/cockpit",
   "version": "0.1.11",
   "description": "The pure cockpit core (cycle model \u00b7 builder model \u00b7 codegen \u00b7 deploy planning \u00b7 validate/audit/preview) shared by the vscode extension and the /superadmin web admin panel. CANDIDATE tooling.",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MahmoodKhalil57/suluk.git",
+    "directory": "tooling/ts/packages/cockpit"
+  },
+  "homepage": "https://github.com/MahmoodKhalil57/suluk#readme",
+  "bugs": "https://github.com/MahmoodKhalil57/suluk/issues",
   "type": "module",
   "main": "src/index.ts",
   "exports": {
@@ -15,7 +23,8 @@
     "@suluk/shadcn": "workspace:*",
     "@suluk/builder": "workspace:*",
     "@suluk/deploy": "workspace:*",
-    "@suluk/cost": "workspace:*"
+    "@suluk/cost": "workspace:*",
+    "@suluk/visual": "workspace:*"
   },
   "devDependencies": {
     "@types/bun": "latest"

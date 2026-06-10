@@ -20,6 +20,7 @@ import {
   crossCut, defaultViewers, type CrossCut,
   convergeContract, type ConvergeReport,
   contractToD2, diagramViews, type DiagramView,
+  componentReport, approveComponents, primitiveCss, type ComponentReport, type Baseline,
   PROVIDER_CATALOG, readProviders, swapProvider,
   parseRegistry, type RegistrySource,
   verifyRegistrySignature, isSignedEnvelope, generateSigningKeypair, signRegistry,
@@ -362,6 +363,16 @@ function diagramHtml(view: { id: DiagramView; title: string; description: string
   const render = url ? ` Render it with the d2 CLI, the D2 VS Code extension, or <a href="${esc(url)}">kroki.io ↗</a> <span class="d">(sends the diagram to an external service)</span>.` : " Render it with the d2 CLI or the D2 VS Code extension.";
   return htmlPage(`${view.title} (D2)`, `<p class="sum">${esc(view.description)} — D2 source (d2lang.com).${render}</p><pre class="k">${esc(d2)}</pre>`);
 }
+function componentsHtml(report: ComponentReport): string {
+  const c = report.confidence;
+  const badge = (key: string) => c.approved.includes(key) ? '<span class="add">✓ confident</span>' : c.drifted.some((p) => p.key === key) ? '<span class="chg">~ drifted</span>' : '<span class="rem">? pending</span>';
+  const summary = `${report.used.length} primitives · ${c.approved.length} confident · ${c.drifted.length} drifted · ${c.missing.length} pending · coverage ${Math.round(report.coverage * 100)}%`;
+  // preview is first-party control markup from @suluk/visual (a fixed widget set) — safe to embed raw
+  const prims = report.used.map((p) => `<div class="g"><div class="row"><span class="k">${esc(p.label ?? p.key)}</span> ${badge(p.key)}</div>${report.preview[p.key] ? `<div style="padding:6px 0">${report.preview[p.key]}</div>` : ""}</div>`).join("");
+  const ents = report.entities.map((e) => `<div class="row"><span class="k">${esc(e.name)}</span><span class="d">form ${e.form.length} · table ${e.table.length}</span></div>`).join("");
+  const body = `<style>${primitiveCss()}</style><p class="sum">${esc(summary)} — verify each primitive ONCE; confidence is then decided by content-hash, no re-screenshotting.</p><div class="g"><h3>primitives</h3>${prims}</div><div class="g"><h3>entities (form/table)</h3>${ents}</div>`;
+  return htmlPage("Component pixel-confidence", body);
+}
 function convergeHtml(report: ConvergeReport): string {
   return htmlPage("Contract converge", `<p class="sum">a coherence audit over the whole contract — the contradictions a clean merge can still leave behind.</p>${convergeBody(report)}`);
 }
@@ -573,6 +584,29 @@ export function activate(context: vscode.ExtensionContext): void {
   reg("suluk.exportV4", async () => {
     const src = activeV4Source(); if (!src) { void vscode.window.showWarningMessage("Suluk: open an OpenAPI v4 document first."); return; }
     await openGenerated(exportV4Json(src), "json");
+  });
+  // component pixel-confidence (surfaces @suluk/visual): verify each primitive ONCE, then confidence is by hash
+  const baselineUri = () => { const f = vscode.workspace.workspaceFolders?.[0]; return f ? vscode.Uri.joinPath(f.uri, "suluk-visual-baseline.json") : undefined; };
+  const readBaseline = async (): Promise<Baseline> => {
+    const uri = baselineUri(); if (!uri) return {};
+    try { return JSON.parse(new TextDecoder().decode(await vscode.workspace.fs.readFile(uri))) as Baseline; } catch { return {}; }
+  };
+  reg("suluk.previewComponents", async () => {
+    const src = activeV4Source();
+    if (!src) { void vscode.window.showWarningMessage("Suluk: open a v4 contract first."); return; }
+    const baseline = await readBaseline();
+    const report = componentReport(parseDocument(src), baseline);
+    const panel = vscode.window.createWebviewPanel("suluk.components", "Suluk — component pixel-confidence", vscode.ViewColumn.Beside, {});
+    panel.webview.html = componentsHtml(report);
+    if (!report.used.length) return;
+    if (report.confidence.confident) { void vscode.window.showInformationMessage("Suluk: components are pixel-confident ✓ — every primitive approved + unchanged."); return; }
+    const pending = report.confidence.missing.length + report.confidence.drifted.length;
+    const choice = await vscode.window.showInformationMessage(`Suluk: ${pending} component primitive(s) need a one-time pixel verification. Approve them now (after reviewing the preview)?`, "Approve all");
+    if (choice !== "Approve all") return;
+    const uri = baselineUri();
+    if (!uri) { void vscode.window.showWarningMessage("Suluk: open a workspace folder to save the baseline."); return; }
+    await vscode.workspace.fs.writeFile(uri, new TextEncoder().encode(JSON.stringify(approveComponents(report, baseline, Date.now()), null, 2)));
+    void vscode.window.showInformationMessage("Suluk: approved — components are now pixel-confident. Commit suluk-visual-baseline.json so the team shares the verification.");
   });
   // converge: a coherence audit over the whole contract — the contradictions a clean merge can leave behind
   reg("suluk.convergeContract", () => {
