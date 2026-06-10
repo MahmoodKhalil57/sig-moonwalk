@@ -69,10 +69,12 @@ builder — so the extension can fetch it and **diff local-contract vs deployed-
 - **M1 — View-as × Environments cross-cut.** Project all 9 layers for {principal} × {env} at once; live
   role-previews of the app via a **preview deployment with a real session** (never header-spoof prod). Host
   fetches, webview renders via `postMessage`.
-- **M2 — Module registry browser (curated).** Install from a shadcn-registry-compatible URL (reuse the protocol
-  Suluk already emits). **Contract-diff-on-install** (show exactly what schemas/routes/tables a module
-  adds/touches) + a **conformance grade** (reuse `@suluk/hono` `audit`) + **`burhan-converge` over the merged
-  contract** to catch cross-module contradiction. First-party registry first: ecommerce / crm / auth / billing.
+- **M2 ✓ BUILT (commit cfcc43c).** Curated module-registry browser. `FIRST_PARTY_REGISTRY` (ecommerce + crm +
+  billing); `gradeModule` (an honest conformance grade — cost-coverage minus a doc-warning penalty, C reachable);
+  `previewInstall` (contract-diff-on-install — what a module adds/requires/costs + conflicts, no commit). The
+  extension's **Browse modules** command: pick (grade shown) → preview webview → modal confirm → install.
+  Adversarially reviewed (6 findings fixed — the grade was structurally inflated; now honest). *Remaining for a
+  full M2: a remote-registry fetch (shares L1's plumbing) + `burhan-converge` over the merged contract.*
 - **M3 — Provider-slot generalization.** Lift `@suluk/stripe`'s duck-typed `PaymentProvider` to a per-facet
   **slot** concept `{ payments, auth, email, storage }`; "swap a provider" UX in the extension. The slot
   interface is the visible seam a developer reads to understand *why* — exactly the user's intent.
@@ -126,7 +128,11 @@ builder — so the extension can fetch it and **diff local-contract vs deployed-
   conformance grade + burhan-converge), the *View-as × Environments* cross-cut (M1), provider-slot swapping
   (M3), and the *open* marketplace (L1, gated on M2). The merge primitive exists; the distribution + trust layer
   does not.
-- **Cheapest-next-move:** **M2** — the curated module-registry browser. The install primitive (S2) is the hard
-  part and it's done + reviewed; M2 is mostly the shadcn-registry fetch + the contract-diff-on-install UX (reuse
-  S1's `diffContracts` to preview what a module adds before installing) + a conformance grade (reuse
-  `@suluk/hono` `audit`). Curated first; open marketplace (L1) only after.
+- **Built since (S1+S2+M2):** the OBSERVE seam, the install-time contract-merge, AND the curated registry +
+  grade + preview — all adversarially reviewed. The curated marketplace shape exists end-to-end; what's left is
+  the cross-cut (M1), provider-swap (M3), and the *open/remote* registry (L1).
+- **Cheapest-next-move:** **M1** — the **View-as × Environments cross-cut** (the moat). Both axes already exist
+  in isolation (S1 environments + the cockpit's existing "View as" scopes); M1 wires them so the cockpit
+  projects all 9 layers for {principal} × {env} at once — the one thing no other tool can do. Reuses
+  `buildCycle({principal})` + the environment source. After that: M3 (provider slots), then L1 (remote registry
+  fetch + trust gate — the open marketplace, gated on M2's diff-on-install + grade discipline).
