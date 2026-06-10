@@ -97,8 +97,10 @@ builder — so the extension can fetch it and **diff local-contract vs deployed-
   composes ~80% — entities, CRUD UI, pages, usage-billing, deploy-prep; a developer wires the 20% that's
   irreducibly imperative; the contract makes that 20% small, legible, and swappable instead of a rewrite.* Not
   "no developer ever."
-- **L3 — Round-trip lifecycle.** Edit contract → re-project → deploy; environment lifecycle management — all
-  still bounded by the no-creds charter (deploy stays terminal-gated).
+- **L3 ✓ SHIPPED (0.1.13)** — Round-trip lifecycle made legible: the ship-readiness checklist (`suluk.shipChecklist`)
+  walks authored → coherent → confident → generated → deployed on one screen, each failing gate carrying its
+  cheapest-next-action — still bounded by the no-creds charter (deploy stays terminal-gated). See "Beyond the
+  roadmap" below for the full entry.
 
 ## DECLINE / link-out (do not build — the better tool exists)
 
@@ -167,5 +169,16 @@ builder — so the extension can fetch it and **diff local-contract vs deployed-
     forms/tables into widget primitives, check each vs a committed baseline (confident/drifted/pending), verify
     once. Reviewed (a HIGH false-confident bug fixed — the hash now tracks the REAL `@suluk/shadcn` renderer, not
     an isolated mock). The last built-but-unsurfaced package is now in the cockpit.
-  - **Still optional, operator's call (additive):** live role-previews via a preview deployment; the originated
-    L3 (round-trip lifecycle).
+  - **✓ L3 ship-readiness checklist (commit 3d28e21, cockpit+vscode 0.1.13)** — the round-trip loop as ONE honest
+    view. `contractGates(doc, baseline)` aggregates the gates the cockpit already computes (operations · valid ·
+    coherent · pixel-confident); the `suluk.shipChecklist` command appends the host gates only it can see
+    (generated-in-sync via fs, deployed-in-sync + `/api/health` via network) and renders them with a clickable
+    "→ fix" per gate; `shipSummary` rolls it to "ready / N blockers · M to do". One screen: authored → coherent →
+    confident → generated → deployed. Reviewed (4 gate-honesty findings fixed; the command-URI/XSS angle was traced
+    and is NOT injectable — `gate.action` is always a fixed first-party literal): the checklist now reads ONLY
+    explicitly-saved environments (no silent egress to the demo host, at activation or in the checklist), a
+    zero-operation contract can't read "ready", and a stale-served-but-dead deploy reads `warn` not green. A new
+    non-blocking `info` gate status surfaces n/a conditions without ever making a clean contract look not-ready.
+    **The originated L3 is now shipped — the whole arc, authored → deployed, is legible on one screen.**
+  - **Still optional, operator's call (additive):** live role-previews via a preview deployment (the one
+    credentialed surface, charter-bounded). This is the only roadmap item left.
