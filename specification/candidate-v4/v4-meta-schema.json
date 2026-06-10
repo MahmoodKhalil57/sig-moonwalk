@@ -1,0 +1,153 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://suluk.example/candidate-v4/meta-schema",
+  "title": "OpenAPI v4.0 Suluk Candidate — Document Meta-Schema",
+  "description": "Validates the STRUCTURE of an OpenAPI v4.0 Suluk candidate document, per the pinned canonical model (SPEC §1) and ADRs C003/C004/C005/C009/C013/C019. CANDIDATE, not official OAS; inner Schema Objects are JSON Schema 2020-12 (validated by that dialect, treated as opaque here). Provisional — confidence ~0.55-0.65; revisable with the ADRs.",
+  "type": "object",
+  "required": ["openapi", "info", "paths"],
+  "additionalProperties": true,
+  "properties": {
+    "openapi": { "type": "string", "pattern": "^4\\.0\\.[0-9]+(-[A-Za-z0-9.-]+)?$", "description": "e.g. 4.0.0-candidate" },
+    "info": { "$ref": "#/$defs/Info" },
+    "servers": { "type": "array", "items": { "$ref": "#/$defs/Server" } },
+    "tags": { "type": "object", "additionalProperties": { "$ref": "#/$defs/Tag" }, "description": "Map keyed by tag name (C009)." },
+    "paths": { "type": "object", "additionalProperties": { "$ref": "#/$defs/PathItem" }, "description": "Map keyed by RFC6570 parseable-profile uriTemplate (C005)." },
+    "apiResponses": { "type": "object", "additionalProperties": { "$ref": "#/$defs/Response" }, "description": "Document-level responses reusable across all operations (§5)." },
+    "webhooks": { "type": "object", "additionalProperties": { "$ref": "#/$defs/Request" }, "description": "Incoming operations not hosted at the API's own paths (§14, C018)." },
+    "components": { "$ref": "#/$defs/Components" }
+  },
+  "$defs": {
+    "Info": {
+      "type": "object",
+      "required": ["title", "version"],
+      "properties": {
+        "title": { "type": "string" },
+        "version": { "type": "string" },
+        "description": { "type": "string" },
+        "termsOfService": { "type": "string" },
+        "contact": { "type": "object" },
+        "license": { "type": "object", "properties": { "name": { "type": "string" }, "url": { "type": "string" } } }
+      }
+    },
+    "Server": {
+      "type": "object",
+      "required": ["url"],
+      "properties": { "url": { "type": "string" }, "description": { "type": "string" } },
+      "$comment": "Server IDENTITY = a by-name shape primitive (C015 #55); environment URL config is a deployment-layer concern."
+    },
+    "Tag": {
+      "type": "object",
+      "properties": { "summary": { "type": "string" }, "description": { "type": "string" }, "type": { "type": "string" } }
+    },
+    "PathItem": {
+      "type": "object",
+      "required": ["requests"],
+      "description": "Keyed in paths by its uriTemplate. Each request IS an operation (§1.3/1.4).",
+      "properties": {
+        "summary": { "type": "string" },
+        "description": { "type": "string" },
+        "servers": { "type": "array", "items": { "$ref": "#/$defs/Server" } },
+        "shared": { "$ref": "#/$defs/Shared" },
+        "requests": { "type": "object", "minProperties": 1, "additionalProperties": { "$ref": "#/$defs/Request" }, "description": "The operations at this path, keyed by stable name (C009). At least one required." },
+        "pathResponses": { "type": "object", "additionalProperties": { "$ref": "#/$defs/Response" }, "description": "Responses reusable across this pathItem's requests (§5)." }
+      }
+    },
+    "Shared": {
+      "type": "object",
+      "description": "Optional per-level inheritance wrapper (C012 #116, @0.55). allOf-composed into each request's parameterSchema.",
+      "properties": { "parameterSchema": { "$ref": "#/$defs/ParameterSchema" } }
+    },
+    "Request": {
+      "type": "object",
+      "required": ["method", "responses"],
+      "description": "A Request IS an operation (§1.4). DOM handle = its name; ADA identity = its signature (C003/C019).",
+      "properties": {
+        "method": { "type": "string", "enum": ["get", "GET", "put", "PUT", "post", "POST", "patch", "PATCH", "delete", "DELETE", "head", "HEAD", "options", "OPTIONS", "trace", "TRACE"] },
+        "summary": { "type": "string" },
+        "description": { "type": "string" },
+        "operationId": { "type": "string", "description": "Optional legacy handle; not the v4 primary identity (C009)." },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "deprecated": { "type": "boolean" },
+        "contentType": { "oneOf": [ { "type": "string" }, { "type": "array", "items": { "type": "string" } } ], "description": "Request body media type(s) — plain IANA media type; params via the content model (§6/§7)." },
+        "contentSchema": { "$ref": "#/$defs/SchemaOrRef" },
+        "parameterSchema": { "$ref": "#/$defs/ParameterSchema" },
+        "responses": { "type": "object", "minProperties": 1, "additionalProperties": { "$ref": "#/$defs/Response" }, "description": "Named responses (§5); each carries its own status." },
+        "callbacks": { "type": "object", "additionalProperties": { "$ref": "#/$defs/Callback" } },
+        "security": { "type": "array", "items": { "$ref": "#/$defs/SecurityRequirement" } },
+        "servers": { "type": "array", "items": { "$ref": "#/$defs/Server" } }
+      }
+    },
+    "ParameterSchema": {
+      "type": "object",
+      "description": "Per-location typed slots (C004 #20). Each slot is a JSON Schema 2020-12 over that location's instance.",
+      "properties": {
+        "query": { "$ref": "#/$defs/SchemaOrRef" },
+        "path": { "$ref": "#/$defs/SchemaOrRef" },
+        "header": { "$ref": "#/$defs/SchemaOrRef" },
+        "cookie": { "$ref": "#/$defs/SchemaOrRef" },
+        "body": { "$ref": "#/$defs/SchemaOrRef" }
+      },
+      "additionalProperties": false
+    },
+    "Response": {
+      "type": "object",
+      "required": ["status"],
+      "description": "Named in its containing map (§5). Most-specific-wins precedence: request > pathResponses > apiResponses (C012 #17b).",
+      "properties": {
+        "status": { "oneOf": [ { "type": "string", "pattern": "^([1-5][0-9X]{2}|default)$" }, { "type": "integer", "minimum": 100, "maximum": 599 } ], "description": "HTTP status, a wildcard like 5XX, or 'default'." },
+        "contentType": { "oneOf": [ { "type": "string" }, { "type": "array", "items": { "type": "string" } } ] },
+        "contentSchema": { "$ref": "#/$defs/SchemaOrRef" },
+        "description": { "type": "string" }
+      }
+    },
+    "Callback": {
+      "type": "object",
+      "description": "A name-keyed map; each callback is a runtime-expression-keyed map of pathItem-shaped definitions (§14, C018).",
+      "additionalProperties": { "type": "object", "additionalProperties": { "$ref": "#/$defs/PathItem" } }
+    },
+    "Components": {
+      "type": "object",
+      "description": "Dynamic-key reusable definitions; the referencing anchor (C013). Keyed by name (C009).",
+      "properties": {
+        "schemas": { "type": "object", "additionalProperties": { "$ref": "#/$defs/Schema" } },
+        "requests": { "type": "object", "additionalProperties": { "$ref": "#/$defs/Request" } },
+        "responses": { "type": "object", "additionalProperties": { "$ref": "#/$defs/Response" } },
+        "securitySchemes": { "type": "object", "additionalProperties": { "$ref": "#/$defs/SecurityScheme" } },
+        "links": { "type": "object" },
+        "examples": { "type": "object" }
+      }
+    },
+    "SecurityRequirement": {
+      "type": "object",
+      "description": "Map of securityScheme name -> array of scope strings (referenced BY NAME, C014 #69).",
+      "additionalProperties": { "type": "array", "items": { "type": "string" } }
+    },
+    "SecurityScheme": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "type": "string", "enum": ["apiKey", "http", "oauth2", "openIdConnect", "mutualTLS"] },
+        "name": { "type": "string" },
+        "in": { "type": "string", "enum": ["query", "header", "cookie"] },
+        "scheme": { "type": "string" },
+        "flows": { "type": "object" },
+        "openIdConnectUrl": { "type": "string" }
+      }
+    },
+    "Reference": {
+      "type": "object",
+      "required": ["$ref"],
+      "description": "OpenAPI Reference Object (C013 #49); $ref is a JSON-Pointer '#/components/<type>/<name>' resolved BY NAME (C009, C019 Appendix A).",
+      "properties": { "$ref": { "type": "string" }, "summary": { "type": "string" }, "description": { "type": "string" } },
+      "additionalProperties": false
+    },
+    "Schema": {
+      "$comment": "A JSON Schema 2020-12 object (or boolean). Treated as opaque here; validated by the 2020-12 dialect (C013). May itself contain a JSON-Schema $ref.",
+      "oneOf": [ { "type": "object" }, { "type": "boolean" } ]
+    },
+    "SchemaOrRef": {
+      "description": "Either an inline Schema Object or an OpenAPI Reference Object. anyOf (not oneOf): a {\"$ref\":…} is structurally valid as both, and the slot+token rule (C019 Appendix A) — not this meta-schema — decides which kind applies.",
+      "anyOf": [ { "$ref": "#/$defs/Reference" }, { "$ref": "#/$defs/Schema" } ]
+    }
+  }
+}
