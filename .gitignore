@@ -6,3 +6,8 @@ tooling/**/target
 tooling/**/dist
 tooling/ts/.workflows
 
+
+.env
+.npmrc
+**/.npmrc
+*.vsix

@@ -1,0 +1,9 @@
+# Ship only the bundled extension + manifest + docs.
+src/**
+test/**
+tsconfig.json
+.npmrc
+node_modules/**
+**/*.map
+**/*.ts
+!dist/extension.js
