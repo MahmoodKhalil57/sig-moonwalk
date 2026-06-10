@@ -14,6 +14,7 @@ import {
   entityNames, generateForm, generateTable, generateStoresModule, exportV4Json,
   buildBuilderModel, generateAppFiles, generateRegistryJson, type BuilderNode,
   deployPlan, deployMarkdown,
+  diffContracts, formatMicroUsd, type ContractDiff,
 } from "@suluk/cockpit";
 import { parseDocument } from "@suluk/core";
 import { SAMPLE_V4 } from "./sample";
@@ -28,13 +29,27 @@ function isV4Source(text: string): boolean {
 // The cockpit follows the active editor, but PINS the last v4 doc seen — so generating an artifact
 // (which opens a .tsx/.ts beside and steals focus) does NOT blank the trees. They keep showing the API.
 let pinnedV4Source: string | null = null;
+let pinnedV4IsFile = false; // was the pinned source a real on-disk file (vs a fetched/connected untitled doc)?
 function activeV4Source(): string | null {
   const ed = vscode.window.activeTextEditor;
   if (ed && SUPPORTED.has(ed.document.languageId)) {
     const text = ed.document.getText();
-    if (isV4Source(text)) { pinnedV4Source = text; return text; }
+    if (isV4Source(text)) { pinnedV4Source = text; pinnedV4IsFile = ed.document.uri.scheme === "file"; return text; }
   }
   return pinnedV4Source;
+}
+/**
+ * The LOCAL authored contract for a drift check — must be a real on-disk FILE, never a fetched/connected
+ * (untitled) doc. Otherwise "Diff vs env" right after "Connect" would compare the deployed contract against
+ * itself and falsely report "in sync".
+ */
+function localContractSource(): string | null {
+  const ed = vscode.window.activeTextEditor;
+  if (ed && ed.document.uri.scheme === "file" && SUPPORTED.has(ed.document.languageId)) {
+    const text = ed.document.getText();
+    if (isV4Source(text)) return text;
+  }
+  return pinnedV4IsFile ? pinnedV4Source : null;
 }
 
 async function openGenerated(content: string, language: string): Promise<void> {
@@ -163,6 +178,116 @@ class BuilderProvider implements vscode.TreeDataProvider<BuilderNode> {
   }
 }
 
+// ── Environments (OBSERVE side, C020) ─────────────────────────────────────────────────────────────────
+// An environment is just a base URL whose live Worker serves /openapi.json, /cost, /api/health, /superadmin,
+// /scalar. The extension is a read-only CLIENT of these — it never holds credentials and never mutates prod
+// (writing to prod is a deploy, in your terminal). "Connect" loads the live contract into the cockpit; "Diff"
+// compares your LOCAL contract against the deployed one (the free "what's drifted in prod" view).
+interface SulukEnv { name: string; baseUrl: string; }
+const DEFAULT_ENVS: SulukEnv[] = [
+  { name: "prod", baseUrl: "https://saasuluk.saastemly.com" },
+  { name: "local", baseUrl: "http://localhost:8787" },
+];
+type Health = "ok" | "down" | "checking";
+
+async function fetchText(url: string, ms = 7000): Promise<string> {
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), ms);
+  try {
+    const res = await fetch(url, { signal: ctl.signal });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    if (Number(res.headers.get("content-length") ?? 0) > 16_000_000) throw new Error("response too large (> 16 MB)");
+    return await res.text();
+  } finally { clearTimeout(timer); }
+}
+async function fetchJson(url: string, ms = 7000): Promise<unknown> { return JSON.parse(await fetchText(url, ms)); }
+
+class EnvironmentsProvider implements vscode.TreeDataProvider<SulukEnv> {
+  private readonly _onDidChange = new vscode.EventEmitter<SulukEnv | undefined | void>();
+  readonly onDidChangeTreeData = this._onDidChange.event;
+  private readonly health = new Map<string, Health>();
+  constructor(private readonly ctx: vscode.ExtensionContext) {}
+
+  list(): SulukEnv[] { return this.ctx.workspaceState.get<SulukEnv[]>("suluk.environments", DEFAULT_ENVS); }
+  async save(envs: SulukEnv[]): Promise<void> { await this.ctx.workspaceState.update("suluk.environments", envs); this.refresh(); }
+  refresh(): void { this._onDidChange.fire(); }
+
+  /** Probe each environment's /api/health and recolour its dot. Never throws. */
+  async checkAll(): Promise<void> {
+    const envs = this.list();
+    for (const e of envs) this.health.set(e.baseUrl, "checking");
+    this.refresh();
+    await Promise.all(envs.map(async (e) => {
+      try { await fetchJson(`${e.baseUrl}/api/health`, 5000); this.health.set(e.baseUrl, "ok"); }
+      catch { this.health.set(e.baseUrl, "down"); }
+    }));
+    this.refresh();
+  }
+
+  getTreeItem(env: SulukEnv): vscode.TreeItem {
+    const ti = new vscode.TreeItem(env.name, vscode.TreeItemCollapsibleState.None);
+    const h = this.health.get(env.baseUrl);
+    ti.description = env.baseUrl;
+    ti.tooltip = `${env.baseUrl}\nClick to connect (load the live contract into the cockpit).${h && h !== "checking" ? `\nHealth: ${h}` : ""}`;
+    ti.iconPath = h === "ok"
+      ? new vscode.ThemeIcon("circle-filled", new vscode.ThemeColor("charts.green"))
+      : h === "down"
+        ? new vscode.ThemeIcon("circle-outline", new vscode.ThemeColor("charts.red"))
+        : new vscode.ThemeIcon("loading~spin");
+    ti.contextValue = "suluk.env";
+    ti.command = { command: "suluk.connectEnvironment", title: "Connect", arguments: [env] };
+    return ti;
+  }
+  getChildren(): SulukEnv[] { return this.list(); }
+}
+
+// ── webview rendering (host-rendered HTML, no scripts → enableScripts stays off; all values escaped) ──
+function esc(s: string): string {
+  return s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c] as string));
+}
+function htmlPage(title: string, body: string): string {
+  return `<!doctype html><html><head><meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline';">
+<style>
+ body{font-family:var(--vscode-font-family);color:var(--vscode-foreground);padding:12px 18px;font-size:13px}
+ h2{margin:0 0 4px;font-size:15px} .sum{color:var(--vscode-descriptionForeground);margin:0 0 14px}
+ .g{margin:12px 0} .g h3{margin:0 0 6px;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--vscode-descriptionForeground)}
+ .row{padding:2px 0} .k{font-family:var(--vscode-editor-font-family)} .d{color:var(--vscode-descriptionForeground);margin-left:8px}
+ .add{color:var(--vscode-charts-green)} .rem{color:var(--vscode-charts-red)} .chg{color:var(--vscode-charts-yellow)}
+ table{border-collapse:collapse} td{padding:2px 16px 2px 0} pre{white-space:pre-wrap}
+</style></head><body><h2>${esc(title)}</h2>${body}</body></html>`;
+}
+function driftHtml(d: ContractDiff, env: SulukEnv): string {
+  if (d.identical) return htmlPage(`Drift vs ${env.name}`, `<p class="sum">✓ in sync — your local contract matches what's deployed at ${esc(env.baseUrl)}.</p>`);
+  const opGroup = (cls: string, title: string, rows: { name: string; tail: string }[]) =>
+    rows.length ? `<div class="g"><h3 class="${cls}">${esc(title)}</h3>${rows.map((r) => `<div class="row"><span class="k ${cls}">${esc(r.name)}</span><span class="d">${esc(r.tail)}</span></div>`).join("")}</div>` : "";
+  const schGroup = () => {
+    const { added, removed, changed } = d.schemas;
+    if (!added.length && !removed.length && !changed.length) return "";
+    const line = (cls: string, sign: string, n: string) => `<div class="row"><span class="k ${cls}">${sign} ${esc(n)}</span></div>`;
+    return `<div class="g"><h3>schemas</h3>${added.map((s) => line("add", "+", s)).join("")}${removed.map((s) => line("rem", "−", s)).join("")}${changed.map((s) => line("chg", "~", s)).join("")}</div>`;
+  };
+  const body = `<p class="sum">${esc(d.summary)} — local (your contract) vs deployed (${esc(env.name)})</p>`
+    + opGroup("add", "added — authored locally, not yet deployed", d.operations.added.map((o) => ({ name: o.name, tail: o.detail })))
+    + opGroup("rem", "removed — deleted locally, still live in prod", d.operations.removed.map((o) => ({ name: o.name, tail: o.detail })))
+    + opGroup("chg", "changed — drift between local and deployed", d.operations.changed.map((o) => ({ name: o.name, tail: o.changes.join(" · ") })))
+    + schGroup();
+  return htmlPage(`Drift vs ${env.name}`, body);
+}
+function costHtml(data: unknown, env: SulukEnv): string {
+  const d = data as { total?: number; byPrincipal?: Record<string, number>; byAction?: Record<string, number>; bySource?: Record<string, number> };
+  const money = (v: unknown): string => { const n = Number(v); return Number.isFinite(n) ? formatMicroUsd(n) : "—"; };
+  if (d && Number.isFinite(d.total)) {
+    const tbl = (label: string, obj?: Record<string, number>) =>
+      obj && Object.keys(obj).length ? `<div class="g"><h3>${esc(label)}</h3><table>${Object.entries(obj).map(([k, v]) => `<tr><td class="k">${esc(k)}</td><td>${esc(money(v))}</td></tr>`).join("")}</table></div>` : "";
+    const body = `<p class="sum">live metered spend at ${esc(env.baseUrl)}/cost</p>`
+      + `<div class="g"><h3>total</h3><div class="row k">${esc(money(d.total))}</div></div>`
+      + tbl("by principal", d.byPrincipal) + tbl("by action", d.byAction) + tbl("by source", d.bySource);
+    return htmlPage(`Cost — ${env.name}`, body);
+  }
+  return htmlPage(`Cost — ${env.name}`, `<p class="sum">live /cost response from ${esc(env.baseUrl)}</p><pre class="k">${esc(JSON.stringify(data, null, 2))}</pre>`);
+}
+
 // ── diagnostics ─────────────────────────────────────────────────────────────────────────────────────
 function toVsDiagnostics(diags: Diagnostic[]): vscode.Diagnostic[] {
   const sev: Record<Diagnostic["severity"], vscode.DiagnosticSeverity> = {
@@ -206,10 +331,12 @@ export function activate(context: vscode.ExtensionContext): void {
   const collection = vscode.languages.createDiagnosticCollection("suluk");
   const cycle = new CycleProvider();
   const builder = new BuilderProvider();
+  const envs = new EnvironmentsProvider(context);
   context.subscriptions.push(
     collection,
     vscode.window.registerTreeDataProvider("suluk.cycle", cycle),
     vscode.window.registerTreeDataProvider("suluk.builder", builder),
+    vscode.window.registerTreeDataProvider("suluk.environments", envs),
   );
 
   const reg = (id: string, fn: (...a: never[]) => unknown) => context.subscriptions.push(vscode.commands.registerCommand(id, fn));
@@ -356,6 +483,68 @@ export function activate(context: vscode.ExtensionContext): void {
     term.sendText("# Suluk: run the steps from DEPLOY.md. First: wrangler login", false);
     void vscode.window.showInformationMessage(`Suluk: deploy files written to suluk-deploy/ — follow DEPLOY.md (${plan.steps.length} steps). Suluk won't run wrangler for you; log in in the terminal.`);
   });
+
+  // ── Environments (OBSERVE) commands ──
+  const pickEnv = async (): Promise<SulukEnv | undefined> => {
+    const items = envs.list().map((e) => ({ label: e.name, description: e.baseUrl, env: e }));
+    if (!items.length) { void vscode.window.showWarningMessage("Suluk: no environments configured — add one first."); return undefined; }
+    return (await vscode.window.showQuickPick(items, { placeHolder: "Environment" }))?.env;
+  };
+  reg("suluk.refreshEnvironments", () => void envs.checkAll());
+  reg("suluk.addEnvironment", async () => {
+    const name = await vscode.window.showInputBox({ prompt: "Environment name", placeHolder: "staging" });
+    if (!name) return;
+    const baseUrl = await vscode.window.showInputBox({ prompt: "Base URL of the deployed Worker", placeHolder: "https://staging.example.com", value: "https://" });
+    if (!baseUrl || baseUrl === "https://") return;
+    await envs.save([...envs.list(), { name, baseUrl: baseUrl.replace(/\/+$/, "") }]);
+    void envs.checkAll();
+  });
+  reg("suluk.removeEnvironment", async (env?: SulukEnv) => {
+    env = env ?? await pickEnv(); if (!env) return;
+    let dropped = false; // drop only ONE matching entry, not every env that happens to share a baseUrl
+    await envs.save(envs.list().filter((e) => {
+      if (!dropped && e.name === env!.name && e.baseUrl === env!.baseUrl) { dropped = true; return false; }
+      return true;
+    }));
+  });
+  // Connect = load the live contract into the cockpit (the trees re-project against what's deployed).
+  reg("suluk.connectEnvironment", async (env?: SulukEnv) => {
+    env = env ?? await pickEnv(); if (!env) return;
+    try {
+      const text = await fetchText(`${env.baseUrl}/openapi.json`);
+      const doc = await vscode.workspace.openTextDocument({ content: text, language: "json" });
+      await vscode.window.showTextDocument(doc);
+      cycle.refresh(); builder.refresh();
+      if (!isV4Source(text)) void vscode.window.showWarningMessage(`Suluk: ${env.baseUrl}/openapi.json loaded but doesn't look like v4.`);
+      else void vscode.window.showInformationMessage(`Suluk: connected to ${env.name} — the cockpit now projects the live contract from ${env.baseUrl}.`);
+    } catch (e) { void vscode.window.showErrorMessage(`Suluk: couldn't reach ${env.baseUrl}/openapi.json — ${(e as Error).message}`); }
+  });
+  // Diff = compare your LOCAL contract against the DEPLOYED one (the free "what's drifted in prod" view).
+  reg("suluk.diffEnvironment", async (env?: SulukEnv) => {
+    env = env ?? await pickEnv(); if (!env) return;
+    const local = localContractSource();
+    if (!local) { void vscode.window.showWarningMessage("Suluk: open your local contract FILE first (a saved .yaml/.json) — a connected/fetched doc can't be the local side of a drift check."); return; }
+    try {
+      const deployed = await fetchText(`${env.baseUrl}/openapi.json`);
+      if (!isV4Source(deployed)) { void vscode.window.showErrorMessage(`Suluk: ${env.baseUrl}/openapi.json did not return a v4 contract.`); return; }
+      const diff = diffContracts(parseDocument(local), parseDocument(deployed));
+      const panel = vscode.window.createWebviewPanel("suluk.drift", `Suluk — drift vs ${env.name}`, vscode.ViewColumn.Beside, {});
+      panel.webview.html = driftHtml(diff, env);
+    } catch (e) { void vscode.window.showErrorMessage(`Suluk: drift check vs ${env.name} failed — ${(e as Error).message}`); }
+  });
+  reg("suluk.openCostLedger", async (env?: SulukEnv) => {
+    env = env ?? await pickEnv(); if (!env) return;
+    try {
+      const data = await fetchJson(`${env.baseUrl}/cost`);
+      const panel = vscode.window.createWebviewPanel("suluk.cost", `Suluk — cost (${env.name})`, vscode.ViewColumn.Beside, {});
+      panel.webview.html = costHtml(data, env);
+    } catch (e) { void vscode.window.showErrorMessage(`Suluk: couldn't read ${env.baseUrl}/cost — ${(e as Error).message}`); }
+  });
+  // OBSERVE/operate surfaces live in the browser (the no-creds charter), not reimplemented in the extension.
+  reg("suluk.openLiveApp", async (env?: SulukEnv) => { env = env ?? await pickEnv(); if (env) void vscode.env.openExternal(vscode.Uri.parse(env.baseUrl)); });
+  reg("suluk.openSuperadmin", async (env?: SulukEnv) => { env = env ?? await pickEnv(); if (env) void vscode.env.openExternal(vscode.Uri.parse(`${env.baseUrl}/superadmin`)); });
+  reg("suluk.openScalarLive", async (env?: SulukEnv) => { env = env ?? await pickEnv(); if (env) void vscode.env.openExternal(vscode.Uri.parse(`${env.baseUrl}/scalar`)); });
+  void envs.checkAll(); // initial health probe
 
   const onChange = () => { cycle.refresh(); builder.refresh(); };
   context.subscriptions.push(

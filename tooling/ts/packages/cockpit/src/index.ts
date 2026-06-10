@@ -10,3 +10,7 @@ export { buildBuilderModel, builderTree, entitiesFromDoc, generateAppFiles, gene
 export { entityNames, generateForm, generateTable, generateStoresModule, exportV4Json } from "./codegen";
 export { deployPlan, deployMarkdown } from "./deploy";
 export type { DeployPlan, DeployStep, DeployProvider } from "@suluk/deploy";
+// drift (OBSERVE): compare a LOCAL contract against a DEPLOYED one — the "what's drifted in prod" view (C020).
+export { diffContracts, canonical, type ContractDiff, type ChangedOp, type OpRef } from "./drift";
+// cost formatting, re-exported so the extension shell can render a live /cost ledger without a direct @suluk/cost dep.
+export { formatMicroUsd, summarize, type CostSummary } from "@suluk/cost";
