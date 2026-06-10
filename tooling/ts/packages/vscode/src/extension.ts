@@ -25,11 +25,16 @@ function isV4Source(text: string): boolean {
   try { return looksLikeV4(parseDocument(text)); } catch { return false; }
 }
 
+// The cockpit follows the active editor, but PINS the last v4 doc seen — so generating an artifact
+// (which opens a .tsx/.ts beside and steals focus) does NOT blank the trees. They keep showing the API.
+let pinnedV4Source: string | null = null;
 function activeV4Source(): string | null {
   const ed = vscode.window.activeTextEditor;
-  if (!ed || !SUPPORTED.has(ed.document.languageId)) return null;
-  const text = ed.document.getText();
-  return isV4Source(text) ? text : null;
+  if (ed && SUPPORTED.has(ed.document.languageId)) {
+    const text = ed.document.getText();
+    if (isV4Source(text)) { pinnedV4Source = text; return text; }
+  }
+  return pinnedV4Source;
 }
 
 async function openGenerated(content: string, language: string): Promise<void> {
@@ -47,8 +52,37 @@ function themeIcon(status?: LayerStatus): vscode.ThemeIcon | undefined {
   }
 }
 
+// What a Cycle row DOES when you click it — each layer maps to the most natural action, so the tree is a
+// control surface, not just a read-out. Nothing here writes to disk; results open in a beside editor.
+function cycleItemCommand(layerId: CycleLayer["id"], item: CycleItem): vscode.Command | undefined {
+  const ref = item.ref ?? item.label;
+  const reveal = (title: string): vscode.Command => ({ command: "suluk.reveal", title, arguments: [ref] });
+  switch (layerId) {
+    case "data":     return reveal(`Reveal the ${ref} schema in source`);
+    case "contract": return reveal(`Reveal operation ${ref} in source`);
+    case "auth":     return reveal(`Reveal security scheme ${ref} in source`);
+    case "cost":     return reveal(`Reveal ${ref} (and its x-suluk-cost) in source`);
+    case "document": return { command: "suluk.validate", title: "Validate against the v4 meta-schema" };
+    case "docs":     return /scalar/i.test(item.label)
+                       ? { command: "suluk.previewScalar", title: "Open the Scalar preview" }
+                       : { command: "suluk.previewSwagger", title: "Open the Swagger UI preview" };
+    case "state":    return { command: "suluk.generateStores", title: "Generate the Nano Stores client" };
+    case "ui":       return { command: "suluk.generateUi", title: `Generate shadcn form/table for ${ref}`, arguments: [ref] };
+    case "tests":    return { command: "suluk.runChecks", title: "Run the contract checks" };
+    default:         return undefined;
+  }
+}
+
+// Builder rows are actionable at the block tier — its label encodes entity + artifact (e.g. "ProjectForm").
+function builderNodeCommand(node: BuilderNode): vscode.Command | undefined {
+  if (node.tier !== "block") return undefined;
+  if (node.label.endsWith("Form"))  return { command: "suluk.generateForm",  title: `Generate the ${node.label}`,  arguments: [node.label.slice(0, -4)] };
+  if (node.label.endsWith("Table")) return { command: "suluk.generateTable", title: `Generate the ${node.label}`, arguments: [node.label.slice(0, -5)] };
+  return undefined;
+}
+
 // ── the Cycle TreeView ──────────────────────────────────────────────────────────────────────────────
-type Node = { kind: "layer"; layer: CycleLayer } | { kind: "item"; item: CycleItem };
+type Node = { kind: "layer"; layer: CycleLayer } | { kind: "item"; item: CycleItem; layerId: CycleLayer["id"] };
 
 class CycleProvider implements vscode.TreeDataProvider<Node> {
   private readonly _onDidChange = new vscode.EventEmitter<Node | undefined | void>();
@@ -88,6 +122,8 @@ class CycleProvider implements vscode.TreeDataProvider<Node> {
     ti.description = node.item.detail;
     ti.iconPath = themeIcon(node.item.status);
     if (node.item.ref) ti.contextValue = "suluk.item";
+    const cmd = cycleItemCommand(node.layerId, node.item);
+    if (cmd) { ti.command = cmd; ti.tooltip = cmd.title; }
     return ti;
   }
 
@@ -95,7 +131,7 @@ class CycleProvider implements vscode.TreeDataProvider<Node> {
     const model = this.model();
     if (!model) return [];
     if (!node) return model.layers.map((layer) => ({ kind: "layer", layer }));
-    if (node.kind === "layer") return node.layer.items.map((item) => ({ kind: "item", item }));
+    if (node.kind === "layer") return node.layer.items.map((item) => ({ kind: "item", item, layerId: node.layer.id }));
     return [];
   }
 }
@@ -118,6 +154,8 @@ class BuilderProvider implements vscode.TreeDataProvider<BuilderNode> {
     ti.description = node.contract.length ? `${node.tier} · may set { ${node.contract.join(", ")} }` : node.tier;
     ti.iconPath = new vscode.ThemeIcon({ page: "browser", section: "symbol-namespace", block: "symbol-method", component: "symbol-field" }[node.tier] ?? "circle-outline");
     ti.contextValue = `suluk.builder.${node.tier}`;
+    const cmd = builderNodeCommand(node);
+    if (cmd) { ti.command = cmd; ti.tooltip = cmd.title; }
     return ti;
   }
   getChildren(node?: BuilderNode): BuilderNode[] {
@@ -232,15 +270,37 @@ export function activate(context: vscode.ExtensionContext): void {
     void vscode.window.showInformationMessage(`Suluk: viewing as ${cycle.viewLabel()}.`);
   });
 
-  reg("suluk.generateForm", async () => {
-    const name = await pickEntity(); if (!name) return;
+  // jump to where a thing (entity/operation/scheme) is DEFINED in the active source — the tree as a map.
+  reg("suluk.reveal", (needle?: string) => {
+    const ed = vscode.window.activeTextEditor;
+    if (!ed || typeof needle !== "string") return;
+    const text = ed.document.getText();
+    let idx = -1;
+    for (const pat of [`"${needle}":`, `${needle}:`, `"${needle}"`, needle]) { idx = text.indexOf(pat); if (idx >= 0) { if (text[idx] === '"') idx += 1; break; } }
+    if (idx < 0) { void vscode.window.showInformationMessage(`Suluk: couldn't locate "${needle}" in the active document.`); return; }
+    const start = ed.document.positionAt(idx), end = ed.document.positionAt(idx + needle.length);
+    ed.revealRange(new vscode.Range(start, end), vscode.TextEditorRevealType.InCenter);
+    ed.selection = new vscode.Selection(start, end);
+  });
+  reg("suluk.generateForm", async (name?: string) => {
+    name = typeof name === "string" ? name : await pickEntity(); if (!name) return;
     try { await openGenerated(generateForm(parseDocument(activeV4Source()!), name), "typescriptreact"); }
     catch (e) { void vscode.window.showErrorMessage(`Suluk: ${(e as Error).message}`); }
   });
-  reg("suluk.generateTable", async () => {
-    const name = await pickEntity(); if (!name) return;
+  reg("suluk.generateTable", async (name?: string) => {
+    name = typeof name === "string" ? name : await pickEntity(); if (!name) return;
     try { await openGenerated(generateTable(parseDocument(activeV4Source()!), name), "typescriptreact"); }
     catch (e) { void vscode.window.showErrorMessage(`Suluk: ${(e as Error).message}`); }
+  });
+  // the UI row covers both form + table for an entity — ask which, then generate it.
+  reg("suluk.generateUi", async (name?: string) => {
+    name = typeof name === "string" ? name : await pickEntity(); if (!name) return;
+    const which = await vscode.window.showQuickPick(["Form", "Table"], { placeHolder: `Generate a shadcn component for ${name}` });
+    if (!which) return;
+    try {
+      const doc = parseDocument(activeV4Source()!);
+      await openGenerated(which === "Form" ? generateForm(doc, name) : generateTable(doc, name), "typescriptreact");
+    } catch (e) { void vscode.window.showErrorMessage(`Suluk: ${(e as Error).message}`); }
   });
   reg("suluk.generateStores", async () => {
     const src = activeV4Source(); if (!src) { void vscode.window.showWarningMessage("Suluk: open an OpenAPI v4 document first."); return; }
