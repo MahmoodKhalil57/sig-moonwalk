@@ -236,16 +236,16 @@ The model operationalizes two critical layers:
 | `servers` | array [Server Object] | MAY | Deployment endpoints. Default: `[{url: "/"}]` if absent. |
 | `tags` | Map[tagName → Tag Object] | MAY | Named tag definitions for operation classification. Keyed by `name` for referenceability (C009). |
 | `paths` | Map[uriTemplate → Path Item Object] | MUST | Keyed by RFC6570 parseable-profile uriTemplate (C005). |
-| `requests` | Map[requestName → Request Object] | MAY | Reusable request definitions at document root (shared across operations). |
-| `responses` | Map[responseName → Response Object] | MAY | Reusable response definitions at document root (shared across operations). |
-| `pathResponses` | Map[responseName → Response Object] | MAY | Response definitions scoped to a single pathItem (reusable across operations in one path). |
-| `apiResponses` | Map[responseName → Response Object] | MAY | API-level response definitions (error schemas shared across all operations). |
-| `components` | Components Object | MAY | Reusable schema definitions: `schemas`, `securitySchemes`, `links`, `examples`, etc. |
+| `apiResponses` | Map[responseName → Response Object] | MAY | API-level responses reusable across all operations (e.g. a shared `serverError`, §5). |
+| `webhooks` | Map[name → Webhook Object] | MAY | Incoming operations the API receives but does not host at its own paths (§14). |
+| `components` | Components Object | MAY | Reusable definitions keyed by name: `schemas`, `requests`, `responses`, `securitySchemes`, `links`, `examples` (§8). The dynamic-key referencing anchor (C013). |
+
+(Reusable *requests* and *responses* live in `components` — §8 — not as separate root collections. `pathResponses` is a **pathItem** field, §1.3, not a root field.)
 
 **Normative language:**
 
 - The document MUST be valid JSON or YAML.
-- All NAME-keyed collections (requests, responses, pathResponses, apiResponses, tags) resolve references **by stable NAME, never by array index or map-insertion order** (C009). Tooling MUST NOT assume order-based identity.
+- All NAME-keyed collections (requests, responses, apiResponses, tags, components.*) resolve references **by stable NAME, never by array index or map-insertion order** (C009). Tooling MUST NOT assume order-based identity.
 - Paths MUST be keyed by RFC6570 parseable-profile uriTemplate (C005); the key itself is the reverse-parse input for routing.
 - Components MUST be a dynamic-key MAP for referential anchoring and schema reuse.
 
@@ -253,56 +253,55 @@ The model operationalizes two critical layers:
 
 ### 1.3 Path Item Object
 
-A **Path Item** describes all operations exposed at a single URI template. It is keyed in `paths` by the uriTemplate and contains zero or more named `requests` and `responses` containers, plus operation-defining fields.
+A **Path Item** describes the operations exposed at a single URI template. It is keyed in `paths` by its uriTemplate and contains a name-keyed **`requests`** map (each Request *is* an operation — §1.4), pathItem-scoped `pathResponses`, and an optional `shared` inheritance wrapper. **This §1 object model is canonical; where a later section's field table differs in detail, §1 governs.**
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `summary` | string | MAY | Short description of the path. |
 | `description` | string | MAY | Detailed description. |
 | `servers` | array [Server Object] | MAY | Path-specific deployment endpoints (override document root). |
-| `requests` | Map[requestName → Request Object] | MAY | Named requests for operations at this path. |
-| `responses` | Map[responseName → Response Object] | MAY | Named responses for operations at this path. |
-| `pathResponses` | Map[responseName → Response Object] | MAY | Responses scoped to this pathItem only. |
-| `operations` | Map[signature → Operation Object] | MUST | Named operations keyed by **signature** (C003). See § 1.4. |
+| `requests` | Map[requestName → Request Object] | MUST | The operations at this path, keyed by stable **name** (C009). Each Request *is* an operation (§1.4). At least one required. |
+| `pathResponses` | Map[responseName → Response Object] | MAY | Responses reusable across the requests of this pathItem only (§5). |
+| `shared` | Shared Object | MAY | Optional per-level inheritance wrapper carrying parameterSchema down to the requests (§4.5, C012). |
 
-A **signature** is a unique identifier for an operation, composed of HTTP method and optional disambiguators (content-type, header patterns, request body shape). Signatures are determined by the **ADA** via the mechanism in § 1.4 and C003. The `operations` map keyed by signature is the DOM representation of that determination.
+Each Request carries an operation **signature** — its *identity*, computed by the **ADA** from the request's method and disambiguating aspects (content-type, headers, URI-template variables, request-body shape; §3, C003). The signature is an **ADA** concept used for request→operation *matching*; it is **not** a separate DOM collection — the DOM keys requests by stable **name** (C009), and the ADA derives each request's signature.
 
-> ⚠ **Candidate @0.5–0.6**: The signature's exact composition and collision policy are contested (C003). The framing (uniform, aspect-based, collision-as-detect-and-tolerate) is accepted; the literal string format for the signature key and the policy for ambiguous cases (invalid vs. precedence vs. priority) remain OPEN. This spec models operations by signature; tooling consuming the DOM MAY introduce its own signature syntax and collision policy atop this structure.
+> ⚠ **Candidate @0.5–0.6**: The signature's exact composition and collision policy are contested (C003). The framing (uniform, aspect-based, detect-and-tolerate collision) is accepted; the literal signature encoding and the ambiguous-case policy (invalid vs. precedence vs. priority) remain OPEN.
 
 **Normative language:**
 
-- At least one operation MUST exist at a pathItem (empty pathItems are invalid).
-- Request/response names at the pathItem level are scoped to that path and override document-root definitions for operations in this path only.
-- Per-location parameter schema slots (query, path, header, cookie, body) are attached to individual operations, not to the pathItem (see § 1.4).
+- At least one request MUST exist at a pathItem (empty pathItems are invalid).
+- Request/response names at the pathItem level are scoped to that path and override document-root definitions for that path only.
+- Per-location parameter schema slots (query, path, header, cookie, body) are attached to individual **requests** (§1.4), and MAY be inherited from a pathItem-level `shared` wrapper (§4.5, C012 @0.55).
 
 ---
 
 ### 1.4 Operation Object
 
-An **Operation** describes a single, uniquely-identified HTTP operation: the request schema(s), response schema(s), security, and behavior. It is keyed in the pathItem's `operations` map by its **signature** (C003).
+A **Request Object** *is* an operation: a single HTTP operation's method, request schema, response schema(s), security, and behavior. It is keyed in the pathItem's **`requests`** map by a stable **name** (C009); its **ADA identity** is its **signature** (§3, C003) — the name is the DOM handle, the signature is the matching identity. (The 3.x `requestBody`/`mediaType`/`operation` nesting is flattened into this one object per the initial proposal.)
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `method` | string (GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS, TRACE) | MUST | HTTP method. |
 | `summary` | string | MAY | Short description. |
 | `description` | string | MAY | Detailed description. |
-| `operationId` | string | MAY | Unique identifier for the operation (for code generation, documentation links). Coexists with signature for backward compatibility; not the primary identity key in v4. |
-| `tags` | array [string] | MAY | References to Tag Object names for classification. |
-| `deprecated` | boolean | MAY | True if the operation is deprecated. Default: false. |
-| `requestBody` | Request Body Object | MAY | The operation's request; if absent, the operation accepts no body. |
-| `parameters` | Map[paramName → Parameter Object] | MAY | Query/path/header/cookie parameters (for backward compat with 3.x). **Deferred to C004 per-location slots (§4)** for v4's full parameter schema expression. |
-| `parameterSchema` | Parameter Schema Object | MAY | Per-location typed parameter schema: query, path, header, cookie, body (C004). |
-| `responses` | Map[statusOrName → Response Object] | MUST | Responses keyed by HTTP status code (e.g. "200", "404") or a friendly response name. |
-| `callbacks` | Map[callbackName → Callback Object] | MAY | Outbound callback definitions (webhooks). |
-| `security` | array [Security Requirement Object] | MAY | Applied security schemes; inherits from pathItem and document root if absent. |
-| `servers` | array [Server Object] | MAY | Operation-specific deployment endpoints (override pathItem/document root). |
+| `operationId` | string | MAY | Optional legacy handle (codegen/doc links). Coexists with the request name; **not** the primary identity in v4 (C009). |
+| `tags` | array [string] | MAY | References to Tag names for classification (§11). |
+| `deprecated` | boolean | MAY | Default false. |
+| `contentType` | string \| array[string] | MAY | The request body media type(s) (§1.5). Absent ⇒ no body. |
+| `contentSchema` | Schema Object | MAY | JSON Schema 2020-12 for the request body (§6). |
+| `parameterSchema` | Parameter Schema Object | MAY | Per-location typed parameter slots: query, path, header, cookie, body (C004, §4). |
+| `responses` | Map[responseName → Response Object] | MUST | Named responses (§5); each carries its own `status`. At least one required. |
+| `callbacks` | Map[callbackName → Callback Object] | MAY | Outbound callbacks (§14). |
+| `security` | array [Security Requirement Object] | MAY | Applied security; inherits pathItem/document if absent (§9). |
+| `servers` | array [Server Object] | MAY | Request-specific endpoints (override pathItem/document). |
 
 **Normative language:**
 
-- An Operation MUST have exactly one `method`.
-- The operation's identity in the ADA is determined by its **signature** (C003): a tuple of (method, content-type, headers, URI-template variables, request-body shape) resolved by the ADA's matcher. The DOM key (the signature string) MUST be stable and deterministic.
-- Responses MUST include a default response (keyed by "default") OR explicit status codes covering normal and error cases. At least one response MUST be defined.
-- If both `parameters` (3.x style) and `parameterSchema` (4.x style, C004) are present, tooling MUST apply BOTH and perform intersection validation. `parameterSchema` takes precedence for per-location detail; `parameters` is supported for migration.
+- A Request MUST have exactly one `method`.
+- The request's identity in the **ADA** is its **signature** (C003): the ADA derives it from (method, content-type, headers, URI-template variables, request-body shape). The DOM handle is the request **name**, which MUST be stable.
+- At least one response MUST be defined; a wildcard/`5XX` or `default`-named entry covers the unenumerated cases (§5).
+- The 3.x `parameters` array upgrades into `parameterSchema` slots (§4); see §12 for the migration rules.
 
 ---
 
