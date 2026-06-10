@@ -1,7 +1,7 @@
 {
   "name": "@suluk/visual",
   "version": "0.1.0",
-  "description": "Pixel-confidence by construction: verify each UI primitive's pixels ONCE (a golden snapshot), and confidence propagates to every generated UI via content-hashing + the deterministic generator \u2014 re-verify a primitive only when its source changes. CANDIDATE tooling.",
+  "description": "Pixel-confidence by construction: verify each UI primitive's pixels ONCE (a golden snapshot), and confidence propagates to every generated UI via content-hashing + the deterministic generator — re-verify a primitive only when its source changes. CANDIDATE tooling.",
   "type": "module",
   "main": "src/index.ts",
   "exports": {
@@ -19,10 +19,11 @@
     }
   },
   "devDependencies": {
-    "@types/bun": "latest",
     "@suluk/shadcn": "workspace:*",
-    "zod": "^4.4.3",
-    "@suluk/zod": "workspace:*"
+    "@suluk/zod": "workspace:*",
+    "@types/bun": "latest",
+    "playwright-core": "^1.60.0",
+    "zod": "^4.4.3"
   },
   "scripts": {
     "test": "bun test",
