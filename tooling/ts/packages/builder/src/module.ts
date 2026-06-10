@@ -12,6 +12,7 @@
  */
 import { validateDocument } from "@suluk/core";
 import type { OpenAPIv4Document, PathItem, Request, SchemaOrRef } from "@suluk/core";
+import { audit } from "@suluk/hono";
 
 /** A per-operation cost facet (mirrors @suluk/cost's CostModel; kept local so builder needn't depend on cost). */
 export interface ModuleCost {
@@ -195,4 +196,92 @@ export function namespaceModule(mod: SulukModule, prefix: string): SulukModule {
   const cost = mod.cost ? Object.fromEntries(Object.entries(mod.cost).map(([op, c]) => [renameInName(op), c])) : undefined;
 
   return { ...mod, name: `${mod.name}:${prefix}`, provides: mod.provides.map(rename), schemas, paths, cost };
+}
+
+// ── module registry + conformance grade + install preview (M2 — the curated registry browser) ──
+
+export interface ModuleEntry {
+  title: string;
+  description: string;
+  module: SulukModule;
+}
+export interface ModuleRegistry {
+  name: string;
+  homepage?: string;
+  modules: ModuleEntry[];
+}
+export interface ModuleGrade {
+  grade: "A" | "B" | "C";
+  /** 0..1 — cost-declaration coverage minus a documentation-warning penalty. */
+  score: number;
+  /** fraction of the module's operations that declare a cost (the real, author-attributable signal). */
+  costCoverage: number;
+  /** real documentation problems (audit `warn`s) on the module's authored ops. */
+  warnings: number;
+  notes: string[];
+}
+export interface InstallPreview {
+  willInstall: boolean;
+  conflicts: string[];
+  requires: string[];
+  missingRequires: string[];
+  addsSchemas: string[];
+  addsOperations: string[];
+  cost: { operation: string; estimateMicroUsd: number }[];
+  grade: ModuleGrade;
+}
+
+/** Every operation handle a module declares (auto-CRUD per provided entity + explicit ops). */
+export function moduleOperations(mod: SulukModule): string[] {
+  const crud: Record<string, PathItem> = (mod.crud ?? true) ? Object.assign({}, ...mod.provides.map((e) => crudV4Paths(e))) : {};
+  return [...opNamesOf(crud), ...opNamesOf(mod.paths ?? {})];
+}
+
+/** A self-contained doc for the module (its `requires` entities stubbed) so audit/coverage can grade it. */
+function moduleDoc(mod: SulukModule): OpenAPIv4Document {
+  const stubs = Object.fromEntries((mod.requires ?? []).map((r) => [r, { type: "object" } as SchemaOrRef]));
+  const crud: Record<string, PathItem> = (mod.crud ?? true) ? Object.assign({}, ...mod.provides.map((e) => crudV4Paths(e))) : {};
+  return {
+    openapi: "4.0.0-candidate",
+    info: { title: mod.name, version: mod.version },
+    paths: { ...crud, ...(mod.paths ?? {}) },
+    components: { schemas: { ...stubs, ...mod.schemas } },
+  } as OpenAPIv4Document;
+}
+
+/**
+ * A conformance grade. The real, author-attributable signal is COST coverage (auto-CRUD ops carry a
+ * framework-injected summary, so @suluk/hono `coverage` is structurally ~1.0 and tells us nothing); we use it
+ * only as a documentation-WARNING penalty on authored ops. A module that contributes nothing grades C.
+ */
+export function gradeModule(mod: SulukModule): ModuleGrade {
+  const ops = moduleOperations(mod);
+  if (ops.length === 0) return { grade: "C", score: 0, costCoverage: 0, warnings: 0, notes: ["declares no operations"] };
+  const costCoverage = ops.filter((op) => mod.cost?.[op]).length / ops.length;
+  const warnings = audit(moduleDoc(mod)).filter((f) => f.severity === "warn").length;
+  const score = Math.max(0, costCoverage - 0.1 * warnings);
+  const grade: ModuleGrade["grade"] = warnings === 0 && score >= 0.9 ? "A" : score >= 0.5 ? "B" : "C";
+  const notes: string[] = [];
+  const undeclared = ops.filter((op) => !mod.cost?.[op]).length;
+  if (undeclared) notes.push(`${undeclared}/${ops.length} operations declare no cost`);
+  if (warnings) notes.push(`${warnings} documentation warning${warnings === 1 ? "" : "s"}`);
+  return { grade, score, costCoverage, warnings, notes };
+}
+
+/** Preview an install WITHOUT committing — what it adds, what it requires, any conflicts, and its grade. */
+export function previewInstall(base: OpenAPIv4Document, mod: SulukModule): InstallPreview {
+  const baseSchemas = (base.components?.schemas ?? {}) as Record<string, SchemaOrRef>;
+  const result = installModule(base, mod); // pure — never mutates base
+  const ops = new Set(moduleOperations(mod));
+  return {
+    willInstall: result.installed,
+    conflicts: result.conflicts,
+    requires: mod.requires ?? [],
+    missingRequires: (mod.requires ?? []).filter((r) => !(r in baseSchemas)),
+    addsSchemas: Object.keys(mod.schemas),
+    addsOperations: [...ops],
+    // only the operations install will actually stamp — never a stale/typo cost key install would ignore
+    cost: Object.entries(mod.cost ?? {}).filter(([op]) => ops.has(op)).map(([operation, c]) => ({ operation, estimateMicroUsd: c.estimateMicroUsd })),
+    grade: gradeModule(mod),
+  };
 }

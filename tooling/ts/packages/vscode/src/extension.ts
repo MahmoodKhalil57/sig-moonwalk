@@ -15,7 +15,7 @@ import {
   buildBuilderModel, generateAppFiles, generateRegistryJson, type BuilderNode,
   deployPlan, deployMarkdown,
   diffContracts, formatMicroUsd, type ContractDiff,
-  installModule, ECOMMERCE, type SulukModule,
+  installModule, previewInstall, FIRST_PARTY_REGISTRY, type ModuleEntry, type InstallPreview,
 } from "@suluk/cockpit";
 import { parseDocument } from "@suluk/core";
 import { SAMPLE_V4 } from "./sample";
@@ -288,6 +288,19 @@ function costHtml(data: unknown, env: SulukEnv): string {
   }
   return htmlPage(`Cost — ${env.name}`, `<p class="sum">live /cost response from ${esc(env.baseUrl)}</p><pre class="k">${esc(JSON.stringify(data, null, 2))}</pre>`);
 }
+function modulePreviewHtml(entry: ModuleEntry, p: InstallPreview): string {
+  const gradeCls = p.grade.grade === "A" ? "add" : p.grade.grade === "B" ? "chg" : "rem";
+  const list = (cls: string, title: string, items: string[]) =>
+    items.length ? `<div class="g"><h3 class="${cls === "d" ? "" : cls}">${esc(title)}</h3>${items.map((i) => `<div class="row"><span class="k ${cls === "d" ? "d" : cls}">${esc(i)}</span></div>`).join("")}</div>` : "";
+  const body = `<p class="sum">${esc(entry.description)}<br><span class="${gradeCls}">grade ${esc(p.grade.grade)}</span>${p.grade.notes.length ? ` · ${esc(p.grade.notes.join(" · "))}` : " · every operation costed, no documentation warnings"}</p>`
+    + (p.willInstall ? "" : `<div class="g"><h3 class="rem">cannot install yet</h3>${p.conflicts.map((c) => `<div class="row rem">• ${esc(c)}</div>`).join("")}</div>`)
+    + list("rem", "requires (missing — install its provider first)", p.missingRequires)
+    + list("d", "requires", p.requires.filter((r) => !p.missingRequires.includes(r)))
+    + list("add", `adds ${p.addsSchemas.length} entities`, p.addsSchemas)
+    + list("add", `adds ${p.addsOperations.length} operations`, p.addsOperations)
+    + (p.cost.length ? `<div class="g"><h3>declared cost</h3><table>${p.cost.map((c) => `<tr><td class="k">${esc(c.operation)}</td><td>${esc(formatMicroUsd(c.estimateMicroUsd))}</td></tr>`).join("")}</table></div>` : "");
+  return htmlPage(`${entry.module.name} — install preview`, body);
+}
 
 // ── diagnostics ─────────────────────────────────────────────────────────────────────────────────────
 function toVsDiagnostics(diags: Diagnostic[]): vscode.Diagnostic[] {
@@ -547,28 +560,40 @@ export function activate(context: vscode.ExtensionContext): void {
   reg("suluk.openScalarLive", async (env?: SulukEnv) => { env = env ?? await pickEnv(); if (env) void vscode.env.openExternal(vscode.Uri.parse(`${env.baseUrl}/scalar`)); });
   void envs.checkAll(); // initial health probe
 
-  // ── Modules (C021): install a contract fragment into the active hub doc → the cockpit re-projects it ──
-  const MODULES: { label: string; detail: string; mod: SulukModule }[] = [
-    { label: "ecommerce", detail: "Product, Order (→ User), checkout, per-op cost, a swappable payments slot", mod: ECOMMERCE },
-  ];
+  // ── Modules (C021 / M2): browse the curated registry → PREVIEW (contract-diff + grade) → install ──
   reg("suluk.installModule", async () => {
     const local = activeV4Source();
     if (!local) { void vscode.window.showWarningMessage("Suluk: open your v4 contract first, then install a module into it."); return; }
-    const pick = await vscode.window.showQuickPick(MODULES.map((m) => ({ label: m.label, detail: m.detail, mod: m.mod })), { placeHolder: "Install a Suluk module — merges its contract fragment into the open document" });
+    const doc = parseDocument(local);
+    const pick = await vscode.window.showQuickPick(
+      FIRST_PARTY_REGISTRY.modules.map((e) => ({ label: `$(package) ${e.module.name}`, description: `grade ${previewInstall(doc, e.module).grade.grade}`, detail: e.description, entry: e })),
+      { placeHolder: `Browse ${FIRST_PARTY_REGISTRY.name} — preview before installing`, matchOnDescription: true },
+    );
     if (!pick) return;
+    const entry = pick.entry;
     try {
-      const result = installModule(parseDocument(local), pick.mod);
-      if (!result.installed) {
-        // the merge was REFUSED to protect the contract — show exactly why (the install-time discipline, C021)
-        const panel = vscode.window.createWebviewPanel("suluk.moduleConflicts", `Suluk — ${pick.mod.name} not installed`, vscode.ViewColumn.Beside, {});
-        panel.webview.html = htmlPage(`${pick.mod.name} — install refused`, `<p class="sum">The merge was refused so your contract stays consistent:</p>${result.conflicts.map((c) => `<div class="row rem">• ${esc(c)}</div>`).join("")}`);
+      const preview = previewInstall(doc, entry.module);
+      // always show the contract-diff-on-install preview (what it adds, requires, grade, conflicts)
+      const panel = vscode.window.createWebviewPanel("suluk.modulePreview", `Suluk — ${entry.module.name}`, vscode.ViewColumn.Beside, {});
+      panel.webview.html = modulePreviewHtml(entry, preview);
+      if (!preview.willInstall) {
+        void vscode.window.showWarningMessage(`Suluk: ${entry.module.name} can't be installed into this contract yet — ${preview.missingRequires.length ? `it needs ${preview.missingRequires.join(", ")}` : "see the preview for the conflicts"}.`);
         return;
       }
-      const doc = await vscode.workspace.openTextDocument({ content: JSON.stringify(result.doc, null, 2), language: "json" });
-      await vscode.window.showTextDocument(doc);
+      const choice = await vscode.window.showInformationMessage(
+        `Install ${entry.module.name}? Adds ${preview.addsSchemas.length} entities + ${preview.addsOperations.length} operations · grade ${preview.grade.grade}.`,
+        { modal: true }, "Install",
+      );
+      if (choice !== "Install") return;
+      // re-read the live contract — the user may have edited/switched editors during the preview + modal
+      const liveSource = activeV4Source();
+      const result = installModule(parseDocument(liveSource ?? local), entry.module);
+      if (!result.installed) { void vscode.window.showWarningMessage(`Suluk: ${entry.module.name} no longer installs cleanly (the document changed): ${result.conflicts[0] ?? "conflict"}.`); return; }
+      const merged = await vscode.workspace.openTextDocument({ content: JSON.stringify(result.doc, null, 2), language: "json" });
+      await vscode.window.showTextDocument(merged);
       cycle.refresh(); builder.refresh();
-      void vscode.window.showInformationMessage(`Suluk: installed ${pick.mod.name} — +${result.added.schemas.length} entities, +${result.added.operations.length} operations. The cockpit now projects the merged contract.`);
-    } catch (e) { void vscode.window.showErrorMessage(`Suluk: install of ${pick.mod.name} failed — ${(e as Error).message}`); }
+      void vscode.window.showInformationMessage(`Suluk: installed ${entry.module.name} — the cockpit now projects the merged contract.`);
+    } catch (e) { void vscode.window.showErrorMessage(`Suluk: install of ${entry.module.name} failed — ${(e as Error).message}`); }
   });
 
   const onChange = () => { cycle.refresh(); builder.refresh(); };

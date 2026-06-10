@@ -124,7 +124,7 @@
       },
       {
         "command": "suluk.installModule",
-        "title": "Suluk: Install a module (merge a contract fragment)",
+        "title": "Suluk: Browse modules (preview + install a contract fragment)",
         "icon": "$(package)"
       },
       {

@@ -60,8 +60,17 @@ export const ECOMMERCE: SulukModule = {
     },
   },
   cost: {
+    // the exemplar module declares cost for EVERY operation — it grades A in the registry
     listProduct: { components: [{ source: "db-read", basis: "per-call", microUsd: 10 }], estimateMicroUsd: 10 },
+    createProduct: { components: [{ source: "db-write", basis: "per-call", microUsd: 30 }], estimateMicroUsd: 30 },
+    getProduct: { components: [{ source: "db-read", basis: "per-call", microUsd: 8 }], estimateMicroUsd: 8 },
+    updateProduct: { components: [{ source: "db-write", basis: "per-call", microUsd: 30 }], estimateMicroUsd: 30 },
+    deleteProduct: { components: [{ source: "db-write", basis: "per-call", microUsd: 20 }], estimateMicroUsd: 20 },
+    listOrder: { components: [{ source: "db-read", basis: "per-call", microUsd: 12 }], estimateMicroUsd: 12 },
     createOrder: { components: [{ source: "compute", basis: "per-call", microUsd: 100 }, { source: "db-write", basis: "per-call", microUsd: 40 }], estimateMicroUsd: 140 },
+    getOrder: { components: [{ source: "db-read", basis: "per-call", microUsd: 8 }], estimateMicroUsd: 8 },
+    updateOrder: { components: [{ source: "db-write", basis: "per-call", microUsd: 40 }], estimateMicroUsd: 40 },
+    deleteOrder: { components: [{ source: "db-write", basis: "per-call", microUsd: 20 }], estimateMicroUsd: 20 },
     checkoutOrder: { components: [{ source: "third-party", basis: "per-call", microUsd: 2900 }], estimateMicroUsd: 2900 }, // the payments provider
   },
   providerSlots: { payments: "stripe" },
