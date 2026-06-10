@@ -1,0 +1,35 @@
+# Contributing to Suluk
+
+> Suluk is a **candidate** exploration of OpenAPI v4 "Moonwalk" — not the official specification.
+
+Suluk is a Bun + TypeScript monorepo of small, single-purpose packages (plus a Rust core) under
+[`tooling/`](tooling/). The full, always-current contributor guide is generated into the docs site
+(**Contributing** and **Community** pages); this file is the quick start.
+
+## Set up
+
+```sh
+cd tooling/ts && bun install
+cd packages/<name> && bun test          # each package has bun test + tsc gates — keep both green
+```
+
+## Conventions
+
+- **Pure logic + thin shells.** Each package separates unit-tested pure functions from a duck-typed host
+  adapter. That is why coverage is high and the bindings are trivial.
+- **One source, many projections.** New work is usually a new package that consumes the v4 document (or a
+  Zod/Drizzle source) and emits an artifact — follow `@suluk/scalar` or `@suluk/drizzle`.
+- **Enumerate every loss.** If a transform cannot carry something, surface it (a `warnings`/`diagnostics`
+  array) — never drop it silently.
+- **Keep the CANDIDATE labeling.** Nothing here is the official OpenAPI specification.
+
+## Docs
+
+The documentation site is generated **from source** by [`@suluk/docs`](tooling/ts/packages/docs) and
+published to GitHub Pages by [`.github/workflows/docs.yml`](.github/workflows/docs.yml). Regenerate locally:
+
+```sh
+cd tooling/ts && bun run scripts/gen-docs.ts   # → ./site
+```
+
+Open a [discussion](https://github.com/MahmoodKhalil57/sig-moonwalk/discussions) before large changes.

@@ -1,0 +1,11 @@
+{
+  "name": "@suluk/docs",
+  "version": "0.1.0",
+  "description": "Generate an intuitive static documentation site for a Bun/TS monorepo, straight from source (package.json + doc-comments + exports + README/ARCHITECTURE). Deployable to GitHub Pages. CANDIDATE tooling.",
+  "type": "module",
+  "main": "src/index.ts",
+  "exports": { ".": "./src/index.ts" },
+  "dependencies": {},
+  "devDependencies": { "@types/bun": "latest" },
+  "scripts": { "test": "bun test", "typecheck": "tsc --noEmit -p ." }
+}
