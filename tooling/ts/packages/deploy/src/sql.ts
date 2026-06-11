@@ -1,9 +1,9 @@
 /**
  * Derive a Cloudflare D1 (SQLite) schema from the entities' v4 Schema Objects. D1 IS SQLite, and the Suluk
  * data floor (@suluk/drizzle) already uses sqlite-core, so this DDL matches the source with no translation.
+ * The structured `entityColumns` view is shared with the migration-delta (migrate.ts).
  */
 import { isReference } from "@suluk/core";
-import type { SchemaOrRef } from "@suluk/core";
 import type { DeployEntity } from "./types";
 
 const lower = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
@@ -19,25 +19,48 @@ function sqliteType(prop: Record<string, unknown>): string {
   }
 }
 
-function createTable(entity: DeployEntity): string {
+/** One column, structured — shared by the full-schema emitter and the migration-delta. */
+export interface ColumnDef {
+  name: string;
+  type: string;
+  notNull: boolean;
+  pk: boolean;
+}
+
+/** The SQLite table name for an entity. */
+export function tableName(entity: DeployEntity): string {
+  return lower(entity.name);
+}
+
+/** The columns of an entity, in DDL order (id is a synthesized autoincrement PK when absent). [] for a $ref/boolean. */
+export function entityColumns(entity: DeployEntity): ColumnDef[] {
   const schema = entity.schema;
-  if (isReference(schema) || typeof schema === "boolean") {
-    return `-- ${entity.name}: schema is a $ref/boolean; define this table manually.`;
-  }
+  if (isReference(schema) || typeof schema === "boolean") return [];
   const props = (schema.properties ?? {}) as Record<string, Record<string, unknown>>;
   const required = new Set((schema.required as string[] | undefined) ?? []);
-  const table = lower(entity.name);
-  const cols: string[] = [];
+  const cols: ColumnDef[] = [];
+  let hasId = false;
   for (const [name, prop] of Object.entries(props)) {
-    if (name === "id") {
-      cols.push(`  id INTEGER PRIMARY KEY AUTOINCREMENT`);
-      continue;
-    }
-    const nn = required.has(name) ? " NOT NULL" : "";
-    cols.push(`  ${name} ${sqliteType(prop)}${nn}`);
+    if (name === "id") { cols.push({ name: "id", type: "INTEGER", notNull: true, pk: true }); hasId = true; continue; }
+    cols.push({ name, type: sqliteType(prop), notNull: required.has(name), pk: false });
   }
-  if (!props.id) cols.unshift(`  id INTEGER PRIMARY KEY AUTOINCREMENT`);
-  return `CREATE TABLE IF NOT EXISTS ${table} (\n${cols.join(",\n")}\n);`;
+  if (!hasId) cols.unshift({ name: "id", type: "INTEGER", notNull: true, pk: true });
+  return cols;
+}
+
+/** The DDL fragment for one column. */
+export function columnDdl(c: ColumnDef): string {
+  if (c.pk) return `id INTEGER PRIMARY KEY AUTOINCREMENT`;
+  return `${c.name} ${c.type}${c.notNull ? " NOT NULL" : ""}`;
+}
+
+/** CREATE TABLE for one entity (or a manual-define comment for a $ref/boolean schema). */
+export function createTable(entity: DeployEntity): string {
+  if (isReference(entity.schema) || typeof entity.schema === "boolean") {
+    return `-- ${entity.name}: schema is a $ref/boolean; define this table manually.`;
+  }
+  const cols = entityColumns(entity).map((c) => `  ${columnDdl(c)}`);
+  return `CREATE TABLE IF NOT EXISTS ${tableName(entity)} (\n${cols.join(",\n")}\n);`;
 }
 
 /** A full schema.sql for the app's entities. */

@@ -6,7 +6,14 @@
  */
 export type { DeployProvider, DeployPlan, DeployInput, DeployEntity, DeployFile, DeployStep } from "./types";
 export { cloudflare, DEFAULT_COMPAT_DATE } from "./cloudflare";
-export { schemaToSql } from "./sql";
+export { schemaToSql, createTable, entityColumns, columnDdl, tableName, type ColumnDef } from "./sql";
+// contract-delta → additive migration SQL (Phase 2).
+export { migrationSql } from "./migrate";
+// secret-push + facet-derived durable-binding provisioning (Phase 2).
+export {
+  secretPushPlan, durableBindings,
+  type SecretPushPlan, type BindingPlan, type DurableBinding,
+} from "./secrets";
 
 import { cloudflare } from "./cloudflare";
 import type { DeployProvider } from "./types";
