@@ -32,3 +32,10 @@ export {
 } from "./schemas";
 
 export { crudRoutes, type CrudOptions } from "./crud";
+// list query-param synthesis (Phase 1): declare page/perPage/sort/order/q + the pure parser the handler uses.
+export { listQuerySchema, parseListQuery, type ListQuery, type ListQueryOptions } from "./query";
+// CrudOptions runtime helpers (Phase 1): soft-delete / anonymize-on-delete (GDPR keep-record) / timestamps patches.
+export {
+  softDeleteValues, anonymizeValues, touchTimestamps, notSoftDeleted,
+  type SoftDeleteOptions, type TimestampOptions,
+} from "./mutations";

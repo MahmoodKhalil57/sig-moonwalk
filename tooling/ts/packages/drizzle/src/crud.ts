@@ -9,12 +9,25 @@ import { getTableName } from "drizzle-orm";
 import type { RouteContract, RouteResponse } from "@suluk/hono";
 import { tableSchemas } from "./schemas";
 import { pascalCase, type AnyTable } from "./meta";
+import { listQuerySchema, type ListQueryOptions } from "./query";
 
 export interface CrudOptions {
   /** Base path for the collection. Default "/" + tableName, e.g. "/users". */
   basePath?: string;
   /** Path-param name for the item id. Default "id" ⇒ ".../:id". */
   idParam?: string;
+  /** Declare list query params (page/perPage/sort/order/q) on the list route. Default true; pass options to scope. */
+  listQuery?: boolean | ListQueryOptions;
+  /**
+   * SOFT delete: DELETE marks the row (sets a deletedAt column) instead of removing it, so the projected DELETE
+   * returns the affected row (200), not 204. The patch is built at runtime by `softDeleteValues`.
+   */
+  softDelete?: boolean | { column?: string };
+  /**
+   * ANONYMIZE on delete (GDPR keep-record): DELETE redacts these columns instead of removing the row. Like
+   * softDelete, the projected DELETE returns the affected row (200). The patch comes from `anonymizeValues`.
+   */
+  anonymizeDelete?: { columns: string[] };
 }
 
 /**
@@ -41,6 +54,15 @@ export function crudRoutes(table: AnyTable, opts: CrudOptions = {}): RouteContra
   const ok = (status: number, schema: z.ZodType, description: string): RouteResponse => ({ status, schema, description });
   const bare = (status: number, description: string): RouteResponse => ({ status, description });
 
+  // a soft-delete / anonymize-delete keeps the row, so DELETE returns it (200) rather than 204.
+  const softening = opts.softDelete || opts.anonymizeDelete;
+  const deleteResponses: RouteResponse[] = softening
+    ? [ok(200, select, `The ${tableName} row, after a soft delete / anonymize.`), bare(404, "Not found.")]
+    : [bare(204, "Deleted.")];
+
+  const listQueryOpts: ListQueryOptions | undefined =
+    opts.listQuery === false ? undefined : typeof opts.listQuery === "object" ? opts.listQuery : {};
+
   return [
     {
       method: "get",
@@ -48,6 +70,7 @@ export function crudRoutes(table: AnyTable, opts: CrudOptions = {}): RouteContra
       name: `list${Pascal}`,
       summary: `List ${tableName}`,
       tags: [tableName],
+      ...(listQueryOpts ? { request: { query: listQuerySchema(table, listQueryOpts) } } : {}),
       responses: [ok(200, z.array(select), `A page of ${tableName}.`)],
     },
     {
@@ -81,10 +104,10 @@ export function crudRoutes(table: AnyTable, opts: CrudOptions = {}): RouteContra
       method: "delete",
       path: itemPath,
       name: `delete${Pascal}`,
-      summary: `Delete a ${tableName} row by ${idParam}`,
+      summary: `${softening ? "Soft-delete" : "Delete"} a ${tableName} row by ${idParam}`,
       tags: [tableName],
       request: { params: idParams },
-      responses: [bare(204, "Deleted.")],
+      responses: deleteResponses,
     },
   ];
 }

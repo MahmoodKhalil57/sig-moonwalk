@@ -23,6 +23,8 @@ export interface ColumnMeta {
   hasDefault: boolean;
   /** Part of the (single-column) primary key. */
   primaryKey: boolean;
+  /** Carries a column-level UNIQUE constraint (drizzle's `.unique()` / `isUnique`). */
+  unique: boolean;
   /** SQL CHECK/enum allowed values when the column was declared with `{ enum: [...] }`. */
   enumValues?: string[];
 }
@@ -31,6 +33,8 @@ export interface TableMeta {
   name: string;
   /** Column names flagged `primary` (ordered as drizzle reports the columns). */
   primaryKey: string[];
+  /** Column names carrying a UNIQUE constraint (the natural keys for upsert / by-field lookup). */
+  unique: string[];
   columns: ColumnMeta[];
 }
 
@@ -43,6 +47,7 @@ export function tableMetadata(table: AnyTable): TableMeta {
   const cols = getTableColumns(table);
   const columns: ColumnMeta[] = [];
   const primaryKey: string[] = [];
+  const unique: string[] = [];
 
   for (const [name, col] of Object.entries(cols)) {
     // drizzle's descriptor surface — read defensively (any dialect, any version in our peer range).
@@ -52,6 +57,7 @@ export function tableMetadata(table: AnyTable): TableMeta {
       notNull: boolean;
       hasDefault: boolean;
       primary: boolean;
+      isUnique?: boolean;
       enumValues?: string[];
     };
     const meta: ColumnMeta = {
@@ -61,14 +67,16 @@ export function tableMetadata(table: AnyTable): TableMeta {
       notNull: !!c.notNull,
       hasDefault: !!c.hasDefault,
       primaryKey: !!c.primary,
+      unique: !!c.isUnique,
       // enumValues is often an empty array on non-enum columns — only surface a non-empty one.
       ...(Array.isArray(c.enumValues) && c.enumValues.length ? { enumValues: c.enumValues } : {}),
     };
     columns.push(meta);
     if (meta.primaryKey) primaryKey.push(name);
+    if (meta.unique) unique.push(name);
   }
 
-  return { name: getTableName(table), primaryKey, columns };
+  return { name: getTableName(table), primaryKey, unique, columns };
 }
 
 /** "user_accounts" / "users" → "UserAccounts" / "Users". The v4 component key (C009 by-name). */
