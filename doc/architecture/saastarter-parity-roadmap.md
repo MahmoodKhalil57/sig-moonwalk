@@ -42,6 +42,15 @@ depth track (below): `@suluk/stripe` checkout-path, `@suluk/drizzle`, `@suluk/bu
 | **`@suluk/email`** | `8fc7e77` | the `EmailProvider` binding the builder slot lacked (`consoleProvider` + Workers-safe `resendProvider` via REST, no SDK); `renderEmailHtml` (branding parameterized + i18n strings injected); per-event templates (verify/reset/change-email/delete/order-confirmation/order-status/newsletter); wired the `resend` slot `pkg` | 12 |
 | **`@suluk/theme`** | `812e376` | OKLCH value type; `TokenSpec` contract; deterministic `deriveDark`; `toCssVars`/`toThemeCss`/`toTailwindTheme`/`toShadcnTokens` projections; graphite/terracotta/ocean reference schemes | 14 |
 
+### Phase 1 · payment/data depth (in progress)
+
+| Item | Commit | What landed | Tests |
+|---|---|---|---|
+| **`@suluk/stripe` checkout money-path** | `e5a3c5d` | pure `planPaymentIntent` (never charges a client amount; reuse/update/create + idempotency — anti-double-charge) + `cardInfoFrom`/`ownsPaymentMethod`; `stripeCheckout` binding (getOrCreateCustomer + saved-card vault); typed `webhookRouter` over `verifyWebhook` | 45 |
+| **`@suluk/drizzle` depth** | `7456f16` | list-query synthesis (`listQuerySchema` + pure `parseListQuery`); `softDelete`/`anonymizeDelete`/`timestamps` CrudOptions + pure patch helpers (anonymize = GDPR keep-record); UNIQUE-column metadata. FK/relation projection deferred (needs dialect-specific `getTableConfig`) | 25 |
+| `@suluk/builder` ECOMMERCE + AUTH (Session/Account/Verification) modules | — | pending | — |
+| `@suluk/admin` data-admin mode · `@suluk/better-auth` 2FA/passkey | — | pending | — |
+
 ---
 
 ## Three new packages (the only ones that survived review)
