@@ -12,6 +12,7 @@ import { v4ToZod } from "@suluk/zod";
 import type { RouteContract } from "@suluk/hono";
 import { emitV4 } from "@suluk/hono";
 import { formSpec, tableSpec, renderFormTsx, renderTableTsx } from "@suluk/shadcn";
+import { listQuerySchema } from "@suluk/drizzle";
 import type { DslDocument, ParamSpec } from "./dsl";
 import { registry, type Registry } from "./registry";
 import { validateAll } from "./validate";
@@ -29,8 +30,12 @@ export function crudRoutesFromSchema(name: string, schema: SchemaOrRef, defs?: R
   const entity = v4ToZod(schema as Record<string, unknown>, { defs }) as z.ZodType;
   const base = `/${lower(name)}`;
   const idParams = z.object({ id: z.string() });
+  // List routes carry the five reserved list-query params (page/perPage/sort/order/q) — DECLARED here so they
+  // project into the v4 doc + the typed SDK + the auto-wired query validator, and PARSED at runtime by the same
+  // package's parseListQuery. Per-column equality filters are flat (read at runtime), so they aren't enumerated.
+  const listQuery = listQuerySchema();
   return [
-    { method: "get", path: base, name: `list${name}`, summary: `List ${name}`, tags: [name], responses: [{ status: 200, description: "ok", schema: z.array(entity) }] },
+    { method: "get", path: base, name: `list${name}`, summary: `List ${name}`, tags: [name], request: { query: listQuery }, responses: [{ status: 200, description: "ok", schema: z.array(entity) }] },
     { method: "post", path: base, name: `create${name}`, summary: `Create ${name}`, tags: [name], request: { json: entity }, responses: [{ status: 201, description: "created", schema: entity }] },
     { method: "get", path: `${base}/:id`, name: `get${name}`, summary: `Get ${name} by id`, tags: [name], request: { params: idParams }, responses: [{ status: 200, description: "ok", schema: entity }, { status: 404, description: "not found" }] },
     { method: "patch", path: `${base}/:id`, name: `update${name}`, summary: `Update ${name}`, tags: [name], request: { params: idParams, json: entity }, responses: [{ status: 200, description: "updated", schema: entity }] },

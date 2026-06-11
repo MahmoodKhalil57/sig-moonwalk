@@ -20,9 +20,12 @@ export interface ListQueryOptions {
 const RESERVED = new Set(["page", "perPage", "sort", "order", "q"]);
 
 /** The Zod query schema for a list route: page/perPage/sort/order/q (coerced from strings). Extra column filters
- * are read by {@link parseListQuery} at runtime (OpenAPI query params are flat, so they aren't enumerated here). */
-export function listQuerySchema(table: AnyTable, opts: ListQueryOptions = {}): z.ZodType {
-  const cols = opts.columns ?? tableMetadata(table).columns.map((c) => c.name);
+ * are read by {@link parseListQuery} at runtime (OpenAPI query params are flat, so they aren't enumerated here).
+ * `table` is OPTIONAL: with a table (or `opts.columns`) `sort` is a column enum; without either it is a free string —
+ * so the contract-projection layer (@suluk/builder), which holds a Zod entity rather than a Drizzle table, can call
+ * `listQuerySchema()` and still emit the same five params into the v4 doc + SDK. */
+export function listQuerySchema(table?: AnyTable, opts: ListQueryOptions = {}): z.ZodType {
+  const cols = opts.columns ?? (table ? tableMetadata(table).columns.map((c) => c.name) : []);
   const sort = cols.length ? z.enum(cols as [string, ...string[]]).optional() : z.string().optional();
   return z.object({
     page: z.coerce.number().int().min(1).optional(),

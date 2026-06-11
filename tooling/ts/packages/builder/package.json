@@ -18,7 +18,8 @@
     "@suluk/core": "workspace:*",
     "@suluk/zod": "workspace:*",
     "@suluk/hono": "workspace:*",
-    "@suluk/shadcn": "workspace:*"
+    "@suluk/shadcn": "workspace:*",
+    "@suluk/drizzle": "workspace:*"
   },
   "peerDependencies": { "zod": "^4.0.0" },
   "devDependencies": { "@types/bun": "latest", "zod": "^4.4.3" },
