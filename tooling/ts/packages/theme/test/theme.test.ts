@@ -2,7 +2,7 @@ import { test, expect, describe } from "bun:test";
 import {
   oklch, clampOklch, formatOklch, parseOklch, withLightness,
   cssVarName, deriveDark, themeFromLight,
-  toCssVars, toThemeCss, toTailwindTheme, toShadcnTokens,
+  toCssVars, toThemeCss, toTailwindTheme, toShadcnTokens, renderBaseCss,
   graphite, terracotta, ocean, REFERENCE_SCHEMES,
 } from "../src/index";
 
@@ -106,6 +106,22 @@ describe("reference schemes", () => {
     for (const s of Object.values(REFERENCE_SCHEMES)) {
       expect(toThemeCss(themeFromLight(s))).toContain("--primary:");
     }
+  });
+
+  test("renderBaseCss emits the a11y + motion contract, parameterized by var names + reduced-motion-gated", () => {
+    const css = renderBaseCss({ ring: "var(--accent)", destructive: "#ef4444" });
+    expect(css).toContain(":focus-visible");
+    expect(css).toContain("outline: 2px solid var(--accent)"); // ring var threaded through
+    expect(css).toContain('[aria-invalid="true"]');
+    expect(css).toContain("#ef4444"); // destructive threaded through
+    expect(css).toContain(".sr-only");
+    expect(css).toContain(".skip-link");
+    expect(css).toContain("@keyframes suluk-shake");
+    expect(css).toContain("[data-reveal]");
+    expect(css).toContain(".navprogress");
+    expect(css).toContain("@media (prefers-reduced-motion: reduce)"); // the global guard
+    // defaults to the shadcn role vars when unparameterized
+    expect(renderBaseCss()).toContain("var(--ring)");
   });
 
   test("dark mode keeps TEXT readable: the bare `foreground` goes LIGHT, not dark (regression)", () => {

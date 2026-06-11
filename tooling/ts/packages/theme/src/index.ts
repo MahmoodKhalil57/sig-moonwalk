@@ -14,7 +14,7 @@ export {
 } from "./tokens";
 export { deriveDark, themeFromLight } from "./derive";
 export {
-  toCssVars, toThemeCss, toTailwindTheme, toShadcnTokens,
-  type CssVarsOptions, type ThemeCssOptions,
+  toCssVars, toThemeCss, toTailwindTheme, toShadcnTokens, renderBaseCss,
+  type CssVarsOptions, type ThemeCssOptions, type BaseCssOptions,
 } from "./emit";
 export { graphite, terracotta, ocean, REFERENCE_SCHEMES } from "./schemes";

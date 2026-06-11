@@ -64,3 +64,55 @@ export function toShadcnTokens(spec: TokenSpec): Record<string, string> {
   out["--radius"] = `${spec.radius}rem`;
   return out;
 }
+
+export interface BaseCssOptions {
+  /** CSS value for keyboard focus rings (default the theme's `var(--ring)`). Pass your own accent var if your app
+   *  uses a different color vocabulary. */
+  ring?: string;
+  /** CSS value for error / invalid states (default `var(--destructive)`). */
+  destructive?: string;
+  /** CSS value for the corner radius used on focus rings (default `var(--radius)`). */
+  radius?: string;
+}
+
+/**
+ * The reusable design-system BASE layer — the accessibility + motion contract every builder inherits, independent
+ * of the scheme colors. Parameterized by CSS-var names so an app on its OWN color vocabulary (not the shadcn role
+ * names) can point it at its own ring/destructive vars. Emits, all reduced-motion-gated:
+ *   - keyboard-only focus rings (`:focus-visible`) on every interactive element — mouse clicks stay clean;
+ *   - the `[aria-invalid]` destructive border+ring contract (app toggles the attribute, theme owns the look);
+ *   - the `.sr-only` + `.skip-link` accessibility utilities (skip-to-content);
+ *   - motion primitives — `shake`/`fade-in-down` (form errors), `[data-reveal]` staggered scroll-reveal, and the
+ *     asymptotic `.navprogress` bar — so each app drives behavior while the look is one inherited source;
+ *   - a GLOBAL `prefers-reduced-motion` baseline that neutralizes all of the above for users who ask for it.
+ */
+export function renderBaseCss(opts: BaseCssOptions = {}): string {
+  const ring = opts.ring ?? "var(--ring)";
+  const destructive = opts.destructive ?? "var(--destructive)";
+  const radius = opts.radius ?? "var(--radius)";
+  return `/* @suluk/theme base layer — a11y + motion contract (reduced-motion-gated). */
+:where(a,button,[role="button"],input,select,textarea,summary,[tabindex]):focus-visible {
+  outline: 2px solid ${ring}; outline-offset: 2px; border-radius: ${radius};
+}
+:where(a,button,input,select,textarea):focus:not(:focus-visible) { outline: none; }
+[aria-invalid="true"], [data-invalid="true"] {
+  border-color: ${destructive} !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, ${destructive} 22%, transparent) !important;
+}
+.sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+.skip-link { position:fixed; top:8px; inset-inline-start:8px; z-index:100; padding:9px 15px; border-radius:9px; background:var(--panel,#fff); color:var(--fg,#000); border:1px solid ${ring}; font-weight:600; transform:translateY(-160%); transition:transform .18s ease; }
+.skip-link:focus { transform:translateY(0); outline:2px solid ${ring}; outline-offset:2px; }
+@keyframes suluk-shake { 10%,90%{transform:translateX(-1px)} 20%,80%{transform:translateX(2px)} 30%,50%,70%{transform:translateX(-4px)} 40%,60%{transform:translateX(4px)} }
+@keyframes suluk-fade-in-down { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }
+.shake { animation: suluk-shake .4s cubic-bezier(.36,.07,.19,.97) both; }
+.fade-in-down { animation: suluk-fade-in-down .22s ease both; }
+[data-reveal] { opacity:0; transform:translateY(12px); transition:opacity .5s ease, transform .5s ease; transition-delay:calc(var(--i,0)*80ms); }
+[data-reveal].reveal-in { opacity:1; transform:none; }
+.navprogress { position:fixed; top:0; inset-inline-start:0; height:3px; width:0; z-index:95; background:${ring}; box-shadow:0 0 9px ${ring}, 0 0 4px ${ring}; opacity:0; transition:width .2s ease, opacity .3s ease; pointer-events:none; }
+.navprogress.active { opacity:1; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation-duration:.01ms!important; animation-iteration-count:1!important; transition-duration:.01ms!important; scroll-behavior:auto!important; }
+  [data-reveal] { opacity:1; transform:none; }
+}`;
+}
