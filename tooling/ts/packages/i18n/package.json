@@ -1,0 +1,23 @@
+{
+  "name": "@suluk/i18n",
+  "version": "0.1.0",
+  "description": "The locale primitive every content app needs: a typed locale/direction model (defineLocales), a Workers-safe message loader with default-locale fallback + {token} interpolation, compile-time key-parity + a runtime completeness grade, Intl number/currency/date formatting (incl. Eastern-Arabic numerals), framework-agnostic cookie→locale resolution, and an ./astro middleware glue. The catalog CONTENT stays app-authored; this owns the MECHANISM. CANDIDATE tooling.",
+  "publishConfig": { "access": "public" },
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MahmoodKhalil57/suluk.git",
+    "directory": "tooling/ts/packages/i18n"
+  },
+  "homepage": "https://github.com/MahmoodKhalil57/suluk#readme",
+  "bugs": "https://github.com/MahmoodKhalil57/suluk/issues",
+  "type": "module",
+  "main": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./astro": "./src/astro.ts"
+  },
+  "dependencies": {},
+  "devDependencies": { "@types/bun": "latest" },
+  "scripts": { "test": "bun test", "typecheck": "tsc --noEmit -p ." }
+}
