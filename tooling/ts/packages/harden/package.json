@@ -1,0 +1,16 @@
+{
+  "name": "@suluk/harden",
+  "version": "0.1.0",
+  "description": "Schema HARDENING as a derived contract facet: audit a v4 'Suluk' document's input schemas for the validations that keep weird/oversized input from breaking the system — every string a maxLength + a pattern, every number a maximum, every array a maxItems, every object closed + typed, no any/unknown — score it (A-F), surface the grade to INCENTIVISE the author, and gate CI on a minimum. CANDIDATE tooling.",
+  "publishConfig": { "access": "public" },
+  "license": "Apache-2.0",
+  "repository": { "type": "git", "url": "git+https://github.com/MahmoodKhalil57/suluk.git", "directory": "tooling/ts/packages/harden" },
+  "homepage": "https://github.com/MahmoodKhalil57/suluk#readme",
+  "bugs": "https://github.com/MahmoodKhalil57/suluk/issues",
+  "type": "module",
+  "main": "src/index.ts",
+  "exports": { ".": "./src/index.ts" },
+  "dependencies": { "@suluk/core": "workspace:*" },
+  "devDependencies": { "@types/bun": "latest" },
+  "scripts": { "test": "bun test", "typecheck": "tsc --noEmit -p ." }
+}

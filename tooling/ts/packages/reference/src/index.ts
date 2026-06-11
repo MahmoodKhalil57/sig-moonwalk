@@ -15,7 +15,8 @@ import {
 import { schemaHtml, sampleOf, constraintNotes } from "./schema";
 import { normalize, type RefDoc, type NormalizedOperation, type NormalizedParam, type ServerEntry } from "./ir";
 import { codeSamples } from "./codegen";
-import { costExplorer, adaPlayground, projectionMap } from "./panels";
+import { costExplorer, adaPlayground, projectionMap, hardeningPanel, hardenBadge } from "./panels";
+import { auditDocument, type OpAudit, type DocAudit } from "@suluk/harden";
 import { STYLE, SCRIPT } from "./assets";
 
 export interface ReferencePlugin {
@@ -72,7 +73,7 @@ function paramTable(doc: OpenAPIv4Document, label: string, loc: string, params: 
   return `<div class="slot"><div class="slot-label">${label}</div><table class="props"><thead><tr><th>name</th><th>type</th><th>notes</th>${tryIt ? "<th>value</th>" : ""}</tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 
-function opCard(doc: OpenAPIv4Document, ir: RefDoc, op: NormalizedOperation, viewers: Viewer[], server: string, opts: ReferenceOptions): string {
+function opCard(doc: OpenAPIv4Document, ir: RefDoc, op: NormalizedOperation, viewers: Viewer[], server: string, opts: ReferenceOptions, harden?: OpAudit): string {
   const m = op.method;
   const reach = viewers.filter((v) => reachable(op.access, v)).map((v) => v.id);
   const bodySample = op.request.body ? sampleOf(doc, op.request.body.schema) : undefined;
@@ -94,6 +95,7 @@ function opCard(doc: OpenAPIv4Document, ir: RefDoc, op: NormalizedOperation, vie
       <span class="op-name">${escapeHtml(op.name)}</span>
       ${op.deprecated ? '<span class="dep">deprecated</span>' : ""}
       <span class="spacer"></span>
+      ${harden ? hardenBadge(harden.grade, `hardening: ${harden.findings.length} finding(s) · ${harden.score}/100`) : ""}
       ${accessChip(op.access)}
       ${costBadge(op.cost)}
       <span class="caret" aria-hidden="true">▾</span>
@@ -123,6 +125,8 @@ export function referenceHtml(doc: OpenAPIv4Document, opts: ReferenceOptions = {
   const viewers = opts.viewers ?? DEFAULT_VIEWERS;
   const servers = ir.servers.length ? ir.servers : [{ url: "" }];
   const server = servers[0].url;
+  const hardening = auditDocument(doc); // the hardening facet (grade per op + a doc rollup)
+  const hardenByName = new Map(hardening.byOperation.map((o) => [o.operation, o]));
 
   // group operations by tag (preserving the IR's tag metadata + order)
   const tagOrder = new Map(ir.tags.map((t, i) => [t.name, t.order ?? i]));
@@ -133,10 +137,11 @@ export function referenceHtml(doc: OpenAPIv4Document, opts: ReferenceOptions = {
 
   const nav = sortedTags.map((tag) => `<div class="nav-group"><div class="nav-tag">${escapeHtml(tag)}</div>${groups.get(tag)!.map((op) => { const reach = viewers.filter((v) => reachable(op.access, v)).map((v) => v.id); return `<a class="nav-op" href="#${escapeHtml(op.id)}" data-name="${escapeHtml((op.name + " " + op.path).toLowerCase())}" data-reach="${escapeHtml(reach.join(" "))}"><span class="nm" style="color:${METHOD_COLOR[op.method] ?? "#475569"}">${escapeHtml(op.method.toUpperCase())}</span>${escapeHtml(op.name)}</a>`; }).join("")}</div>`).join("");
 
-  const body = sortedTags.map((tag) => { const t = tagMeta.get(tag); return `<div class="group"><h2 id="tag-${escapeHtml(tag)}">${escapeHtml(t?.summary ?? tag)}${t?.type ? ` <span class="badge">${escapeHtml(t.type)}</span>` : ""}</h2>${t?.description ? `<p class="muted">${mdInline(t.description)}</p>` : ""}${groups.get(tag)!.map((op) => opCard(doc, ir, op, viewers, server, opts)).join("")}</div>`; }).join("");
+  const body = sortedTags.map((tag) => { const t = tagMeta.get(tag); return `<div class="group"><h2 id="tag-${escapeHtml(tag)}">${escapeHtml(t?.summary ?? tag)}${t?.type ? ` <span class="badge">${escapeHtml(t.type)}</span>` : ""}</h2>${t?.description ? `<p class="muted">${mdInline(t.description)}</p>` : ""}${groups.get(tag)!.map((op) => opCard(doc, ir, op, viewers, server, opts, hardenByName.get(op.name))).join("")}</div>`; }).join("");
 
   const roll = costRollup(doc);
   const costHero = `<span class="badge cost" title="${roll.priced} priced · ${roll.undeclared} undeclared">⛁ ${fmtUsd(roll.totalMicroUsd)} priced subtotal · ${roll.priced}/${roll.priced + roll.undeclared} priced</span>`;
+  const hardenHero = `<a class="badge harden-hero" href="#hardening" style="background:${["F","D"].includes(hardening.grade) ? "#fee2e2" : hardening.grade === "C" ? "#fef9c3" : "#dcfce7"};color:${["F","D"].includes(hardening.grade) ? "#991b1b" : hardening.grade === "C" ? "#854d0e" : "#166534"}" title="${hardening.bySeverity.high} high · ${hardening.bySeverity.medium} medium findings">🛡 Hardening ${hardening.grade} · ${hardening.score}% bounded</a>`;
 
   const lens = `<div class="lens" role="radiogroup" aria-label="View as"><div class="lens-label">View as</div><div class="lens-btns">
     <button class="lens-btn" role="radio" data-view="all">Everything <span class="cnt" id="view-count">${ir.operations.length}</span></button>
@@ -151,7 +156,7 @@ export function referenceHtml(doc: OpenAPIv4Document, opts: ReferenceOptions = {
     ${cc.rows.map((r) => `<tr><td class="opn">${escapeHtml(r.name)}</td><td><span class="acc ${ACCESS_CHIP[r.requires]?.cls ?? "acc-any"}">${escapeHtml(r.requires)}${r.scope === "owner" ? " · own" : ""}</span></td>${viewers.map((v) => `<td class="cell" aria-label="${escapeHtml(v.label)}: ${r.reach[v.id]}">${GLYPH[r.reach[v.id]]}</td>`).join("")}</tr>`).join("")}
     </tbody></table></div>`;
 
-  const webhooks = ir.webhooks.length ? `<div class="section" id="webhooks"><h2>Webhooks — operations the API receives</h2>${ir.webhooks.map((op) => opCard(doc, ir, op, viewers, server, opts)).join("")}</div>` : "";
+  const webhooks = ir.webhooks.length ? `<div class="section" id="webhooks"><h2>Webhooks — operations the API receives</h2>${ir.webhooks.map((op) => opCard(doc, ir, op, viewers, server, opts, hardenByName.get(op.name))).join("")}</div>` : "";
   const models = ir.models.length ? `<div class="section" id="models"><h2>Models</h2>${ir.models.map((mod) => `<div class="model" id="model-${escapeHtml(mod.name)}" data-name="${escapeHtml(mod.name.toLowerCase())}"><h3>${escapeHtml(mod.name)}</h3>${schemaHtml(doc, mod.schema)}</div>`).join("")}</div>` : "";
   const security = ir.security.length ? `<div class="section" id="security"><h2>Authentication</h2>${ir.security.map((s) => `<div class="scheme" id="scheme-${escapeHtml(s.name)}"><b>${escapeHtml(s.name)}</b> <span class="chip">${escapeHtml(s.type ?? "")}${s.scheme ? " · " + escapeHtml(s.scheme) : ""}${s.in ? " · in " + escapeHtml(s.in) : ""}</span>${s.description ? `<p class="muted">${mdInline(s.description)}</p>` : ""}</div>`).join("")}</div>` : "";
 
@@ -174,12 +179,12 @@ export function referenceHtml(doc: OpenAPIv4Document, opts: ReferenceOptions = {
   ${lens}
   <nav id="nav" aria-label="Operations">${nav}</nav>
   <div class="side-foot">
-    <a href="/openapi.json">⬇ OpenAPI v4 document</a><a href="#cost-explorer">Cost Explorer</a><a href="#ada">ADA Playground</a><a href="#reachability">Reachability matrix</a>${models ? '<a href="#models">Models</a>' : ""}${security ? '<a href="#security">Authentication</a>' : ""}
+    <a href="/openapi.json">⬇ OpenAPI v4 document</a><a href="#hardening">🛡 Hardening ${hardening.grade}</a><a href="#cost-explorer">Cost Explorer</a><a href="#ada">ADA Playground</a><a href="#reachability">Reachability matrix</a>${models ? '<a href="#models">Models</a>' : ""}${security ? '<a href="#security">Authentication</a>' : ""}
   </div>
 </aside>
 <main id="main">
   <header class="hero">
-    <div class="badges"><span class="badge v4">OpenAPI ${escapeHtml(ir.spec.version)}</span><span class="badge">${ir.operations.length} operations</span>${costHero}${ir.security.length ? `<span class="badge">${ir.security.length} auth scheme${ir.security.length > 1 ? "s" : ""}</span>` : ""}</div>
+    <div class="badges"><span class="badge v4">OpenAPI ${escapeHtml(ir.spec.version)}</span><span class="badge">${ir.operations.length} operations</span>${costHero}${hardenHero}${ir.security.length ? `<span class="badge">${ir.security.length} auth scheme${ir.security.length > 1 ? "s" : ""}</span>` : ""}</div>
     <h1>${escapeHtml(ir.info.title)}</h1>
     <p class="tagline">${escapeHtml(opts.tagline ?? "One typed v4 contract — projected into CRUD · client · UI · cost · docs.")}</p>
     ${ir.info.description ? `<p class="muted">${mdInline(ir.info.description)}</p>` : ""}
@@ -191,6 +196,7 @@ export function referenceHtml(doc: OpenAPIv4Document, opts: ReferenceOptions = {
   ${body}
   ${webhooks}
   ${projectionMap(ir)}
+  ${hardeningPanel(hardening)}
   ${costExplorer(ir)}
   ${adaPlayground(ir)}
   ${matrix}
@@ -211,5 +217,6 @@ export { normalize, type RefDoc, type NormalizedOperation } from "./ir";
 export { escapeHtml, crossCut, reachable, reachState, costRollup, DEFAULT_VIEWERS, type Viewer, type AccessFacet, type CostModel, type CrossCutRow } from "./facets";
 export { schemaHtml, sampleOf, constraintNotes } from "./schema";
 export { codeSamples } from "./codegen";
-export { costExplorer, adaPlayground, projectionMap } from "./panels";
+export { costExplorer, adaPlayground, projectionMap, hardeningPanel, hardenBadge } from "./panels";
 export { portalHtml, portalResponse, type PortalEntry, type PortalOptions } from "./portal";
+export { auditDocument, auditOperation, assertGrade, type DocAudit, type OpAudit, type Grade } from "@suluk/harden";

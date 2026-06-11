@@ -67,6 +67,12 @@ pre.json{background:var(--code);color:var(--codefg);border-radius:8px;padding:10
 .cx-calc{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--accentbg);border:1px solid var(--accentline);border-radius:10px;padding:10px 12px;margin:10px 0;font-size:14px}.cx-calc input{width:80px;padding:3px 6px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg)}.cx-table th.sortable{cursor:pointer}
 .ada-form{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.ada-form input,.ada-form select{padding:6px 9px;border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--fg);font-size:13px}.ada-form input{flex:1;min-width:160px;font-family:ui-monospace,monospace}#ada-out{margin-top:8px}
 .proj-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-top:12px}.proj-card{display:block;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;text-decoration:none;color:var(--fg)}.proj-card:hover{border-color:var(--accent)}.proj-name{font-weight:700;font-size:14px}.proj-detail{font-size:12px;margin-top:2px}
+.harden{font-size:11px;font-weight:800;padding:2px 8px;border-radius:999px;white-space:nowrap}.harden-hero{text-decoration:none}
+.harden-op{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:10px 0;background:var(--panel)}.harden-op-head{display:flex;gap:8px;align-items:center}.harden-op-head a{text-decoration:none}
+.harden-list{margin:8px 0 0;padding-left:18px;font-size:13px}.harden-list li{margin:3px 0}
+.sev{font-size:10px;font-weight:800;text-transform:uppercase;padding:0 5px;border-radius:4px}.sev-high{background:#fee2e2;color:#991b1b}.sev-medium{background:#fef9c3;color:#854d0e}.sev-low{background:#f1f5f9;color:#475569}
+[data-theme="dark"] .sev-high{background:#7f1d1d;color:#fecaca}[data-theme="dark"] .sev-medium{background:#451a03;color:#fcd34d}
+.ok-line{color:#166534;background:#dcfce7;border-radius:8px;padding:8px 12px;display:inline-block}
 .hidden-by-view,.hidden-by-filter{display:none !important}.menu-toggle{display:none}
 @media(max-width:820px){.side{position:fixed;left:0;top:0;z-index:50;transform:translateX(-100%);transition:transform .2s;box-shadow:0 0 40px rgba(0,0,0,.2)}body.nav-open .side{transform:translateX(0)}.menu-toggle{display:grid;position:fixed;top:12px;left:12px;z-index:60}main{padding:60px 18px 80px}}
 `;

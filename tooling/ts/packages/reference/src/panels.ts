@@ -5,8 +5,26 @@
  */
 import { escapeHtml, fmtUsd, costEstimate } from "./facets";
 import type { RefDoc } from "./ir";
+import type { DocAudit, Grade } from "@suluk/harden";
 
 const embed = (v: unknown) => JSON.stringify(v).replace(/</g, "\\u003c");
+
+export const HARDEN_COLOR: Record<Grade, { bg: string; fg: string }> = {
+  A: { bg: "#dcfce7", fg: "#166534" }, B: { bg: "#ecfccb", fg: "#3f6212" }, C: { bg: "#fef9c3", fg: "#854d0e" }, D: { bg: "#ffedd5", fg: "#9a3412" }, F: { bg: "#fee2e2", fg: "#991b1b" },
+};
+export function hardenBadge(g: Grade, title: string): string {
+  const c = HARDEN_COLOR[g];
+  return `<span class="harden" style="background:${c.bg};color:${c.fg}" title="${escapeHtml(title)}">🛡 ${g}</span>`;
+}
+
+/** The Hardening incentive panel — the weakest operations + their concrete fixes, gamified toward the next grade. */
+export function hardeningPanel(audit: DocAudit): string {
+  const worst = audit.byOperation.filter((o) => o.findings.length);
+  const next: Record<Grade, string> = { F: "D", D: "C", C: "B", B: "A", A: "A" };
+  return `<div class="section" id="hardening"><h2>Hardening — input-validation grade ${hardenBadge(audit.grade, `${audit.score}/100`)} <span class="muted">${audit.score}/100</span></h2>
+    <p class="muted">Untrusted input is the attack surface. Every string wants a <b>maxLength</b> + a <b>pattern</b> (a character allowlist), every number a <b>maximum</b>, every array a <b>maxItems</b>, every object <b>closed</b> (additionalProperties:false) + typed, and <b>no any/unknown</b> — so malformed or oversized input can't break the system. <b>${audit.bySeverity.high}</b> high · <b>${audit.bySeverity.medium}</b> medium · <b>${audit.bySeverity.low}</b> low findings.${audit.grade !== "A" ? ` Harden the operations below to reach grade <b>${next[audit.grade]}</b>.` : ""}</p>
+    ${worst.length === 0 ? '<p class="ok-line">✓ every input is fully bounded — grade A.</p>' : worst.map((o) => `<div class="harden-op"><div class="harden-op-head">${hardenBadge(o.grade, "")} <a href="#${escapeHtml(o.operation)}"><code>${escapeHtml(o.operation)}</code></a> <span class="muted">${o.findings.length} finding${o.findings.length > 1 ? "s" : ""}</span></div><ul class="harden-list">${o.findings.slice(0, 8).map((f) => `<li><span class="sev sev-${f.severity}">${f.severity}</span> ${escapeHtml(f.message)} → <span class="muted">${escapeHtml(f.fix)}</span></li>`).join("")}</ul></div>`).join("")}</div>`;
+}
 
 export function costExplorer(ir: RefDoc): string {
   const rows = ir.operations.map((o) => {

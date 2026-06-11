@@ -1,5 +1,5 @@
 import { test, expect, describe } from "bun:test";
-import { referenceHtml, referenceResponse, normalize, crossCut, reachable, reachState, costRollup, codeSamples, portalHtml, DEFAULT_VIEWERS, schemaHtml, sampleOf, constraintNotes, escapeHtml, type ReferencePlugin } from "../src/index";
+import { referenceHtml, referenceResponse, normalize, crossCut, reachable, reachState, costRollup, codeSamples, portalHtml, auditDocument, DEFAULT_VIEWERS, schemaHtml, sampleOf, constraintNotes, escapeHtml, type ReferencePlugin } from "../src/index";
 import type { OpenAPIv4Document } from "@suluk/core";
 
 const doc = {
@@ -129,6 +129,18 @@ describe("@suluk/reference — IR + complete renderer", () => {
     const html = referenceHtml(doc, { plugins: [plugin] });
     expect(html).toContain("Plugged");
     expect(html).toContain("<!--after:listProduct-->");
+  });
+
+  test("hardening facet: a grade badge per op + a hero rollup + the Hardening panel with fixes", () => {
+    const html = referenceHtml(doc);
+    expect(html).toContain("🛡 Hardening");            // hero rollup badge
+    expect(html).toContain('id="hardening"');           // the incentive panel
+    expect(html).toContain("input-validation grade");
+    expect(html).toMatch(/maxLength|pattern|maximum|maxItems/); // concrete fixes surfaced
+    const a = auditDocument(doc);
+    expect(["A", "B", "C", "D", "F"]).toContain(a.grade);
+    expect(a.byOperation.length).toBe(normalize(doc).operations.length);
+    expect(a.byOperation[0].score).toBeLessThanOrEqual(a.byOperation[a.byOperation.length - 1].score); // weakest first
   });
 
   test("Phase-3 portal: multi-document index", () => {
