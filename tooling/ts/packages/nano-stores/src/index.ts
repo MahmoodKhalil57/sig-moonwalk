@@ -14,3 +14,5 @@ export {
   type MutatorInvoker,
   type MutatorInput,
 } from "./stores";
+// commerce primitive: a framework-agnostic, localStorage-persisted, cross-tab-synced shopping cart.
+export { createCartStore, type CartStore, type CartLine, type CartStoreOptions } from "./cart";
