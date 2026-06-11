@@ -49,7 +49,9 @@ depth track (below): `@suluk/stripe` checkout-path, `@suluk/drizzle`, `@suluk/bu
 | **`@suluk/stripe` checkout money-path** | `e5a3c5d` | pure `planPaymentIntent` (never charges a client amount; reuse/update/create + idempotency — anti-double-charge) + `cardInfoFrom`/`ownsPaymentMethod`; `stripeCheckout` binding (getOrCreateCustomer + saved-card vault); typed `webhookRouter` over `verifyWebhook` | 45 |
 | **`@suluk/drizzle` depth** | `7456f16` | list-query synthesis (`listQuerySchema` + pure `parseListQuery`); `softDelete`/`anonymizeDelete`/`timestamps` CrudOptions + pure patch helpers (anonymize = GDPR keep-record); UNIQUE-column metadata. FK/relation projection deferred (needs dialect-specific `getTableConfig`) | 25 |
 | **`@suluk/builder` modules** | `f9f43e0` | AUTH 0.2.0 → User (+ emailVerified/image) + Session/Account/Verification (security tab + GDPR-cascade targets); ECOMMERCE 0.2.0 → +Variant/Cart/Discount/Review/Wishlist; shared `crudCost` keeps both grade-A | builder 93 · cockpit 115 |
-| `@suluk/admin` data-admin mode · `@suluk/better-auth` 2FA/passkey | — | **pending (last depth item)** | — |
+| **`@suluk/admin` + `@suluk/better-auth`** | `b1b4b28` | data-admin mode (entity schema + access scope → list table + create/edit form, `/data` route); 2FA/passkey/org via scope-encoding (`mfa:verified`, `org:<id>:<scope>`) — Open-Decision #5 resolved toward the scope branch | admin 11 · better-auth 39 |
+
+**✅ Phase 1 COMPLETE** — three new packages + payment/data depth all shipped. Open-Decision #5 (Principal model) resolved: **scope-encoding** (`mfa:verified` / `org:<id>:<scope>`), additive over the `{scopes}` Principal — a richer Principal type remains possible later if a projection needs non-scope state.
 
 ---
 
