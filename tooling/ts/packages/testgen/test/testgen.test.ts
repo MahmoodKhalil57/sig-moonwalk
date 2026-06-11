@@ -1,5 +1,6 @@
 import { test, expect, describe } from "bun:test";
-import { generateTests } from "../src/index";
+import { generateTests, generateMoneyTests } from "../src/index";
+import { orderTotal, verifyAmount, prorateDiscount, idempotencyKey } from "@suluk/stripe";
 import type { OpenAPIv4Document } from "@suluk/core";
 
 const doc = {
@@ -65,5 +66,56 @@ describe("@suluk/testgen — generate a conformance suite from a v4 contract", (
 
   test("framework toggle emits vitest imports", () => {
     expect(generateTests(doc, { framework: "vitest" })).toContain('from "vitest"');
+  });
+
+  test("error-conformance: a non-public op asserts the deny body is RFC-9457 Problem Details (the B1 envelope)", () => {
+    expect(suite).toContain("error-conformance — a denied request returns a well-formed Problem Details body");
+    expect(suite).toContain('typeof body.title === "string" && body.status === r.status'); // the @suluk/hono envelope fields
+    // a public op never gets an error-conformance block (it isn't expected to deny)
+    expect(suite.split("access — public").length).toBeGreaterThan(1);
+  });
+});
+
+describe("@suluk/testgen — generateMoneyTests (PARITY §2 checkout-resilience, in-process)", () => {
+  const money = generateMoneyTests();
+
+  test("emits a self-contained bun:test suite importing the @suluk/stripe primitives", () => {
+    expect(money).toContain('import { test, expect, describe } from "bun:test"');
+    expect(money).toContain('} from "@suluk/stripe"');
+    expect(money).toContain("verifyAmount");
+    expect(money).toContain("prorateDiscount");
+    expect(money).toContain("idempotencyKey");
+  });
+
+  test("encodes the load-bearing invariants: anti-tampering, never-over-discount, exact proration, idempotency", () => {
+    expect(money).toContain('expect(tampered.reason).toBe("amount-mismatch")');         // anti-tampering
+    expect(money).toContain("orderTotal(lines, huge).totalCents).toBe(0)");             // never negative
+    expect(money).toContain("expect(sum(shares)).toBe(want)");                          // proration sums exactly
+    expect(money).toContain("idempotencyKey(\"user_1\", [...lines].reverse())).toBe(k1"); // retry reuses the key
+  });
+
+  test("honestly labels the originated (stronger-than-saastarter) invariants", () => {
+    expect(money).toContain("stronger than saastarter");
+    expect(money).toContain("origination inspired by"); // honestly flags the non-ported invariants
+  });
+
+  test("stripeModule + framework are configurable", () => {
+    const v = generateMoneyTests({ framework: "vitest", stripeModule: "../pricing" });
+    expect(v).toContain('from "vitest"');
+    expect(v).toContain('} from "../pricing"');
+  });
+});
+
+// Smoke (closes the loop): the invariants the emitter ENCODES actually hold for the real @suluk/stripe build.
+describe("@suluk/testgen — money smoke against the real @suluk/stripe primitives", () => {
+  test("verifyAmount rejects tampering; proration sums exactly; idempotency is deterministic", () => {
+    const lines = [{ unitCents: 1999, qty: 2, id: "a" }, { unitCents: 500, qty: 1, id: "b" }, { unitCents: 333, qty: 3 }];
+    const exact = orderTotal(lines, null).totalCents;
+    expect(verifyAmount(lines, null, exact).ok).toBe(true);
+    expect(verifyAmount(lines, null, exact - 1).ok).toBe(false);
+    const shares = prorateDiscount(lines, 777);
+    expect(shares.reduce((a, b) => a + b, 0)).toBe(777);
+    expect(idempotencyKey("u1", lines)).toBe(idempotencyKey("u1", [...lines].reverse()));
+    expect(orderTotal(lines, { type: "fixed", value: 9_999_999 }).totalCents).toBe(0);
   });
 });

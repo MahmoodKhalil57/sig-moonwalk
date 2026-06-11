@@ -103,6 +103,14 @@ function emitOp(doc: OpenAPIv4Document, op: OpInfo): string {
     const r = await call("${op.method}", "${op.filledPath}", { token: tok${op.hasBody ? ", body: {}" : ""} });
     expect([401, 403], "a valid principal was rejected (status " + r.status + ")").not.toContain(r.status);
   });`);
+    // ── error-conformance (B1 envelope): a deny is a well-formed RFC-9457 Problem Details body ────────────────
+    tests.push(`  test("error-conformance — a denied request returns a well-formed Problem Details body (RFC-9457)", async () => {
+    const r = await call("${op.method}", "${op.filledPath}"${op.hasBody ? ", { body: {} }" : ""});
+    if (r.status < 400) return; // a success here is already flagged by the access test above
+    const body = isJson(r) ? await r.json() : {};
+    // the shared @suluk/hono envelope: title (string) + status (number) === HTTP status (isProblemDetails shape).
+    expect(typeof body.title === "string" && body.status === r.status, "deny body is not RFC-9457 Problem Details: " + JSON.stringify(body)).toBe(true);
+  });`);
   }
 
   // ── L1: status smoke + schema conformance (public, parameter-free GET) ─────────────────────────────────────
