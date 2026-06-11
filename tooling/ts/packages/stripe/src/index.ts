@@ -10,3 +10,8 @@ export {
   setupUsageBilling, stripeProvider, usageEventsFromCost, reportCostUsage,
   type UsageBillingConfig, type CostBillingConfig,
 } from "./stripe";
+export {
+  subtotal, computeDiscountAmount, validateDiscount, prorateDiscount, orderTotal, verifyAmount,
+  cartFingerprint, idempotencyKey,
+  type CartLine, type Discount, type DiscountResult, type DiscountRejection, type OrderTotal, type AmountVerdict,
+} from "./pricing";
