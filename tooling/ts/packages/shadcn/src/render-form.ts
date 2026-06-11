@@ -15,6 +15,8 @@ export interface RenderFormOptions {
   componentName?: string;
   /** Name of the Zod schema symbol passed to zodResolver. Default "FormSchema". */
   schemaName?: string;
+  /** Reset the form after a successful submit (clear-on-success UX). Default true. */
+  resetOnSuccess?: boolean;
 }
 
 /** Indent every non-empty line of a block by `n` two-space levels. */
@@ -102,6 +104,7 @@ const WIDGET_IMPORTS: Record<FieldWidget, string[]> = {
 export function renderFormTsx(spec: FormSpec, opts: RenderFormOptions = {}): string {
   const componentName = opts.componentName ?? "GeneratedForm";
   const schemaName = opts.schemaName ?? "FormSchema";
+  const resetOnSuccess = opts.resetOnSuccess !== false;
 
   // collect the distinct control modules this form actually uses (honest, minimal imports)
   const used = new Set<string>();
@@ -152,16 +155,18 @@ export function ${componentName}() {
     resolver: zodResolver(${schemaName}),
   });
 
-  function onSubmit(values: z.infer<typeof ${schemaName}>) {
+  async function onSubmit(values: z.infer<typeof ${schemaName}>) {
     // TODO: wire the submit handler
-    console.log(values);
+    console.log(values);${resetOnSuccess ? "\n    form.reset(); // clear-on-success" : ""}
   }
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
 ${indent(fields, 4)}
-        <Button type="submit">Submit</Button>
+        <Button type="submit" disabled={form.formState.isSubmitting}>
+          {form.formState.isSubmitting ? "Submitting…" : "Submit"}
+        </Button>
       </form>
     </Form>
   );

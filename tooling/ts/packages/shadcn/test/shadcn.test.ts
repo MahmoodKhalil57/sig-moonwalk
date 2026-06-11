@@ -144,7 +144,14 @@ describe("renderFormTsx — shadcn <Form> codegen", () => {
 
   test("emits a <Switch for the boolean field and a submit <Button>", () => {
     expect(tsx).toContain("<Switch");
-    expect(tsx).toContain('<Button type="submit">');
+    expect(tsx).toContain('<Button type="submit"');
+  });
+
+  test("the submit button is hardened: disabled while submitting + clear-on-success", () => {
+    expect(tsx).toContain("disabled={form.formState.isSubmitting}");
+    expect(tsx).toContain("form.formState.isSubmitting ? \"Submitting…\" : \"Submit\"");
+    expect(tsx).toContain("form.reset()"); // reset-on-success default
+    expect(tsx).toContain("async function onSubmit");
   });
 
   test("the component is named as requested and labelled CANDIDATE", () => {

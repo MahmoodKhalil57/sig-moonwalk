@@ -22,3 +22,5 @@ export {
 
 export { renderFormTsx, type RenderFormOptions } from "./render-form";
 export { renderTableTsx, type RenderTableOptions } from "./render-table";
+// theme integration (Phase 2): a @suluk/theme TokenSpec → the shadcn globals.css + components.json.
+export { renderShadcnTheme, renderGlobalsCss, renderComponentsJson, type ShadcnThemeOptions } from "./theme";

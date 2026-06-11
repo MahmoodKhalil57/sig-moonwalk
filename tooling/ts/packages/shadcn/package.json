@@ -2,7 +2,9 @@
   "name": "@suluk/shadcn",
   "version": "0.1.1",
   "description": "v4 'Suluk' Schema Objects -> shadcn/ui form + table specs and TSX scaffolds (react-hook-form + zodResolver). Codegen, no runtime UI deps. CANDIDATE tooling.",
-  "publishConfig": { "access": "public" },
+  "publishConfig": {
+    "access": "public"
+  },
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
@@ -13,8 +15,20 @@
   "bugs": "https://github.com/MahmoodKhalil57/suluk/issues",
   "type": "module",
   "main": "src/index.ts",
-  "exports": { ".": "./src/index.ts" },
-  "dependencies": { "@suluk/core": "workspace:*" },
-  "devDependencies": { "@types/bun": "latest", "zod": "^4.4.3", "@suluk/zod": "workspace:*" },
-  "scripts": { "test": "bun test", "typecheck": "tsc --noEmit -p ." }
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@suluk/core": "workspace:*",
+    "@suluk/theme": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "zod": "^4.4.3",
+    "@suluk/zod": "workspace:*"
+  },
+  "scripts": {
+    "test": "bun test",
+    "typecheck": "tsc --noEmit -p ."
+  }
 }
