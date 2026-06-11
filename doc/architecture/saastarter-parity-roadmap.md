@@ -143,7 +143,10 @@ The three new packages + payment/data depth.
 > hardened (disabled-while-submitting + reset-on-success). Note: the current renderers are already RTL-clean (minimal
 > `space-y`; no physical horizontal props), so the logical-property switch is lower-impact than first assessed — the
 > remaining shadcn breadth is the richer widget set (richtext/address/date/file/relation) + `@suluk/zod` Lexical typing.
-> Still open: wire `@suluk/sdk`/`@suluk/nano-stores` into the saasuluk app, `@suluk/deploy` secret-push, marketing SECTION tier.
+> **Richer widgets + Lexical typing done** (`f924b39`): `datetime`/`file`/`richtext`/`relation` widgets (detected via
+> format + `x-suluk-widget`/`x-suluk-relation`); `@suluk/zod` `lexicalSchema` + `LEXICAL_V4_SCHEMA` (recursive) for
+> the richtext storage shape. Still open (in-package): `@suluk/deploy` secret-push + migration-delta; `@suluk/builder`
+> marketing SECTION tier. Still open (saasuluk APP, different repo): wire `@suluk/sdk`/`@suluk/nano-stores` into pages.
 
 - **`@suluk/i18n`** + **`@suluk/theme`** land here (model/loader/Intl + TokenSpec/OKLCH/emitter); `@suluk/shadcn`
   consumes the TokenSpec (`@theme`/`components.json`) and switches to **logical-property output** (`ps-/pe-/start/
