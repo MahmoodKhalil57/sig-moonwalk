@@ -1,14 +1,18 @@
 /**
  * Generate a complete TypeScript SDK from a v4 "Suluk" document. The output is one self-contained .ts file:
- *   • types emitted from the request/response schemas (typed input + output)
+ *   • the contract's input JSON Schemas shipped AS DATA — NOT transpiled into any one validator's source.
+ *     v4 stores JSON Schema 2020-12 (the lossless, portable interchange); the SDK validates THAT, directly.
+ *   • each input is exposed as a STANDARD SCHEMA (`~standard`, the validator-agnostic interface from the
+ *     Zod/Valibot/ArkType authors) backed by a generic, eval-free engine (@cfworker/json-schema, Workers-native).
+ *     So `.input` plugs straight into react-hook-form / TanStack Form / tRPC — not locked to one library.
  *   • an ofetch-based createClient(config) factory — auth wired via an onRequest interceptor (bearer / cookie)
  *   • methods grouped intuitively: CRUD by entity (client.product.create), custom ops by path (client.checkout.order)
- *   • the v4 SUPERPOWERS surfaced as TYPED METADATA on each method: `.cost` (declared µ$) + `.requires` (access).
- *     Metadata, not enforcement — the server is the boundary (council C022). It is a faithful, deterministic
- *     projection of the contract.
+ *   • the v4 SUPERPOWERS surfaced as TYPED METADATA on each method: `.cost` (µ$), `.requires` (access), `.input`
+ *     (the Standard Schema). Metadata + a client-side guard, not enforcement — the server is the boundary (C022).
+ * Static TS types come from the SAME JSON Schema (tsType), so the body is typed AND validated from one source.
  */
 import type { OpenAPIv4Document } from "@suluk/core";
-import { isReference, deref } from "@suluk/core";
+import { isReference } from "@suluk/core";
 
 const reserved = new Set(["delete", "new", "function", "default", "return", "class", "in", "for"]);
 const ident = (s: string) => { const c = s.replace(/[^a-zA-Z0-9_$]/g, "_").replace(/^[0-9]/, "_$&"); return reserved.has(c) ? `${c}_` : c; };
@@ -16,8 +20,8 @@ const camel = (s: string) => s.replace(/[-_/]+(.)/g, (_, c) => c.toUpperCase()).
 const jsKey = (k: string) => (/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(k) ? k : JSON.stringify(k));
 const refName = (r: unknown) => (isReference(r) ? String((r as { $ref: string }).$ref).split("/").pop()! : null);
 
-/** A JSON schema → a TS type string. $refs become the model name; cycles/depth guarded; falls back to unknown. */
-export function tsType(doc: OpenAPIv4Document, schema: unknown, depth = 0, seen: Set<string> = new Set()): string {
+/** A JSON schema → a TS type string (used for typed method inputs + response types). */
+export function tsType(doc: OpenAPIv4Document, schema: unknown, depth = 0): string {
   if (schema == null || schema === true) return "unknown";
   if (schema === false) return "never";
   const rn = refName(schema);
@@ -25,24 +29,18 @@ export function tsType(doc: OpenAPIv4Document, schema: unknown, depth = 0, seen:
   const s = schema as Record<string, unknown>;
   if (Array.isArray(s.enum)) return (s.enum as unknown[]).map((e) => JSON.stringify(e)).join(" | ") || "never";
   if (s.const !== undefined) return JSON.stringify(s.const);
-  if (Array.isArray(s.oneOf) || Array.isArray(s.anyOf)) return ((s.oneOf ?? s.anyOf) as unknown[]).map((x) => tsType(doc, x, depth + 1, seen)).join(" | ");
-  if (Array.isArray(s.allOf)) return (s.allOf as unknown[]).map((x) => tsType(doc, x, depth + 1, seen)).join(" & ");
+  if (Array.isArray(s.oneOf) || Array.isArray(s.anyOf)) return ((s.oneOf ?? s.anyOf) as unknown[]).map((x) => tsType(doc, x, depth + 1)).join(" | ");
+  if (Array.isArray(s.allOf)) return (s.allOf as unknown[]).map((x) => tsType(doc, x, depth + 1)).join(" & ");
   const t = Array.isArray(s.type) ? (s.type as string[])[0] : s.type;
-  if (t === "array" || s.items) return `${tsType(doc, s.items, depth + 1, seen)}[]`;
+  if (t === "array" || s.items) return `${tsType(doc, s.items, depth + 1)}[]`;
   if (t === "object" || s.properties) {
     const props = (s.properties ?? {}) as Record<string, unknown>;
     const required = new Set((s.required as string[] | undefined) ?? []);
     const keys = Object.keys(props);
-    if (!keys.length) return "Record<string, unknown>";
-    if (depth > 8) return "Record<string, unknown>";
-    const fields = keys.map((k) => `${jsKey(k)}${required.has(k) ? "" : "?"}: ${tsType(doc, props[k], depth + 1, seen)}`).join("; ");
-    return `{ ${fields} }`;
+    if (!keys.length || depth > 8) return "Record<string, unknown>";
+    return `{ ${keys.map((k) => `${jsKey(k)}${required.has(k) ? "" : "?"}: ${tsType(doc, props[k], depth + 1)}`).join("; ")} }`;
   }
-  if (t === "string") return "string";
-  if (t === "integer" || t === "number") return "number";
-  if (t === "boolean") return "boolean";
-  if (t === "null") return "null";
-  return "unknown";
+  return t === "string" ? "string" : t === "integer" || t === "number" ? "number" : t === "boolean" ? "boolean" : t === "null" ? "null" : "unknown";
 }
 
 interface RawReq {
@@ -54,8 +52,9 @@ interface RawReq {
 }
 interface OpInfo {
   name: string; ns: string[]; member: string; method: string; uri: string;
-  pathParams: string[]; queryType?: string; bodyType?: string; respType: string;
+  pathParams: string[]; queryRaw?: unknown; bodyRaw?: unknown; respType: string;
   cost: number | null; requires: string; scope?: string; summary?: string;
+  bid?: string; qid?: string; bodyTs?: string; queryTs?: string; // assigned after collision resolution
 }
 
 const pathVars = (uri: string) => [...uri.matchAll(/\{\+?([^}?&]+)\}/g)].map((m) => m[1]);
@@ -80,11 +79,8 @@ function walkOps(doc: OpenAPIv4Document): OpInfo[] {
       const ps = req.parameterSchema ?? {};
       const acc = req["x-suluk-access"];
       ops.push({
-        name, ns, member, method: req.method.toLowerCase(), uri,
-        pathParams: pathVars(uri),
-        queryType: ps.query ? tsType(doc, ps.query) : undefined,
-        bodyType: req.contentSchema ?? ps.body ? tsType(doc, req.contentSchema ?? ps.body) : undefined,
-        respType: respType(doc, req),
+        name, ns, member, method: req.method.toLowerCase(), uri, pathParams: pathVars(uri),
+        queryRaw: ps.query, bodyRaw: req.contentSchema ?? ps.body, respType: respType(doc, req),
         cost: costOf(req), requires: acc?.requires ?? "anyone", scope: acc?.scope, summary: req.summary,
       });
     }
@@ -94,35 +90,32 @@ function walkOps(doc: OpenAPIv4Document): OpInfo[] {
 
 function emitMethod(op: OpInfo): string {
   const args: string[] = op.pathParams.map((p) => `${ident(p)}: string | number`);
-  if (op.queryType) args.push(`query?: ${op.queryType}`);
-  if (op.bodyType) args.push(`body: ${op.bodyType}`);
+  if (op.qid) args.push(`query?: ${op.queryTs}`);
+  if (op.bid) args.push(`body: ${op.bodyTs}`);
   const url = "`" + op.uri.replace(/^\/?/, "/").replace(/\{\+?([^}?&]+)\}/g, (_, p) => "${" + ident(p) + "}") + "`";
   const opts = [`method: "${op.method.toUpperCase()}"`];
-  if (op.bodyType) opts.push("body");
-  if (op.queryType) opts.push("query");
-  const meta = `{ cost: ${op.cost ?? "null"}, requires: ${JSON.stringify(op.requires)}${op.scope ? `, scope: ${JSON.stringify(op.scope)}` : ""} }`;
+  if (op.bid) opts.push(`body: _v ? parse(${op.bid}, body) : body`);
+  if (op.qid) opts.push(`query: _v && query ? parse(${op.qid}, query) : query`);
+  const meta = `{ cost: ${op.cost ?? "null"}, requires: ${JSON.stringify(op.requires)}${op.scope ? `, scope: ${JSON.stringify(op.scope)}` : ""}${op.bid ? `, input: ${op.bid}` : ""} }`;
   const doc = op.summary ? `      /** ${op.summary.replace(/\*\//g, "*\\/")} — ${op.requires}${op.cost != null ? ` · ⛁ ${op.cost}µ$` : ""} */\n` : "";
   return `${doc}      ${ident(op.member)}: Object.assign(\n        (${args.join(", ")}) => api<${op.respType}>(${url}, { ${opts.join(", ")} }),\n        ${meta},\n      )`;
 }
 
 function emitTree(ops: OpInfo[]): string {
-  const tree = new Map<string, OpInfo[]>(); // ns key ("" for top-level) → ops
+  const tree = new Map<string, OpInfo[]>();
   for (const op of ops) tree.set(op.ns.join("."), [...(tree.get(op.ns.join(".")) ?? []), op]);
-  const groups = [...tree.entries()].sort(([a], [b]) => a.localeCompare(b));
-  const parts = groups.map(([ns, list]) => {
+  return [...tree.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([ns, list]) => {
     const methods = list.map(emitMethod).join(",\n");
     return ns === "" ? methods : `      ${ident(ns.split(".").pop()!)}: {\n${methods.split("\n").map((l) => "  " + l).join("\n")}\n      }`;
-  });
-  return parts.join(",\n");
+  }).join(",\n");
 }
 
-export interface SdkOptions { clientName?: string; baseURL?: string }
+export interface SdkOptions { baseURL?: string }
 
 export function generateSdk(doc: OpenAPIv4Document, opts: SdkOptions = {}): string {
   const ops = walkOps(doc);
-  // collisions (council wf4pmh1ie / hudlow): never emit a client that GUESSES at runtime. We resolve DETERMINISTICALLY
-  // by namespacing — two named requests sharing a method-path (e.g. a v4 GET+POST on one path) get distinct, stable
-  // method names (append the HTTP method, then a stable index by name), and the collision is surfaced in the header.
+  // resolve method-name collisions DETERMINISTICALLY (council wf4pmh1ie: never a runtime guess) — append the HTTP
+  // method, then a stable index; surface them in the header.
   const collisions: string[] = [];
   const byKey = new Map<string, OpInfo[]>();
   for (const op of ops) { const k = [...op.ns, op.member].join("."); (byKey.get(k) ?? byKey.set(k, []).get(k)!).push(op); }
@@ -136,34 +129,117 @@ export function generateSdk(doc: OpenAPIv4Document, opts: SdkOptions = {}): stri
       op.member = n === 0 ? cand : `${cand}${n + 1}`;
     }
   }
+
+  // Emit a JSON Schema AS A LITERAL. When it $refs components, splice them in as $defs and rewrite the pointers,
+  // so each validator is self-contained (the generic engine resolves refs without the whole document).
+  const defs = (doc.components?.schemas ?? {}) as Record<string, unknown>;
+  const hasDefs = Object.keys(defs).length > 0;
+  const schemaLiteral = (s: unknown): string => {
+    const str = JSON.stringify(s ?? {});
+    if (!hasDefs || !str.includes("#/components/schemas/")) return str;
+    const merged = { $defs: JSON.parse(JSON.stringify(defs)), ...JSON.parse(str) };
+    return JSON.stringify(merged).replace(/#\/components\/schemas\//g, "#/$defs/");
+  };
+
+  // per-op input schemas (body + query), stored AS DATA in `schemas`, then wrapped as Standard Schemas. Keyed off
+  // the final (post-collision) method path so the id is stable + unique.
+  const schemaEntries: string[] = [];
+  const inputDecls: string[] = [];
+  for (const op of ops) {
+    const base = [...op.ns, op.member].join("_").replace(/[^a-zA-Z0-9_$]/g, "_");
+    if (op.bodyRaw != null) {
+      op.bid = `${base}Input`; op.bodyTs = tsType(doc, op.bodyRaw);
+      schemaEntries.push(`  ${ident(base)}: ${schemaLiteral(op.bodyRaw)},`);
+      inputDecls.push(`const ${op.bid} = std<${op.bodyTs}>(schemas.${ident(base)});`);
+    }
+    if (op.queryRaw != null) {
+      op.qid = `${base}_q`; op.queryTs = tsType(doc, op.queryRaw);
+      schemaEntries.push(`  ${ident(base + "_q")}: ${schemaLiteral(op.queryRaw)},`);
+      inputDecls.push(`const ${op.qid} = std<${op.queryTs}>(schemas.${ident(base + "_q")});`);
+    }
+  }
   const manifest = Object.fromEntries(ops.map((o) => [[...o.ns, o.member].join("."), { cost: o.cost, requires: o.requires, ...(o.scope ? { scope: o.scope } : {}) }]));
   const title = doc.info?.title ?? "API";
   const version = doc.openapi ?? "4.0.0-candidate";
-  const models = Object.entries(doc.components?.schemas ?? {}).map(([n, s]) => {
-    const ty = tsType(doc, s);
-    return ty.startsWith("{") ? `export interface ${ident(n)} ${ty}` : `export type ${ident(n)} = ${ty};`;
-  }).join("\n");
-  const priced = ops.filter((o) => o.cost != null);
-  const totalCost = priced.reduce((s, o) => s + (o.cost ?? 0), 0);
+  // shared models (components.schemas): a Standard Schema + an inferred TS type, both from the one JSON Schema.
+  const models = Object.entries(defs).map(([n, s]) => `export type ${ident(n)} = ${tsType(doc, s)};\nexport const ${ident(n)}Schema = std<${ident(n)}>(${schemaLiteral(s)});`).join("\n");
+  const totalCost = ops.filter((o) => o.cost != null).reduce((s, o) => s + (o.cost ?? 0), 0);
 
   return `/**
  * ${title} — TypeScript SDK. AUTO-GENERATED by @suluk/sdk from the v4 contract (OpenAPI ${version}). Do not edit.
  *
- * Generated straight from the contract: ${ops.length} operations, fully typed. Auth is wired via an interceptor;
- * every method carries the v4 facets as typed metadata — \`.cost\` (declared µ$) and \`.requires\` (who can call it).
- * Those are HINTS, not enforcement — the server is the security boundary.${collisions.length ? `\n * Namespaced ${collisions.length} method collision(s) (a v4 multi-request-per-method capability): ${collisions.join("; ")}.` : ""}
+ * Generated straight from the contract: ${ops.length} operations, fully typed. The contract's input JSON Schemas
+ * are shipped AS DATA (\`schemas\`) and validated DIRECTLY by a generic, eval-free engine — never transpiled into a
+ * single validator's source — so what runs is exactly what the contract stores (lossless). Each input is a STANDARD
+ * SCHEMA (\`.input\`), so it drops into react-hook-form / TanStack Form / tRPC unchanged. Auth is wired via an
+ * interceptor; every method carries the v4 facets as typed metadata — \`.cost\` (µ$), \`.requires\` (who can call it),
+ * \`.input\` (the Standard Schema). Those are HINTS + a client-side guard, not enforcement — the server is the
+ * security boundary.${collisions.length ? `\n * Namespaced ${collisions.length} method collision(s) (a v4 multi-request-per-method capability): ${collisions.join("; ")}.` : ""}
  *
  *   import { createClient } from "./suluk-sdk";
  *   const api = createClient({ baseURL: "${opts.baseURL ?? ""}", token: () => localStorage.getItem("token") });
  *   const products = await api.product.list();
- *   const order = await api.checkout.order({ items: [{ productId: 1, qty: 2 }] });
- *   api.product.create.requires; // "admin"   api.product.create.cost; // µ$
+ *   const order = await api.checkout.order({ items: [{ productId: 1, qty: 2 }] }); // input validated before send
  *
- * Requires: \`npm i ofetch\`.
+ * Requires: \`npm i ofetch @cfworker/json-schema\`.
  */
 import { ofetch, type FetchError } from "ofetch";
+import { Validator } from "@cfworker/json-schema";
 
 export type { FetchError };
+
+/** The Standard Schema v1 interface — \`.input\` implements this, so any Standard-Schema-aware tool can consume it. */
+export interface StandardSchemaV1<Output = unknown> {
+  readonly "~standard": {
+    readonly version: 1;
+    readonly vendor: "suluk";
+    readonly validate: (value: unknown) => StandardResult<Output>;
+    readonly types?: { readonly output: Output };
+  };
+}
+export type StandardIssue = { readonly message: string; readonly path: ReadonlyArray<string | number> };
+export type StandardResult<O> = { readonly value: O } | { readonly issues: ReadonlyArray<StandardIssue> };
+
+/** Thrown by a method when its input fails the contract's JSON Schema (only when \`validate\` is on). */
+export class SulukValidationError extends Error {
+  constructor(public readonly issues: ReadonlyArray<StandardIssue>) {
+    super("Input failed contract validation: " + issues.map((i) => \`\${i.path.join(".") || "(root)"}: \${i.message}\`).join("; "));
+    this.name = "SulukValidationError";
+  }
+}
+
+/** The contract's input JSON Schemas (2020-12), shipped AS DATA — introspectable, validated directly. */
+export const schemas = {
+${schemaEntries.join("\n")}
+} as const;
+
+/** Wrap a stored JSON Schema as a Standard Schema, backed by a generic, eval-free validator (Workers-native). */
+function std<Output>(schema: unknown): StandardSchemaV1<Output> {
+  const v = new Validator(schema as object, "2020-12");
+  return {
+    "~standard": {
+      version: 1,
+      vendor: "suluk",
+      validate(value: unknown): StandardResult<Output> {
+        const r = v.validate(value);
+        if (r.valid) return { value: value as Output };
+        return { issues: (r.errors as Array<{ error?: string; instanceLocation?: string }>).map((e) => ({ message: e.error ?? "invalid", path: (e.instanceLocation ?? "").split("/").slice(1).filter(Boolean) })) };
+      },
+    },
+  };
+}
+
+/** Validate \`value\` against an input schema; return it (typed) or throw SulukValidationError. */
+function parse<Output>(input: StandardSchemaV1<Output>, value: unknown): Output {
+  const r = input["~standard"].validate(value);
+  if ("issues" in r) throw new SulukValidationError(r.issues);
+  return r.value;
+}
+
+${models}
+
+${inputDecls.join("\n")}
+
 export interface SulukClientConfig {
   /** API base URL (default: same-origin "${opts.baseURL ?? ""}"). */
   baseURL?: string;
@@ -175,12 +251,13 @@ export interface SulukClientConfig {
   headers?: Record<string, string>;
   /** retries for idempotent requests (ofetch default). */
   retry?: number;
+  /** validate inputs against the contract's JSON Schemas before sending (default true). */
+  validate?: boolean;
 }
 
-${models}
-
-/** Create a typed client for ${title}. */
+/** Create a typed, input-validating client for ${title}. */
 export function createClient(config: SulukClientConfig = {}) {
+  const _v = config.validate !== false;
   const api = ofetch.create({
     baseURL: config.baseURL ?? ${JSON.stringify(opts.baseURL ?? "")},
     credentials: config.credentials ?? "include",
@@ -188,13 +265,15 @@ export function createClient(config: SulukClientConfig = {}) {
     retry: config.retry,
     async onRequest({ options }) {
       const t = typeof config.token === "function" ? await config.token() : config.token;
-      if (t) options.headers = { ...(options.headers as Record<string, string>), Authorization: \`Bearer \${t}\` };
+      if (t) { const h = new Headers(options.headers as HeadersInit | undefined); h.set("Authorization", \`Bearer \${t}\`); options.headers = h; }
     },
   });
   return {
 ${emitTree(ops)},
     /** the raw ofetch instance — escape hatch for anything the typed methods don't cover. */
     $fetch: api,
+    /** the contract's input JSON Schemas, as data (for codegen / forms / introspection). */
+    $schemas: schemas,
     /** introspectable per-operation facet manifest (for agents/tooling): { "<method.path>": { cost, requires } }. */
     $manifest: ${JSON.stringify(manifest)} as const,
     /** total declared cost of all priced operations (µ$): ${totalCost}. */

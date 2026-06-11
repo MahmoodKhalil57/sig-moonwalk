@@ -2,16 +2,39 @@
   "name": "@suluk/sdk",
   "version": "0.1.0",
   "description": "Generate a COMPLETE, intuitive TypeScript SDK from a v4 'Suluk' contract — built on ofetch, entity-grouped, fully typed from the schemas, auth wired (bearer/session) via interceptors, and the v4 superpowers (declared cost + access) surfaced as typed metadata. Not a bag of functions: a library a developer downloads and uses straight away. CANDIDATE tooling.",
-  "publishConfig": { "access": "public" },
+  "publishConfig": {
+    "access": "public"
+  },
   "license": "Apache-2.0",
-  "repository": { "type": "git", "url": "git+https://github.com/MahmoodKhalil57/suluk.git", "directory": "tooling/ts/packages/sdk" },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MahmoodKhalil57/suluk.git",
+    "directory": "tooling/ts/packages/sdk"
+  },
   "homepage": "https://github.com/MahmoodKhalil57/suluk#readme",
   "bugs": "https://github.com/MahmoodKhalil57/suluk/issues",
   "type": "module",
   "main": "src/index.ts",
-  "exports": { ".": "./src/index.ts" },
-  "dependencies": { "@suluk/core": "workspace:*" },
-  "peerDependencies": { "ofetch": "^1.0.0" },
-  "devDependencies": { "@types/bun": "latest" },
-  "scripts": { "test": "bun test", "typecheck": "tsc --noEmit -p ." }
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@suluk/core": "workspace:*"
+  },
+  "peerDependencies": {
+    "ofetch": "^1.5.1",
+    "@cfworker/json-schema": "^4.1.1"
+  },
+  "peerDependenciesMeta": {
+    "@cfworker/json-schema": {
+      "optional": false
+    }
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "scripts": {
+    "test": "bun test",
+    "typecheck": "tsc --noEmit -p ."
+  }
 }
