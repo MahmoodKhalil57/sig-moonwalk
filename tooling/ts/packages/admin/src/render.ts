@@ -11,7 +11,7 @@ export function esc(s: unknown): string {
 const STATUS_DOT: Record<string, string> = { ok: "🟢", warn: "🟡", error: "🔴", info: "🔵" };
 
 const SECTIONS = [
-  ["", "Overview"], ["builder", "Builder"], ["data", "Data"], ["docs", "Docs"], ["checks", "Checks"], ["deploy", "Deploy"],
+  ["", "Overview"], ["builder", "Builder"], ["data", "Data"], ["analytics", "Analytics"], ["docs", "Docs"], ["checks", "Checks"], ["deploy", "Deploy"],
 ] as const;
 
 export function layout(title: string, base: string, active: string, body: string): string {

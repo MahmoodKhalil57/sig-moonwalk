@@ -10,3 +10,5 @@ export {
   entityModels, renderEntityForm, renderEntityTable, renderDataIndex, renderEntityAdmin,
   type EntityModel, type EntityField, type EntityAccess,
 } from "./render-data";
+// analytics dashboard (Phase 3): inline-SVG charts over the contract's cost facets.
+export { renderAnalytics } from "./analytics";
