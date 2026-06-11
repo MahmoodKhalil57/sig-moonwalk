@@ -107,4 +107,16 @@ describe("reference schemes", () => {
       expect(toThemeCss(themeFromLight(s))).toContain("--primary:");
     }
   });
+
+  test("dark mode keeps TEXT readable: the bare `foreground` goes LIGHT, not dark (regression)", () => {
+    // `"foreground".endsWith("Foreground")` is false — a capital-F check would misclassify the primary body-text
+    // token as a surface and darken it, giving dark-on-dark text. Every *foreground role must be light on the dark bg.
+    for (const s of Object.values(REFERENCE_SCHEMES)) {
+      const d = deriveDark(s).colors;
+      for (const role of ["foreground", "cardForeground", "popoverForeground", "mutedForeground"] as const) {
+        expect(d[role].l, `${s.name}.${role} must be light in dark mode`).toBeGreaterThan(0.8);
+        expect(d[role].l, `${s.name}.${role} must out-contrast the dark background`).toBeGreaterThan(d.background.l);
+      }
+    }
+  });
 });

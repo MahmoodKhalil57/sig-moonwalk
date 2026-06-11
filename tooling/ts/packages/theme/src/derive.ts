@@ -14,8 +14,10 @@ const BASE_SURFACE = new Set<keyof ColorTokens>(["background", "card", "popover"
 /** Remap one token's lightness for dark mode by role, keeping chroma + hue. */
 function darkenRole(role: keyof ColorTokens, color: Oklch): Oklch {
   const { c, h } = color;
-  // text (any *Foreground): light text on dark — derived so a darker light-text stays a touch darker.
-  if (role.endsWith("Foreground")) return clampOklch({ l: 0.97 - color.l * 0.12, c, h });
+  // text (the bare `foreground` OR any `*Foreground`): light text on dark — derived so a darker light-text stays a
+  // touch darker. NOTE: case-insensitive — `"foreground".endsWith("Foreground")` is false, so a capital-F check
+  // would misclassify the PRIMARY body-text token as a surface and darken it (dark-on-dark text). This is the fix.
+  if (role.toLowerCase().endsWith("foreground")) return clampOklch({ l: 0.97 - color.l * 0.12, c, h });
   // brand accents: a NEUTRAL brand (near-zero chroma) inverts to near-white; a colored brand stays vivid.
   if (BRAND.has(role)) {
     if (c < 0.03) return clampOklch({ l: 0.92, c, h });
