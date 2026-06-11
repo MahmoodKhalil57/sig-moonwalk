@@ -58,6 +58,17 @@ function controlFor(f: FieldSpec): string {
       return `<Input type="url" placeholder="${escapeAttr(f.label)}" {...field} />`;
     case "date":
       return `<Input type="date" placeholder="${escapeAttr(f.label)}" {...field} />`;
+    case "datetime":
+      return `<Input type="datetime-local" placeholder="${escapeAttr(f.label)}" {...field} />`;
+    case "file":
+      // file inputs are uncontrolled — hand the chosen File to the field, never spread `value`.
+      return `<Input type="file" onChange={(e) => field.onChange(e.target.files?.[0])} />`;
+    case "richtext":
+      // app-provided editor over a Lexical state (@suluk/zod lexicalSchema). value/onChange are the editor state.
+      return `<RichTextEditor value={field.value} onChange={field.onChange} />`;
+    case "relation":
+      // app-provided async select over the related entity's options.
+      return `<EntitySelect entity="${escapeAttr(f.relation ?? "")}" value={field.value} onValueChange={field.onChange} />`;
     case "text":
     default:
       return `<Input placeholder="${escapeAttr(f.label)}" {...field} />`;
@@ -94,10 +105,14 @@ const WIDGET_IMPORTS: Record<FieldWidget, string[]> = {
   email: ["input"],
   url: ["input"],
   date: ["input"],
+  datetime: ["input"],
+  file: ["input"],
   textarea: ["textarea"],
   switch: ["switch"],
   checkbox: ["checkbox"],
   select: ["select"],
+  richtext: ["richtext"],
+  relation: ["relation"],
 };
 
 /** Render a shadcn <Form> component from a {@link FormSpec}. Returns TSX source as a string. */
@@ -120,6 +135,9 @@ export function renderFormTsx(spec: FormSpec, opts: RenderFormOptions = {}): str
       `import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";`,
     );
   }
+  // richtext + relation use app-provided components (a Lexical editor / an async entity picker).
+  if (used.has("richtext")) controlImports.push(`import { RichTextEditor } from "@/components/ui/rich-text-editor";`);
+  if (used.has("relation")) controlImports.push(`import { EntitySelect } from "@/components/ui/entity-select";`);
 
   // surface any descriptor warnings as a leading comment so losses are never silent
   const warningHeader =

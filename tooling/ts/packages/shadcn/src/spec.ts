@@ -13,7 +13,14 @@ import { isReference, type SchemaOrRef, type Schema, type Reference } from "@sul
 
 /** The shadcn form control we pick for a property. Drives which control the renderer emits. */
 export type FieldWidget =
-  | "text" | "number" | "checkbox" | "switch" | "select" | "textarea" | "date" | "email" | "url";
+  | "text" | "number" | "checkbox" | "switch" | "select" | "textarea" | "date" | "email" | "url"
+  | "datetime" | "file" | "richtext" | "relation";
+
+/** Widget names accepted as an explicit `x-suluk-widget` override on a property. */
+const WIDGET_HINTS = new Set<FieldWidget>([
+  "text", "number", "checkbox", "switch", "select", "textarea", "date", "email", "url",
+  "datetime", "file", "richtext", "relation",
+]);
 
 /** One form control, derived from a single object property. */
 export interface FieldSpec {
@@ -34,6 +41,8 @@ export interface FieldSpec {
   max?: number;
   /** String `pattern` (regex source) — surfaced as a hint. */
   pattern?: string;
+  /** For a `relation` widget: the entity this property references (from `x-suluk-relation`). */
+  relation?: string;
 }
 
 export interface FormSpec {
@@ -130,6 +139,11 @@ function pickWidget(schema: SchemaObject): FieldWidget {
   const format = typeof schema.format === "string" ? schema.format : undefined;
   const enumMembers = Array.isArray(schema.enum) ? schema.enum : undefined;
 
+  // contract-first overrides win: an explicit x-suluk-widget, or x-suluk-relation ⇒ a relation picker.
+  const hint = schema["x-suluk-widget"];
+  if (typeof hint === "string" && WIDGET_HINTS.has(hint as FieldWidget)) return hint as FieldWidget;
+  if (typeof schema["x-suluk-relation"] === "string") return "relation";
+
   if (type === "boolean") return "switch";
   // enum → select regardless of type (a numeric enum is still a closed choice, not a free number input).
   if (enumMembers && enumMembers.length > 0) return "select";
@@ -138,7 +152,11 @@ function pickWidget(schema: SchemaObject): FieldWidget {
   // string-ish from here down
   if (format === "email") return "email";
   if (format === "uri" || format === "url" || format === "uri-reference") return "url";
-  if (format === "date" || format === "date-time") return "date";
+  if (format === "date") return "date";
+  if (format === "date-time") return "datetime";
+  // a binary/base64 string is a file upload; a text/html or lexical media type is rich text.
+  if (format === "binary" || format === "byte" || schema.contentEncoding === "base64") return "file";
+  if (schema.contentMediaType === "text/html" || schema.contentMediaType === "application/json+lexical") return "richtext";
 
   const maxLength = typeof schema.maxLength === "number" ? schema.maxLength : undefined;
   if ((maxLength !== undefined && maxLength > 120) || format === "textarea" || schema.contentMediaType !== undefined) {
@@ -199,6 +217,7 @@ export function formSpec(schema: SchemaOrRef, opts: SpecOptions = {}): FormSpec 
     if (typeof prop.minimum === "number") field.min = prop.minimum;
     if (typeof prop.maximum === "number") field.max = prop.maximum;
     if (typeof prop.pattern === "string") field.pattern = prop.pattern;
+    if (typeof prop["x-suluk-relation"] === "string") field.relation = prop["x-suluk-relation"] as string;
     fields.push(field);
   }
 

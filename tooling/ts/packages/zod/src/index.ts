@@ -9,3 +9,5 @@
  */
 export { zodToV4, type ZodToV4Result } from "./to-v4";
 export { v4ToZod, convert, type V4ToZodOptions } from "./to-zod";
+// Lexical rich-text typing (Phase 2): the storage shape of a richtext field, in Zod + a v4 projection.
+export { lexicalSchema, lexicalNodeSchema, LEXICAL_V4_SCHEMA, type LexicalState } from "./lexical";
