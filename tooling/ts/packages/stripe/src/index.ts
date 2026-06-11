@@ -15,3 +15,10 @@ export {
   cartFingerprint, idempotencyKey,
   type CartLine, type Discount, type DiscountResult, type DiscountRejection, type OrderTotal, type AmountVerdict,
 } from "./pricing";
+// the checkout money-path (Phase 1): the pure anti-double-charge / anti-tampering core + the Stripe binding.
+export {
+  planPaymentIntent, cardInfoFrom, ownsPaymentMethod, stripeCheckout,
+  type IntentPlan, type CardInfo, type CheckoutProvider,
+  type StripeCheckoutLike, type PaymentMethodLike, type PaymentIntentLike,
+} from "./checkout";
+export { webhookRouter, STRIPE_EVENTS, type WebhookRouter, type WebhookHandler, type HandleResult } from "./webhook";
