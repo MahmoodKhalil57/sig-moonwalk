@@ -138,6 +138,13 @@ The three new packages + payment/data depth.
 
 ## Phase 2 — i18n, theming, generated-UI adoption (parity breadth + thesis proof)
 
+> **Progress.** `@suluk/i18n` + `@suluk/theme` landed early (in Phase 1). **`@suluk/shadcn` ← `@suluk/theme`** done
+> (`d47a24b`): `renderShadcnTheme` projects a TokenSpec → `globals.css` + `components.json`; generated-form UX
+> hardened (disabled-while-submitting + reset-on-success). Note: the current renderers are already RTL-clean (minimal
+> `space-y`; no physical horizontal props), so the logical-property switch is lower-impact than first assessed — the
+> remaining shadcn breadth is the richer widget set (richtext/address/date/file/relation) + `@suluk/zod` Lexical typing.
+> Still open: wire `@suluk/sdk`/`@suluk/nano-stores` into the saasuluk app, `@suluk/deploy` secret-push, marketing SECTION tier.
+
 - **`@suluk/i18n`** + **`@suluk/theme`** land here (model/loader/Intl + TokenSpec/OKLCH/emitter); `@suluk/shadcn`
   consumes the TokenSpec (`@theme`/`components.json`) and switches to **logical-property output** (`ps-/pe-/start/
   end`) — *physical props are silently broken under RTL* (P1 correctness, fixes every generated form/table at once).
