@@ -10,7 +10,8 @@ import type { OpenAPIv4Document, Request as V4Request } from "@suluk/core";
 import { computeSignature, collide, type CollisionVerdict } from "@suluk/core";
 
 export function escapeHtml(s: string): string {
-  return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
+  // escape ' too — several attributes are single-quoted (data-copy='<json>'), and a JSON value can contain an apostrophe.
+  return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
 }
 
 // ── COST ─────────────────────────────────────────────────────────────────────────────────────────────────────
