@@ -10,3 +10,5 @@ export { contractChecks, runContractChecks, type Check, type CheckRun } from "./
 export { validateSchema2020, type SchemaCheck } from "./schema-check";
 export { mount } from "./mount";
 export { enforceAccess, createGuard, type EnforceAccessConfig, type IdentityConfig, type Guard, type AccessFacet, type AccessRequires } from "./enforce";
+export { SulukHttpError, HttpErrors, type SulukHttpErrorInit } from "./errors";
+export { onError, type OnErrorOptions } from "./on-error";

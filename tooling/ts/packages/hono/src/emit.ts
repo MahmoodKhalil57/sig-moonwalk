@@ -4,9 +4,10 @@
  * NOT a static file: the document is a pure function of the contracts × the requesting principal (scopes,
  * the "who") × time (now, the "when"). A public export is just emitV4(routes) with no principal/now.
  */
-import { buildAda } from "@suluk/core";
+import { buildAda, PROBLEM_CONTENT_TYPE, PROBLEM_DETAILS_SCHEMA } from "@suluk/core";
 import type {
   OpenAPIv4Document, PathItem, Request, Response, ParameterSchema, SecurityRequirement, Server, Info, SecurityScheme,
+  Components, Schema,
 } from "@suluk/core";
 import { zodToV4 } from "@suluk/zod";
 import { responseList, type RouteContract, type Method } from "./contract";
@@ -24,6 +25,31 @@ export interface EmitContext {
   securitySchemes?: Record<string, SecurityScheme>;
   /** Include operations flagged deprecated (default true; they are marked, not hidden). */
   includeDeprecated?: boolean;
+  /**
+   * Synthesize RFC-9457 error responses (401/403 from access, 429 from a rate-limit facet, always-500, plus any
+   * `route.errors`) + a shared `components.schemas.ProblemDetails`. Default true — the SDK's `isApiError` guard and
+   * testgen's error-conformance need declared non-2xx responses to check. Set false for a success-only projection.
+   */
+  synthesizeErrors?: boolean;
+}
+
+/** A human title per synthesized error status (RFC-9457 `description`). */
+const ERROR_DESCRIPTION: Readonly<Record<number, string>> = {
+  400: "Bad request", 401: "Unauthorized", 402: "Payment required", 403: "Forbidden",
+  404: "Not found", 409: "Conflict", 429: "Too many requests", 500: "Internal server error", 502: "Bad gateway",
+};
+
+/**
+ * Which error statuses an operation declares it can return: explicit `route.errors`, + 401/403 when the op is
+ * auth-gated (it can deny), + 429 when it declares a rate-limit budget, + always-500 (any handler can fail).
+ */
+function errorStatusesFor(route: RouteContract, ctx: EmitContext): number[] {
+  if (ctx.synthesizeErrors === false) return [];
+  const set = new Set<number>(route.errors ?? []);
+  if ((route.scopes && route.scopes.length > 0) || route.security) { set.add(401); set.add(403); }
+  if (route.rateLimit) set.add(429);
+  set.add(500);
+  return [...set].sort((a, b) => a - b);
 }
 
 export interface EmitDiagnostic {
@@ -97,7 +123,21 @@ function buildRequest(route: RouteContract, deprecated: boolean, ctx: EmitContex
     responses[String(r.status)] = resp;
   }
   if (Object.keys(responses).length === 0) responses["200"] = { status: 200 };
+  // synthesize RFC-9457 error responses — but never clobber a user-declared one for the same status.
+  for (const status of errorStatusesFor(route, ctx)) {
+    const key = String(status);
+    if (responses[key]) continue;
+    responses[key] = {
+      status,
+      description: ERROR_DESCRIPTION[status] ?? "Error",
+      contentType: PROBLEM_CONTENT_TYPE,
+      contentSchema: { $ref: "#/components/schemas/ProblemDetails" },
+    };
+  }
   req.responses = responses;
+
+  // stamp the declared rate-limit facet so rateLimitIndex/coverage + the middleware can read it off the document.
+  if (route.rateLimit) req["x-suluk-ratelimit"] = route.rateLimit;
 
   // security: explicit wins; else synthesize from scopes if a scheme name is configured.
   const security: SecurityRequirement[] | undefined =
@@ -153,7 +193,15 @@ export function emitV4(routes: readonly RouteContract[], ctx: EmitContext = {}):
     paths,
   };
   if (ctx.servers) document.servers = ctx.servers;
-  if (ctx.securitySchemes) document.components = { securitySchemes: ctx.securitySchemes };
+
+  // components: securitySchemes (C014) + the shared ProblemDetails schema iff any op synthesized a problem+json response.
+  const usesProblem = Object.values(paths).some((pi) =>
+    Object.values(pi.requests).some((r) =>
+      Object.values(r.responses).some((resp) => resp.contentType === PROBLEM_CONTENT_TYPE)));
+  const components: Components = {};
+  if (ctx.securitySchemes) components.securitySchemes = ctx.securitySchemes;
+  if (usesProblem) components.schemas = { ProblemDetails: PROBLEM_DETAILS_SCHEMA as unknown as Schema };
+  if (Object.keys(components).length > 0) document.components = components;
 
   // static collision audit over the ADA (detect-and-tolerate; surfaced as diagnostics, never a gate).
   for (const c of buildAda(document).collisions) {

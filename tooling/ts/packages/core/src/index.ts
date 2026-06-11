@@ -19,7 +19,8 @@ export { isReference, resolveRef, deref } from "./reference";
 export { sourceIndex, sourceCoverage, scrubSource, sourceKey, type SourceGroup, type SourceRef } from "./source";
 export { RATELIMIT_EXT, rateLimitOf, rateLimitIndex, rateLimitCoverage, retryAfterSeconds, type RateLimitGroup } from "./ratelimit";
 export {
-  PROBLEM_CONTENT_TYPE, PROBLEM_STATUS_TABLE, TITLE_BY_TAG, isProblemDetails, toProblemDetails,
+  PROBLEM_CONTENT_TYPE, PROBLEM_STATUS_TABLE, TITLE_BY_TAG, PROBLEM_DETAILS_SCHEMA,
+  isProblemDetails, toProblemDetails,
   type ProblemDetails, type ProblemStatus, type ErrorTag,
 } from "./errors";
 export { compileTemplate, matchPath, variableCount, type CompiledTemplate, type PathSegment } from "./template";

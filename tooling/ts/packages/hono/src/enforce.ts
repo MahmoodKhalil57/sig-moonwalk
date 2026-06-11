@@ -18,6 +18,7 @@
  * the primitive is generic over any Suluk app. It never trusts a header it didn't verify; the app's `principal`
  * / `isAdmin` callbacks are responsible for verification.
  */
+import { PROBLEM_CONTENT_TYPE, toProblemDetails } from "@suluk/core";
 import type { Context, MiddlewareHandler } from "hono";
 
 export type AccessRequires = "anyone" | "authenticated" | "admin";
@@ -33,13 +34,12 @@ export interface IdentityConfig {
   scopes?: (c: Context) => string[] | undefined;
 }
 
-const PROBLEM = "application/problem+json";
-/** A deny response. Shape is RFC-9457-shaped (the error model formalizes `type`); status is what the wire honors. */
+/** A deny response — the shared RFC-9457 Problem Details envelope (@suluk/core), so deny + the error model agree. */
 function deny(c: Context, status: 401 | 403, scope?: string): Response {
   const body = status === 401
-    ? { error: "unauthorized", title: "Unauthorized", status, message: "authentication required" }
-    : { error: "forbidden", title: "Forbidden", status, message: scope ? `requires scope: ${scope}` : "insufficient permissions" };
-  return c.json(body, status, { "content-type": PROBLEM });
+    ? toProblemDetails({ tag: "UnauthorizedError", detail: "authentication required" })
+    : toProblemDetails({ tag: "ForbiddenError", detail: scope ? `requires scope: ${scope}` : "insufficient permissions" });
+  return c.json(body, status, { "content-type": PROBLEM_CONTENT_TYPE });
 }
 
 function hasScope(cfg: IdentityConfig, c: Context, scope: string): boolean {

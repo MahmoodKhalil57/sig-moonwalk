@@ -80,6 +80,27 @@ export interface ProblemDetails {
 }
 
 /**
+ * The canonical JSON Schema (2020-12) form of {@link ProblemDetails} — the `$ref` target @suluk/hono's emit
+ * injects into `components.schemas.ProblemDetails`, so the SDK's `isApiError` typing and testgen's
+ * error-conformance validate against ONE shared schema. Frozen; mirrors the type above.
+ */
+export const PROBLEM_DETAILS_SCHEMA = Object.freeze({
+  type: "object",
+  title: "ProblemDetails",
+  description: "RFC-9457 Problem Details (application/problem+json).",
+  properties: {
+    type: { type: "string", format: "uri-reference", default: "about:blank" },
+    title: { type: "string" },
+    status: { type: "integer" },
+    detail: { type: "string" },
+    instance: { type: "string", format: "uri-reference" },
+    errors: { type: "object", additionalProperties: true },
+    error: { type: "string", deprecated: true },
+  },
+  required: ["type", "title", "status"],
+});
+
+/**
  * Structural guard — discriminates a Problem Details body (parallel to saastarter's `isApiError` and core's
  * `isReference`). Checks the two always-present RFC-9457 members `title` (string) + `status` (number).
  */

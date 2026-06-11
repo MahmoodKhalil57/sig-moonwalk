@@ -4,7 +4,7 @@
  * the pure derivations (emitV4 / audit / contractChecks) need no running server — only mount() touches Hono.
  */
 import type * as z from "zod";
-import type { SecurityRequirement } from "@suluk/core";
+import type { SecurityRequirement, SulukRateLimit } from "@suluk/core";
 
 export type Method = "get" | "post" | "put" | "patch" | "delete" | "head" | "options";
 
@@ -51,6 +51,16 @@ export interface RouteContract {
   security?: SecurityRequirement[];
   /** Required scopes. Drives BOTH the per-principal filter (the "who") and synthesized security. */
   scopes?: string[];
+  /**
+   * Error statuses this operation can return. Synthesized into RFC-9457 error responses by emitV4 (alongside
+   * the auto-derived 401/403 for auth-gated ops, 429 when rate-limited, and an always-present 500).
+   */
+  errors?: number[];
+  /**
+   * The declared rate budget (the `x-suluk-ratelimit` facet). emitV4 stamps it onto the operation + synthesizes a
+   * 429 response; @suluk/hono's enforceRateLimit middleware ENFORCES it on the wire. Advisory vendor extension.
+   */
+  rateLimit?: SulukRateLimit;
   request?: RouteRequest;
   /** Responses, as a list (each carries its own status) or a status-keyed map. */
   responses?: RouteResponse[] | Record<string, RouteResponse>;
