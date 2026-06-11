@@ -99,6 +99,36 @@ export interface Request {
    * published projections (it discloses internal layout) — see core's `scrubSource` / `sourceIndex`.
    */
   ["x-suluk-source"]?: SulukSource;
+  /**
+   * RATE-LIMIT facet (saastarter-parity Phase 0): the declared per-operation rate budget. ADVISORY VENDOR
+   * EXTENSION (see {@link SulukRateLimit}) — @suluk/hono's middleware ENFORCES it on the wire; core only
+   * carries the shape + derived reads (`rateLimitIndex`/`rateLimitCoverage`/`retryAfterSeconds`).
+   */
+  ["x-suluk-ratelimit"]?: SulukRateLimit;
+}
+
+/**
+ * RATE-LIMIT facet shape (saastarter-parity Phase 0): the per-operation rate budget an operation DECLARES.
+ * Orthogonal to the NORMATIVE spec, which holds rate-limiting out-of-scope (C012 / frontier #43, ceiling 0.74):
+ * like `x-suluk-cost`/`access`/`source` this is a vendor extension in the `x-suluk-*` namespace, never a
+ * normative OAS construct. Advisory only — the facet declares the budget; the middleware enforces it.
+ *
+ * `windowMs` + `maxRequests` are the fixed-window budget, ported from saastarter's `checkRateLimit` opts
+ * (src/lib/effect/rate-limit.ts:16-19). `key` is the declared key STRATEGY the runtime resolves a concrete
+ * key from: only `"ip"` is saastarter-faithful (it keys by a resolved IP); `"principal"`/`"api-key"`/`"global"`
+ * are ORIGINATED extensions (honestly-low ceiling — `"principal"` keying is gated on the Principal-model
+ * decision, roadmap Open-Decision #5, so the Phase-0 middleware implements only `"ip"` + a caller-supplied override).
+ */
+export interface SulukRateLimit {
+  /** fixed window length, milliseconds. */
+  windowMs: number;
+  /** max requests permitted per resolved key within the window. */
+  maxRequests: number;
+  /** the key STRATEGY (the runtime derives the concrete key). `"ip"` is the faithful default. */
+  key: "ip" | "principal" | "api-key" | "global";
+  /** optional sub-bucket name — lets two operations share or separate a budget (advisory). */
+  scope?: string;
+  description?: string;
 }
 
 /** A stable, symbolic pointer back to the authored source an element was projected from (advisory provenance). */
@@ -170,8 +200,24 @@ export interface Reference {
 /**
  * A JSON Schema 2020-12 object (or boolean). Opaque here — validated by the 2020-12 dialect (C013).
  * May itself contain a JSON-Schema `$ref` keyword (distinct from an OpenAPI Reference Object).
+ * Its `properties[name]` subschemas are the PROPERTY-LEVEL facet locus ({@link SchemaProperty}).
  */
 export type Schema = Record<string, unknown> | boolean;
+
+/**
+ * The PROPERTY-LEVEL facet locus (saastarter-parity Phase 0). core's `x-suluk-*` facets are operation-level
+ * today (on {@link Request}); a Schema Object's `properties[name]` is the locus for a FUTURE property-level
+ * facet — e.g. `@suluk/drizzle` attaching `x-suluk-i18n` to a localized column. This is an ADVISORY typed VIEW
+ * over the opaque {@link Schema}: it never narrows the runtime Schema type (which stays 2020-12-opaque), so a
+ * property carrying an `x-suluk-*` member is still a valid 2020-12 subschema (the dialect ignores `x-*` keywords).
+ */
+export interface SchemaProperty {
+  /** a property subschema may carry any vendor `x-suluk-*` facet (advisory; ignored by the 2020-12 validator). */
+  [facet: `x-suluk-${string}`]: unknown;
+}
+
+/** A map of property name → its (optionally facet-bearing) subschema — the property-level facet locus. */
+export type PropertyFacets = Record<string, SchemaProperty>;
 
 /** Either an inline Schema Object or an OpenAPI Reference Object. */
 export type SchemaOrRef = Schema | Reference;

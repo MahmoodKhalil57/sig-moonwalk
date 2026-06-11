@@ -10,12 +10,18 @@ export type {
   OpenAPIv4Document, Info, Server, Tag, PathItem, Shared, Request, HttpMethod,
   ParameterSchema, Response, Callback, Components, SecurityRequirement, SecurityScheme,
   Reference, Schema, SchemaOrRef, SulukSource,
+  SulukRateLimit, SchemaProperty, PropertyFacets,
 } from "./types";
 
 export { parseDocument } from "./parse";
 export { validateDocument, isValidDocument, type ValidationResult, type ValidationIssue } from "./validate";
 export { isReference, resolveRef, deref } from "./reference";
 export { sourceIndex, sourceCoverage, scrubSource, sourceKey, type SourceGroup, type SourceRef } from "./source";
+export { RATELIMIT_EXT, rateLimitOf, rateLimitIndex, rateLimitCoverage, retryAfterSeconds, type RateLimitGroup } from "./ratelimit";
+export {
+  PROBLEM_CONTENT_TYPE, PROBLEM_STATUS_TABLE, TITLE_BY_TAG, isProblemDetails, toProblemDetails,
+  type ProblemDetails, type ProblemStatus, type ErrorTag,
+} from "./errors";
 export { compileTemplate, matchPath, variableCount, type CompiledTemplate, type PathSegment } from "./template";
 export { computeSignature, collide, type SignatureTuple, type CollisionVerdict } from "./signature";
 export {
