@@ -22,6 +22,8 @@ export {
 } from "./apikey";
 // GDPR erasure cascade (Phase 0): the reusable beforeDelete orchestrator; the app supplies steps + picks the posture.
 export { beforeDeleteCascade, step, anonymizeStep, deleteStep, type CascadeStep, type CascadeOptions } from "./erasure";
+// auth-flow UX: open-redirect-safe redirect preservation + a frictionless emailVerification config.
+export { isSafeRelativePath, resolveRedirectTo, withRedirectTo, emailVerificationConfig, type EmailVerificationOptions } from "./auth-flow";
 // live role-preview (charter-bounded by C020): the fail-closed, deploy-gated role-login handler. The extension
 // holds NO token — it deep-links this route in the browser; the credentialed mint happens here, server-side.
 export { previewLoginHandler, isPreviewRuntime, type PreviewRequestLike, type PreviewEnvLike, type MintedSession, type PreviewLoginOptions } from "./preview";
