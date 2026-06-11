@@ -24,8 +24,8 @@ describe("@suluk/sdk — generate a typed ofetch SDK from a v4 contract", () => 
     expect(sdk).toContain('import { ofetch, type FetchError } from "ofetch"');
     expect(sdk).toContain('import { Validator } from "@cfworker/json-schema"'); // generic, eval-free engine
     expect(sdk).toContain("export function createClient");
-    expect(sdk).toContain("onRequest");                       // auth interceptor
-    expect(sdk).toContain("Authorization: `Bearer ${t}`");
+    expect(sdk).toContain("onRequest");                          // auth interceptor
+    expect(sdk).toContain('h.set("Authorization", `Bearer ${t}`)'); // injects the bearer via Headers.set
     expect(sdk).toContain('"https://api.example.com"');
     expect(sdk).toContain("Requires: `npm i ofetch @cfworker/json-schema`");
   });
