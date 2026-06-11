@@ -127,6 +127,14 @@ describe("renderFormTsx — shadcn <Form> codegen", () => {
     expect(tsx).toContain("handleSubmit");
   });
 
+  test("emits the error-handling contract: real-time revalidation + a root-error alert banner", () => {
+    expect(tsx).toContain('reValidateMode: "onChange"');     // errors clear as the user fixes a field
+    expect(tsx).toContain('form.setError("root"');           // submit failure → root error
+    expect(tsx).toContain('role="alert"');                   // accessible banner
+    expect(tsx).toContain('data-slot="form-error"');
+    expect(tsx).toContain("AlertCircle");                    // the icon import + usage
+  });
+
   test("contains a FormField per field and the Input control", () => {
     expect(tsx).toContain("FormField");
     expect(tsx).toContain("<Input");

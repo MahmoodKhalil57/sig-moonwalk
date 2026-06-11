@@ -156,6 +156,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
+import { AlertCircle } from "lucide-react";
 import {
   Form,
   FormControl,${spec.fields.some((f) => f.description) ? "\n  FormDescription," : ""}
@@ -171,17 +172,28 @@ import { ${schemaName} } from "./schema";
 export function ${componentName}() {
   const form = useForm<z.infer<typeof ${schemaName}>>({
     resolver: zodResolver(${schemaName}),
+    mode: "onSubmit",
+    reValidateMode: "onChange", // a field's error clears as the user fixes it after the first failed submit
   });
 
   async function onSubmit(values: z.infer<typeof ${schemaName}>) {
-    // TODO: wire the submit handler
-    console.log(values);${resetOnSuccess ? "\n    form.reset(); // clear-on-success" : ""}
+    try {
+      // TODO: wire the submit handler
+      console.log(values);${resetOnSuccess ? "\n      form.reset(); // clear-on-success" : ""}
+    } catch (err) {
+      form.setError("root", { message: err instanceof Error ? err.message : "Something went wrong. Please try again." });
+    }
   }
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
 ${indent(fields, 4)}
+        {form.formState.errors.root && (
+          <div role="alert" data-slot="form-error" className="fade-in-down flex items-center gap-2 rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+            <AlertCircle className="size-4 shrink-0" aria-hidden /> {form.formState.errors.root.message}
+          </div>
+        )}
         <Button type="submit" disabled={form.formState.isSubmitting}>
           {form.formState.isSubmitting ? "Submitting…" : "Submit"}
         </Button>

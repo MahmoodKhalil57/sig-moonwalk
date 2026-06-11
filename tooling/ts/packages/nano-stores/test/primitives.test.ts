@@ -4,6 +4,7 @@ import { asyncHandler } from "../src/async-button";
 import { createProgressBar } from "../src/progress";
 import { revealOnScroll } from "../src/reveal";
 import { createDrawer } from "../src/drawer";
+import { markInvalid, clearInvalid, clearInvalidOnInput } from "../src/validation";
 
 function discountHarness(seed?: AppliedDiscount) {
   const m = new Map<string, string>();
@@ -124,6 +125,27 @@ describe("createDrawer — open/close state machine + inert focus-trap", () => {
     d.toggle(); expect(d.isOpen()).toBe(true); expect(opens).toBe(1);
     d.open(); expect(opens).toBe(1); // already open → no double onOpen
     d.toggle(); expect(d.isOpen()).toBe(false); expect(closes).toBe(1);
+  });
+});
+
+describe("form validation feedback — aria-invalid + shake + real-time clear", () => {
+  function field() { const a: Record<string, string> = {}; const c = new Set<string>(); return { setAttribute: (n: string, v: string) => (a[n] = v), removeAttribute: (n: string) => delete a[n], classList: { add: (x: string) => c.add(x), remove: (x: string) => c.delete(x), has: (x: string) => c.has(x) }, _a: a, _c: c }; }
+  test("markInvalid sets aria-invalid + shake (cleared after timer); clearInvalid removes it", () => {
+    const f = field(); let timer: (() => void) | null = null;
+    markInvalid(f, { setTimer: (fn) => { timer = fn; } });
+    expect(f._a["aria-invalid"]).toBe("true");
+    expect(f._c.has("shake")).toBe(true);
+    timer!(); expect(f._c.has("shake")).toBe(false); // shake removed after the animation window
+    clearInvalid(f); expect(f._a["aria-invalid"]).toBeUndefined();
+  });
+  test("clearInvalidOnInput clears the edited field's invalid state on input", () => {
+    const f = field(); markInvalid(f, { shake: false });
+    let handler: ((e: any) => void) | null = null;
+    const form = { addEventListener: (_t: string, fn: any) => { handler = fn; }, removeEventListener: () => {} };
+    const off = clearInvalidOnInput(form as any);
+    handler!({ target: f });
+    expect(f._a["aria-invalid"]).toBeUndefined();
+    expect(typeof off).toBe("function");
   });
 });
 

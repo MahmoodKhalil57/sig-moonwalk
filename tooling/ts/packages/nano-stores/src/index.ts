@@ -24,3 +24,5 @@ export { createProgressBar, type ProgressBar, type ProgressBarOptions, type Prog
 export { revealOnScroll, type RevealOptions } from "./reveal";
 // the reusable slide-in panel controller (cart, mobile nav, sheet) — open/close + inert focus-trap + restore.
 export { createDrawer, type Drawer, type DrawerOptions, type PanelEl } from "./drawer";
+// form-error feedback (aria-invalid + shake + real-time clearing) for hand-written forms.
+export { markInvalid, clearInvalid, clearInvalidOnInput, type FieldLike } from "./validation";
