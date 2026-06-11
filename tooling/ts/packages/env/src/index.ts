@@ -12,4 +12,4 @@
 export { keygen, encrypt, decrypt, isEncrypted, publicFromPrivate, SCHEME, type Keypair } from "./crypto";
 export { parseEnv, resolveEnv, encryptContent, decryptContent, PUBLIC_KEY_NAME, PRIVATE_KEY_NAME } from "./envfile";
 export { loadEnv, type LoadOptions } from "./load";
-export { defineEnv, type EnvSpec, type VarSpec, type Surface, type DefinedEnv, type ManifestEntry, type HealthStatus, type Parsed } from "./schema";
+export { defineEnv, type EnvSpec, type VarSpec, type Surface, type DefinedEnv, type ManifestEntry, type HealthStatus, type Parsed, type EnvIssue, type IssueSeverity, type AssertOptions } from "./schema";
