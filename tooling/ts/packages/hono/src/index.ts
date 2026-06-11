@@ -12,3 +12,7 @@ export { mount } from "./mount";
 export { enforceAccess, createGuard, type EnforceAccessConfig, type IdentityConfig, type Guard, type AccessFacet, type AccessRequires } from "./enforce";
 export { SulukHttpError, HttpErrors, type SulukHttpErrorInit } from "./errors";
 export { onError, type OnErrorOptions } from "./on-error";
+export {
+  enforceRateLimit, MemoryRateLimitStore,
+  type EnforceRateLimitConfig, type RateLimitStore, type RateLimitResult, type RateLimitConsumeOptions,
+} from "./ratelimit";
