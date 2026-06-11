@@ -147,7 +147,9 @@ The three new packages + payment/data depth.
 > format + `x-suluk-widget`/`x-suluk-relation`); `@suluk/zod` `lexicalSchema` + `LEXICAL_V4_SCHEMA` (recursive) for
 > the richtext storage shape. Still open (in-package): `@suluk/deploy` secret-push + migration-delta; `@suluk/builder`
 > marketing SECTION tier. **`@suluk/deploy` migration-delta + secret-push + facet-derived bindings done** (`8d4f1b2`).
-> Still open (in-package): `@suluk/builder` marketing SECTION tier. Still open (saasuluk APP, different repo): wire `@suluk/sdk`/`@suluk/nano-stores` into pages.
+> **`@suluk/builder` marketing SECTION tier done** (`39776c6`): `buildMarketing` emits the landing as DSL docs (section→block→leaf, validated `errors:[]`); copy as i18n keys, data-driven sections via a declarative `source`; + `seoMeta`/`jsonLd` + a MARKETING module (Faq/Newsletter).
+>
+> **✅ IN-PACKAGE PARITY WORK COMPLETE** (Phase 0+1+2 package-side). Everything remaining is the **saasuluk APP** (`/home/mk/apps/saasuluk`, different repo): wire `@suluk/sdk`/`@suluk/nano-stores` into pages, felt-UX polish, the 40+ theme catalog — a run-the-app verification story, not `bun test`.
 
 - **`@suluk/i18n`** + **`@suluk/theme`** land here (model/loader/Intl + TokenSpec/OKLCH/emitter); `@suluk/shadcn`
   consumes the TokenSpec (`@theme`/`components.json`) and switches to **logical-property output** (`ps-/pe-/start/
