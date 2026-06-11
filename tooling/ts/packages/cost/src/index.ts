@@ -17,4 +17,8 @@ export {
 export {
   costMeter, recordUsage, MemoryCostSink, type CostSink, type CostMeterOptions,
 } from "./meter";
+// C024 — the Context-free background-event cost path (a fired webhook/cron/queue event, no live caller).
+export {
+  resolveEventExpression, attributePrincipal, eventCostEvent, recordEventCost, type EventCostInput,
+} from "./event";
 export { summarize, principalCost, type CostSummary } from "./ledger";
