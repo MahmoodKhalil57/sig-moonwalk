@@ -15,6 +15,7 @@ import {
 import { schemaHtml, sampleOf, constraintNotes } from "./schema";
 import { normalize, type RefDoc, type NormalizedOperation, type NormalizedParam, type ServerEntry } from "./ir";
 import { codeSamples } from "./codegen";
+import { costExplorer, adaPlayground, projectionMap } from "./panels";
 import { STYLE, SCRIPT } from "./assets";
 
 export interface ReferencePlugin {
@@ -30,6 +31,12 @@ export interface ReferenceOptions {
   costLedgerUrl?: string;
   /** enable the in-page try-it executor (same-origin fetch). Default true. */
   tryIt?: boolean;
+  /**
+   * a same-origin URL returning `{ viewer: "<id>" }` for the CURRENT session → the renderer auto-selects that
+   * viewer's lens (the council-ratified L2 "live per-user view") and re-checks on focus. The full canonical document
+   * is ALWAYS the source + always escapable via "Everything" — the projection is a client-side legible subset.
+   */
+  whoamiUrl?: string;
   plugins?: ReferencePlugin[];
 }
 
@@ -134,7 +141,7 @@ export function referenceHtml(doc: OpenAPIv4Document, opts: ReferenceOptions = {
   const lens = `<div class="lens" role="radiogroup" aria-label="View as"><div class="lens-label">View as</div><div class="lens-btns">
     <button class="lens-btn" role="radio" data-view="all">Everything <span class="cnt" id="view-count">${ir.operations.length}</span></button>
     ${viewers.map((v) => `<button class="lens-btn" role="radio" data-view="${escapeHtml(v.id)}">${escapeHtml(v.label)}</button>`).join("")}
-  </div></div>`;
+  </div><div id="view-status" class="view-status"></div></div>`;
 
   const cc = crossCut(doc, viewers);
   const GLYPH: Record<string, string> = { full: '<span class="yes" title="reachable">●</span>', scoped: '<span class="scoped" title="reachable, restricted to own rows">◐</span>', none: '<span class="no" title="not reachable">·</span>' };
@@ -152,6 +159,7 @@ export function referenceHtml(doc: OpenAPIv4Document, opts: ReferenceOptions = {
   const serverSel = servers.length > 1 ? `<div class="serverbar"><label>Server</label><select id="server-select">${servers.map((s) => `<option value="${escapeHtml(s.url)}">${escapeHtml(s.url)}${s.description ? ` — ${escapeHtml(s.description)}` : ""}</option>`).join("")}</select></div>` : "";
   const authBar = (opts.tryIt !== false) ? `<div class="authbar"><label>Bearer token</label><input id="ti-token" type="password" placeholder="for Try-it requests"/></div>` : "";
   const costInit = opts.costLedgerUrl ? `<script>window.__SULUK_COST_URL=${JSON.stringify(opts.costLedgerUrl)};</script>` : "";
+  const whoamiInit = opts.whoamiUrl ? `<script>window.__SULUK_WHOAMI=${JSON.stringify(opts.whoamiUrl)};</script>` : "";
   const heroSlots = (opts.plugins ?? []).map((p) => p.slots?.heroAfter?.(ir) ?? "").join("");
 
   return `<!doctype html><html lang="en"><head>
@@ -166,7 +174,7 @@ export function referenceHtml(doc: OpenAPIv4Document, opts: ReferenceOptions = {
   ${lens}
   <nav id="nav" aria-label="Operations">${nav}</nav>
   <div class="side-foot">
-    <a href="/openapi.json">⬇ OpenAPI v4 document</a><a href="#reachability">Reachability matrix</a>${models ? '<a href="#models">Models</a>' : ""}${security ? '<a href="#security">Authentication</a>' : ""}
+    <a href="/openapi.json">⬇ OpenAPI v4 document</a><a href="#cost-explorer">Cost Explorer</a><a href="#ada">ADA Playground</a><a href="#reachability">Reachability matrix</a>${models ? '<a href="#models">Models</a>' : ""}${security ? '<a href="#security">Authentication</a>' : ""}
   </div>
 </aside>
 <main id="main">
@@ -182,12 +190,15 @@ export function referenceHtml(doc: OpenAPIv4Document, opts: ReferenceOptions = {
   <div class="toolbar"><button class="tbtn" data-act="expand">Expand all</button><button class="tbtn" data-act="collapse">Collapse all</button></div>
   ${body}
   ${webhooks}
+  ${projectionMap(ir)}
+  ${costExplorer(ir)}
+  ${adaPlayground(ir)}
   ${matrix}
   ${models}
   ${security}
   <footer class="foot">CANDIDATE — not official OpenAPI. Rendered by <b>@suluk/reference</b> from the v4 contract via its semantic IR.</footer>
 </main>
-${costInit}
+${costInit}${whoamiInit}
 <script>${SCRIPT}</script>
 </body></html>`;
 }
@@ -200,3 +211,5 @@ export { normalize, type RefDoc, type NormalizedOperation } from "./ir";
 export { escapeHtml, crossCut, reachable, reachState, costRollup, DEFAULT_VIEWERS, type Viewer, type AccessFacet, type CostModel, type CrossCutRow } from "./facets";
 export { schemaHtml, sampleOf, constraintNotes } from "./schema";
 export { codeSamples } from "./codegen";
+export { costExplorer, adaPlayground, projectionMap } from "./panels";
+export { portalHtml, portalResponse, type PortalEntry, type PortalOptions } from "./portal";

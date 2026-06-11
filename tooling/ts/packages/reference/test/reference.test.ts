@@ -1,5 +1,5 @@
 import { test, expect, describe } from "bun:test";
-import { referenceHtml, referenceResponse, normalize, crossCut, reachable, reachState, costRollup, codeSamples, DEFAULT_VIEWERS, schemaHtml, sampleOf, constraintNotes, escapeHtml, type ReferencePlugin } from "../src/index";
+import { referenceHtml, referenceResponse, normalize, crossCut, reachable, reachState, costRollup, codeSamples, portalHtml, DEFAULT_VIEWERS, schemaHtml, sampleOf, constraintNotes, escapeHtml, type ReferencePlugin } from "../src/index";
 import type { OpenAPIv4Document } from "@suluk/core";
 
 const doc = {
@@ -108,6 +108,18 @@ describe("@suluk/reference — IR + complete renderer", () => {
     expect(html).toContain("diagnostic");                            // the dangling ref surfaced
   });
 
+  test("Phase-4 panels: Cost Explorer + Workflow Calculator + ADA Playground + projection map + whoami", () => {
+    const html = referenceHtml(doc, { whoamiUrl: "/api/whoami" });
+    expect(html).toContain("Cost Explorer + Workflow Calculator");
+    expect(html).toContain("cx-pick");                 // pickable rows for the workflow
+    expect(html).toContain("calls/mo");                // monthly projection
+    expect(html).toContain("ADA Resolution Playground");
+    expect(html).toContain("__SULUK_SIG_INDEX");       // the signature index for client resolution
+    expect(html).toContain("One contract → every layer"); // projection map
+    expect(html).toContain('window.__SULUK_WHOAMI="/api/whoami"'); // L2 live-view detection
+    expect(html).toContain("hidden by access policy");  // legible projection (council invariant 7)
+  });
+
   test("plugin seam: onNormalize + opCardAfter slot", () => {
     const plugin: ReferencePlugin = {
       name: "test",
@@ -117,6 +129,13 @@ describe("@suluk/reference — IR + complete renderer", () => {
     const html = referenceHtml(doc, { plugins: [plugin] });
     expect(html).toContain("Plugged");
     expect(html).toContain("<!--after:listProduct-->");
+  });
+
+  test("Phase-3 portal: multi-document index", () => {
+    const html = portalHtml([{ name: "store", title: "Store API", href: "/reference", version: "v4", description: "the shop" }], { pageTitle: "APIs" });
+    expect(html).toContain("Store API");
+    expect(html).toContain('href="/reference"');
+    expect(html).toContain("1 APIs");
   });
 
   test("referenceResponse + escaping", async () => {

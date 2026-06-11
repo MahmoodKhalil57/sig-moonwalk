@@ -63,6 +63,10 @@ pre.json{background:var(--code);color:var(--codefg);border-radius:8px;padding:10
 .model{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:12px 0;scroll-margin-top:14px}.model>h3{margin:0 0 8px;font-family:ui-monospace,monospace;font-size:15px}
 .scheme{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:10px 0;scroll-margin-top:14px}
 .foot{margin-top:50px;padding-top:18px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
+.view-status{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.4}
+.cx-calc{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--accentbg);border:1px solid var(--accentline);border-radius:10px;padding:10px 12px;margin:10px 0;font-size:14px}.cx-calc input{width:80px;padding:3px 6px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg)}.cx-table th.sortable{cursor:pointer}
+.ada-form{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.ada-form input,.ada-form select{padding:6px 9px;border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--fg);font-size:13px}.ada-form input{flex:1;min-width:160px;font-family:ui-monospace,monospace}#ada-out{margin-top:8px}
+.proj-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-top:12px}.proj-card{display:block;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;text-decoration:none;color:var(--fg)}.proj-card:hover{border-color:var(--accent)}.proj-name{font-weight:700;font-size:14px}.proj-detail{font-size:12px;margin-top:2px}
 .hidden-by-view,.hidden-by-filter{display:none !important}.menu-toggle{display:none}
 @media(max-width:820px){.side{position:fixed;left:0;top:0;z-index:50;transform:translateX(-100%);transition:transform .2s;box-shadow:0 0 40px rgba(0,0,0,.2)}body.nav-open .side{transform:translateX(0)}.menu-toggle{display:grid;position:fixed;top:12px;left:12px;z-index:60}main{padding:60px 18px 80px}}
 `;
@@ -111,11 +115,34 @@ export const SCRIPT = `
   if(location.hash){var el=document.getElementById(location.hash.slice(1)); el&&setTimeout(function(){el.scrollIntoView();},60);}
   // VIEW-AS lens
   var views=document.querySelectorAll('.lens-btn');
-  function setView(id){views.forEach(function(b){var on=b.dataset.view===id;b.classList.toggle('on',on);b.setAttribute('aria-checked',String(on));}); var shown=0;
-    document.querySelectorAll('.op').forEach(function(o){var on=id==='all'||(o.dataset.reach||'').split(' ').indexOf(id)>=0; o.classList.toggle('hidden-by-view',!on); if(on)shown++; var a=navmap[o.id]; if(a)a.classList.toggle('hidden-by-view',!on);});
-    var c=document.getElementById('view-count'); if(c)c.textContent=shown; try{localStorage.setItem('suluk-view',id);}catch(e){}}
+  function setView(id){views.forEach(function(b){var on=b.dataset.view===id;b.classList.toggle('on',on);b.setAttribute('aria-checked',String(on));}); var shown=0,total=0;
+    document.querySelectorAll('.op').forEach(function(o){total++;var on=id==='all'||(o.dataset.reach||'').split(' ').indexOf(id)>=0; o.classList.toggle('hidden-by-view',!on); if(on)shown++; var a=navmap[o.id]; if(a)a.classList.toggle('hidden-by-view',!on);});
+    var c=document.getElementById('view-count'); if(c)c.textContent=shown;
+    var st=document.getElementById('view-status'); if(st){if(id==='all'){st.textContent='showing all '+total+' — the canonical document';}else{var lbl=id;views.forEach(function(b){if(b.dataset.view===id)lbl=b.textContent.trim();});st.textContent='viewing as '+lbl+' · '+(total-shown)+' hidden by access policy (still reachable on the wire — server-side authz is the boundary)';}}
+    try{localStorage.setItem('suluk-view',id);}catch(e){}}
   views.forEach(function(b){b.addEventListener('click',function(){setView(b.dataset.view);});});
   var saved='all'; try{saved=localStorage.getItem('suluk-view')||'all';}catch(e){} setView(saved);
+  // L2 LIVE per-user view: detect the session viewer → auto-select the lens; re-check on focus (the canonical full
+  // doc is always escapable via "Everything"). The projection is a client-side legible SUBSET; never access control.
+  var who=window.__SULUK_WHOAMI;
+  function checkWho(){if(!who)return; fetch(who,{headers:{accept:'application/json'}}).then(function(r){return r.ok?r.json():null;}).then(function(d){if(d&&d.viewer){var has=false;views.forEach(function(b){if(b.dataset.view===d.viewer)has=true;}); if(has)setView(d.viewer);}}).catch(function(){});}
+  checkWho(); window.addEventListener('focus',checkWho);
+  // COST EXPLORER — workflow calculator + sort
+  function usd(mu){var d=mu/1e6; return d>=0.01?'$'+d.toFixed(2):d>=0.0001?'$'+d.toFixed(6).replace(/0+$/,''):Math.round(mu)+'µ$';}
+  var picks=document.querySelectorAll('.cx-pick'),mult=document.getElementById('cx-mult');
+  function cxCalc(){var sum=0,bd={}; document.querySelectorAll('.cx-pick:checked').forEach(function(p){sum+=Number(p.dataset.total||0); try{var s=JSON.parse(p.dataset.sources||'{}'); for(var k in s)bd[k]=(bd[k]||0)+s[k];}catch(e){}});
+    var sm=document.getElementById('cx-sum'); if(sm)sm.textContent=usd(sum); var b=document.getElementById('cx-bd'); if(b)b.textContent=Object.keys(bd).length?'('+Object.keys(bd).map(function(k){return k+' '+bd[k]+'µ$';}).join(' · ')+')':'';
+    var mo=document.getElementById('cx-month'); var n=Number(mult&&mult.value||0); if(mo)mo.textContent=usd(sum*n);}
+  picks.forEach(function(p){p.addEventListener('change',cxCalc);}); mult&&mult.addEventListener('input',cxCalc);
+  var clr=document.getElementById('cx-clear'); clr&&clr.addEventListener('click',function(){picks.forEach(function(p){p.checked=false;});cxCalc();});
+  var sortTh=document.querySelector('.cx-table th[data-sort=cost]'); if(sortTh){sortTh.style.cursor='pointer'; sortTh.addEventListener('click',function(){var tb=sortTh.closest('table').querySelector('tbody'),rows=[].slice.call(tb.querySelectorAll('tr')); rows.sort(function(a,b){return Number(b.dataset.total)-Number(a.dataset.total);}); rows.forEach(function(r){tb.appendChild(r);});});}
+  // ADA RESOLUTION PLAYGROUND
+  var adaGo=document.getElementById('ada-go');
+  if(adaGo)adaGo.addEventListener('click',function(){var idx=window.__SULUK_SIG_INDEX||[],method=(document.getElementById('ada-method').value||'GET').toUpperCase(),path=(document.getElementById('ada-path').value||'').trim().replace(/^\\//,''),ct=(document.getElementById('ada-ct').value||'').trim().toLowerCase(),segs=path.split('/').filter(Boolean),out=document.getElementById('ada-out');
+    var matches=idx.filter(function(o){if(o.method!==method)return false;var os=o.pathShape.split('/').filter(Boolean);if(os.length!==segs.length)return false;for(var i=0;i<os.length;i++){if(os[i]!=='{}'&&os[i]!==segs[i])return false;}if(ct&&o.contentType!=='*'&&o.contentType!==ct)return false;return true;});
+    if(!matches.length)out.innerHTML='<div class="ti-status s4">no operation matches '+esc(method+' /'+path)+'</div>';
+    else if(matches.length===1)out.innerHTML='<div class="ti-status s2">✓ resolves uniquely to <a href="#'+esc(matches[0].id)+'">'+esc(matches[0].name)+'</a></div>';
+    else out.innerHTML='<div class="ti-status s5">⚠ COLLISION — '+matches.length+' operations match: '+matches.map(function(m){return '<a href="#'+esc(m.id)+'">'+esc(m.name)+'</a>';}).join(', ')+' — disambiguated by body/query at runtime</div>';});
   // DECLARED-vs-ACTUAL cost drift
   var costUrl=window.__SULUK_COST_URL;
   if(costUrl){fetch(costUrl,{headers:{accept:'application/json'}}).then(function(r){return r.ok?r.json():null;}).then(function(d){if(!d||!d.opStats)return;

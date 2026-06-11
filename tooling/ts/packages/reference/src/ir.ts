@@ -22,11 +22,13 @@ export interface NormalizedBody { contentType: string; schema: unknown }
 export interface NormalizedRequest { method: string; path: string; params: NormalizedParam[]; body?: NormalizedBody }
 export interface NormalizedResponse { name: string; status: string; description?: string; contentType?: string; schema?: unknown; inherited: boolean }
 export interface CollisionNote { with: string; verdict: CollisionVerdict; reason: string }
+export interface OpSignature { method: string; pathShape: string; contentType: string }
 export interface NormalizedOperation {
   id: string; name: string; method: string; path: string; tag?: string;
   summary?: string; description?: string; deprecated?: boolean;
   request: NormalizedRequest; responses: NormalizedResponse[]; security: string[]; servers: ServerEntry[];
   cost?: CostModel; access?: AccessFacet; collisions: CollisionNote[]; shareCount: number;
+  signature: OpSignature; // the ADA identity tuple (for the resolution playground)
 }
 export interface RefDoc {
   spec: { dialect: string; version: string };
@@ -86,12 +88,14 @@ export function normalize(doc: OpenAPIv4Document): RefDoc {
     };
     add(apiResponses as never, true); add(pathResponses, true); add(raw.responses ?? {}, false);
 
+    const sig = computeSignature(uri, raw as never).tuple;
     return {
       id: `${slug(uri)}__${slug(name)}`, name, method: raw.method.toLowerCase(), path: uri, tag: raw.tags?.[0],
       summary: raw.summary, description: raw.description, deprecated: raw.deprecated,
       request, responses: Object.values(composed), security: (raw.security ?? []).flatMap((o) => Object.keys(o)),
       servers: (raw as { servers?: ServerEntry[] }).servers ?? pathServers,
       cost: raw["x-suluk-cost"], access: raw["x-suluk-access"], collisions, shareCount,
+      signature: { method: sig.method, pathShape: sig.path, contentType: sig.contentType },
     };
   };
 
