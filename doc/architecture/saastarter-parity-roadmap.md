@@ -29,6 +29,21 @@ the gate**, so the access facet is *decorative* on them. There is **no reusable 
 in any `@suluk` package** — RBAC enforcement lives only in saasuluk's CRUD factory + ad-hoc per-handler. That is
 the Phase-0 fix.
 
+## ✅ Phase 1 · the three new packages — SHIPPED (2026-06-11)
+
+The only three packages the review approved are built, tested, committed. Daftar receipt `seg-4e2f08b36a`.
+Each emits owned source/projection, never a hosted runtime (L3 held). Remaining Phase 1 = the payment/data
+depth track (below): `@suluk/stripe` checkout-path, `@suluk/drizzle`, `@suluk/builder` modules, `@suluk/admin`,
+`@suluk/better-auth` 2FA.
+
+| Package | Commit | What landed | Tests |
+|---|---|---|---|
+| **`@suluk/i18n`** | `48bfa52` | `defineLocales` genericizes the hardcoded `en/ar/es`; Workers-safe cookie/Request resolution (no `next/headers`); `t()` + `loadMessages` default-locale fallback (ported); `Intl` formatting incl. Eastern-Arabic numerals; `./astro` glue | 15 |
+| **`@suluk/email`** | `8fc7e77` | the `EmailProvider` binding the builder slot lacked (`consoleProvider` + Workers-safe `resendProvider` via REST, no SDK); `renderEmailHtml` (branding parameterized + i18n strings injected); per-event templates (verify/reset/change-email/delete/order-confirmation/order-status/newsletter); wired the `resend` slot `pkg` | 12 |
+| **`@suluk/theme`** | `812e376` | OKLCH value type; `TokenSpec` contract; deterministic `deriveDark`; `toCssVars`/`toThemeCss`/`toTailwindTheme`/`toShadcnTokens` projections; graphite/terracotta/ocean reference schemes | 14 |
+
+---
+
 ## Three new packages (the only ones that survived review)
 
 | Package | Purpose | Priority |
