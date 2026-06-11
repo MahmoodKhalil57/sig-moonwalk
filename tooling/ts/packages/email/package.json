@@ -1,0 +1,20 @@
+{
+  "name": "@suluk/email",
+  "version": "0.1.0",
+  "description": "The missing EmailProvider binding + a pure renderEmailHtml(options)→HTML generator with a per-event/per-locale branded template set (verify/reset/change-email/delete/order-confirmation/order-status/newsletter). Emits content the app SENDS — never a hosted mailer: consoleProvider (dev) + a Workers-safe resendProvider (REST, no SDK) are swappable bindings. Consumes @suluk/i18n for strings. CANDIDATE tooling.",
+  "publishConfig": { "access": "public" },
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MahmoodKhalil57/suluk.git",
+    "directory": "tooling/ts/packages/email"
+  },
+  "homepage": "https://github.com/MahmoodKhalil57/suluk#readme",
+  "bugs": "https://github.com/MahmoodKhalil57/suluk/issues",
+  "type": "module",
+  "main": "src/index.ts",
+  "exports": { ".": "./src/index.ts" },
+  "dependencies": { "@suluk/i18n": "workspace:*" },
+  "devDependencies": { "@types/bun": "latest" },
+  "scripts": { "test": "bun test", "typecheck": "tsc --noEmit -p ." }
+}

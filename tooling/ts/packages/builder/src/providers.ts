@@ -28,7 +28,7 @@ export const PROVIDER_CATALOG: Record<string, ProviderImpl[]> = {
     { id: "auth0", facet: "auth", title: "Auth0", description: "Enterprise SSO/OIDC; same session→principal shape." },
   ],
   email: [
-    { id: "resend", facet: "email", title: "Resend", description: "Transactional email; the reference EmailProvider." },
+    { id: "resend", facet: "email", title: "Resend", pkg: "@suluk/email", description: "Transactional email; the reference EmailProvider (@suluk/email resendProvider)." },
     { id: "sendgrid", facet: "email", title: "SendGrid", description: "Transactional + marketing; same EmailProvider interface." },
     { id: "ses", facet: "email", title: "Amazon SES", description: "Low-cost bulk email; same EmailProvider interface." },
   ],
