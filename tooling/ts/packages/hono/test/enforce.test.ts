@@ -16,7 +16,10 @@ describe("@suluk/hono enforceAccess — facet-driven wire enforcement (the serve
     createPet: { path: "/pet-create", access: { requires: "admin" } },
     myCart: { path: "/cart", access: { requires: "authenticated", scope: "owner" } },
     orgReport: { path: "/report", access: { requires: "authenticated", scope: "org:read" } },
-    undeclared: { path: "/undeclared" }, // no facet → defaults to anyone
+    undeclared: { path: "/undeclared" },                                   // no facet → DENY by default
+    scopedPublic: { path: "/scoped-public", access: { requires: "anyone", scope: "admin" } }, // a named scope despite anyone
+    miscased: { path: "/miscased", access: { requires: "Admin" } },        // a casing typo must still gate as admin
+    unknownLevel: { path: "/unknown", access: { requires: "superuser" } }, // an unknown level must fail closed
   };
   const byPath = Object.fromEntries(Object.entries(OPS).map(([name, o]) => [o.path, name]));
 
@@ -51,8 +54,26 @@ describe("@suluk/hono enforceAccess — facet-driven wire enforcement (the serve
     expect((await get("/report", { "x-user": "u1", "x-scopes": "org:read" })).status).toBe(200);
   });
 
-  test("an undeclared op defaults to anyone (never block the undeclared)", async () => {
-    expect((await get("/undeclared")).status).toBe(200);
+  test("FAIL-CLOSED: an undeclared op denies by default (anon → 401), not opens publicly", async () => {
+    expect((await get("/undeclared")).status).toBe(401);                 // deny-by-default (was the fail-open hole)
+    expect((await get("/undeclared", { "x-user": "u" })).status).toBe(200); // a signed-in caller passes the default
+  });
+
+  test("FAIL-CLOSED: a named scope is enforced even when requires is \"anyone\" (no silent scope-drop)", async () => {
+    expect((await get("/scoped-public")).status).toBe(401);              // anon can't reach a scope-gated op
+    expect((await get("/scoped-public", { "x-user": "u" })).status).toBe(403);            // signed-in but no admin scope
+    expect((await get("/scoped-public", { "x-user": "u", "x-admin": "1" })).status).toBe(200);
+  });
+
+  test("FAIL-CLOSED: a mis-cased requires (\"Admin\") still gates as admin (not degraded to authenticated)", async () => {
+    expect((await get("/miscased", { "x-user": "u" })).status).toBe(403);
+    expect((await get("/miscased", { "x-user": "u", "x-admin": "1" })).status).toBe(200);
+  });
+
+  test("FAIL-CLOSED: an UNKNOWN requires level denies everyone (a typo can't open a route)", async () => {
+    expect((await get("/unknown")).status).toBe(403);
+    expect((await get("/unknown", { "x-user": "u" })).status).toBe(403);
+    expect((await get("/unknown", { "x-user": "u", "x-admin": "1" })).status).toBe(403); // even admin — a typo is fixed, not bypassed
   });
 
   test("a non-contract path (no matched op) is passed straight through", async () => {

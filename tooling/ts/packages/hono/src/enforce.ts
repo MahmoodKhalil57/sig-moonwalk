@@ -52,26 +52,41 @@ export interface EnforceAccessConfig extends IdentityConfig {
   operationOf: (c: Context) => string | undefined;
   /** the declared access facet for an operation (e.g. from the document's x-suluk-access). */
   accessOf: (operation: string) => AccessFacet | undefined;
-  /** what an operation that declares NO access facet requires. Default "anyone" — never block the undeclared. */
+  /**
+   * what an operation that declares NO access facet requires. Defaults to "authenticated" — DENY BY DEFAULT, so a
+   * dropped/missing facet is a 401 in tests, NEVER a silent public route (a fail-open default is how an annotation
+   * gap becomes a live breach). Mark genuinely-public ops explicitly `requires:"anyone"`.
+   */
   defaultRequires?: AccessRequires;
+}
+
+/** Normalize a wire-supplied `requires` to the CLOSED enum; an unknown/typo'd value is `null` → fail closed. */
+function normalizeRequires(raw: string | undefined, fallback: AccessRequires): AccessRequires | null {
+  const v = (raw ?? fallback).toLowerCase().trim();
+  return v === "anyone" || v === "authenticated" || v === "admin" ? v : null;
 }
 
 /**
  * The facet-driven gate. Apply once (after identity is resolved, before the handlers): every operation is then
- * enforced at the level its `x-suluk-access` declares. Non-contract paths and `anyone` ops pass untouched.
+ * enforced at the level its `x-suluk-access` declares. FAIL-CLOSED throughout — a missing facet denies (deny-by-
+ * default), an unknown/mis-cased `requires` denies, and a non-owner `scope` is enforced even when `requires` is
+ * "anyone" (a named scope implies authentication). Non-contract paths (operationOf → undefined) pass untouched;
+ * a consumer's operationOf MUST be at least as strict as the router and MUST fail closed if it can't resolve.
  */
 export function enforceAccess(cfg: EnforceAccessConfig): MiddlewareHandler {
-  const fallback = cfg.defaultRequires ?? "anyone";
+  const fallback = cfg.defaultRequires ?? "authenticated"; // deny by default
   return async (c, next) => {
     const op = cfg.operationOf(c);
     if (!op) return next(); // not a contract operation (static asset, /api/auth, docs) — out of scope
     const facet = cfg.accessOf(op);
-    const requires = (facet?.requires ?? fallback) as string;
-    if (requires === "anyone") return next();
-    if (!cfg.principal(c)) return deny(c, 401);                                    // authenticated + admin both need a caller
+    const requires = normalizeRequires(facet?.requires, fallback);
+    if (requires === null) return deny(c, 403); // unknown/typo'd level — fail closed, never degrade to authenticated
+    // a named (non-owner) scope is a real requirement; row-level "owner" is the app's CRUD concern, not enforced here
+    const namedScope = facet?.scope && facet.scope !== "owner" ? facet.scope : undefined;
+    if (requires === "anyone" && !namedScope) return next(); // truly public
+    if (!cfg.principal(c)) return deny(c, 401);                                    // authenticated / admin / a named scope all need a caller
     if (requires === "admin" && !hasScope(cfg, c, "admin")) return deny(c, 403, "admin");
-    // a named scope beyond authenticated (row-level "owner" is the app's CRUD concern, not enforced here)
-    if (facet?.scope && facet.scope !== "owner" && !hasScope(cfg, c, facet.scope)) return deny(c, 403, facet.scope);
+    if (namedScope && !hasScope(cfg, c, namedScope)) return deny(c, 403, namedScope);
     return next();
   };
 }

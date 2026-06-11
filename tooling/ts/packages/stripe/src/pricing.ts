@@ -35,7 +35,9 @@ export interface OrderTotal { subtotalCents: number; discountCents: number; tota
 export interface AmountVerdict { ok: boolean; expectedCents: number; claimedCents: number; deltaCents: number; reason?: "amount-mismatch" }
 
 const sum = (ns: number[]) => ns.reduce((a, b) => a + b, 0);
-const lineTotal = (l: CartLine) => Math.max(0, Math.round(l.unitCents)) * Math.max(0, Math.trunc(l.qty));
+/** Coerce a non-finite number (NaN/±Infinity) to 0 — money math must never propagate poison. */
+const fin = (n: number) => (Number.isFinite(n) ? n : 0);
+const lineTotal = (l: CartLine) => Math.max(0, Math.round(fin(l.unitCents))) * Math.max(0, Math.trunc(fin(l.qty)));
 
 /** Subtotal in cents — integer, non-negative. */
 export function subtotal(lines: CartLine[]): number {
@@ -48,8 +50,8 @@ export function subtotal(lines: CartLine[]): number {
  * raw amount assuming the discount applies.
  */
 export function computeDiscountAmount(subtotalCents: number, d: Discount): number {
-  const base = Math.max(0, Math.round(subtotalCents));
-  if (base === 0) return 0;
+  const base = Math.max(0, Math.round(fin(subtotalCents)));
+  if (base === 0 || !Number.isFinite(d.value) || d.value <= 0) return 0; // a non-finite/non-positive value buys nothing
   const raw = d.type === "percent" ? (base * d.value) / 100 : d.value;
   return Math.min(base, Math.max(0, Math.round(raw)));
 }
