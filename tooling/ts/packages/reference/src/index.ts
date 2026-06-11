@@ -38,6 +38,8 @@ export interface ReferenceOptions {
    * is ALWAYS the source + always escapable via "Everything" — the projection is a client-side legible subset.
    */
   whoamiUrl?: string;
+  /** a URL serving a generated TypeScript SDK (@suluk/sdk) → a prominent "Download SDK" affordance. */
+  sdkUrl?: string;
   plugins?: ReferencePlugin[];
 }
 
@@ -179,7 +181,7 @@ export function referenceHtml(doc: OpenAPIv4Document, opts: ReferenceOptions = {
   ${lens}
   <nav id="nav" aria-label="Operations">${nav}</nav>
   <div class="side-foot">
-    <a href="/openapi.json">⬇ OpenAPI v4 document</a><a href="#hardening">🛡 Hardening ${hardening.grade}</a><a href="#cost-explorer">Cost Explorer</a><a href="#ada">ADA Playground</a><a href="#reachability">Reachability matrix</a>${models ? '<a href="#models">Models</a>' : ""}${security ? '<a href="#security">Authentication</a>' : ""}
+    ${opts.sdkUrl ? `<a class="sdk-dl" href="${escapeHtml(opts.sdkUrl)}" download>⬇ TypeScript SDK</a>` : ""}<a href="/openapi.json">⬇ OpenAPI v4 document</a><a href="#hardening">🛡 Hardening ${hardening.grade}</a><a href="#cost-explorer">Cost Explorer</a><a href="#ada">ADA Playground</a><a href="#reachability">Reachability matrix</a>${models ? '<a href="#models">Models</a>' : ""}${security ? '<a href="#security">Authentication</a>' : ""}
   </div>
 </aside>
 <main id="main">
