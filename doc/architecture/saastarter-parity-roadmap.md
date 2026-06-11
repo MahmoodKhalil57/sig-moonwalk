@@ -37,6 +37,32 @@ the Phase-0 fix.
 | **`@suluk/i18n`** | The locale primitive every content app needs: `SupportedLocale`/direction model, typed `Messages<N>` catalog shape (compile-time key-parity + harden-style completeness grade), a Workers-safe loader (`getMessages` + English fallback + `t()` interpolation + `dirOf`), `Intl` number/currency/date formatting (incl. Eastern-Arabic numerals), server cookie→locale resolution, and an `./astro` subpath for middleware glue. Catalog *content* stays app-authored. Consolidates ≥4 fragmented i18n proposals into one package. | P1 |
 | **`@suluk/theme`** | The design-token **contract**: a typed `TokenSpec` (colors/fonts/shadows/radius + type & spacing scales + breakpoints) projecting into CSS vars, the Tailwind v4 `@theme` block, shadcn token maps, and `@suluk/visual` baselines. OKLCH value-type + deterministic generate-dark-from-light; 2–3 reference schemes prove the mechanism (the 40+ curated catalog is meta-product breadth). **No `@suluk/astro`** — the no-flash stamper/toggle/picker is one thin app-layer helper, not a package. | P1 |
 
+## ✅ Phase 0 — SHIPPED (2026-06-11)
+
+All Phase-0 trust/correctness items are implemented contract-first, package-placed (never app-hardcoded), each
+verified (`bun test` + `tsc`) and committed. Daftar receipts: `seg-9ae626b8c4` (C012 reconciliation), `seg-261f4b7abd`
+(completion + deviations).
+
+| Item | Package | Commit | Tests |
+|---|---|---|---|
+| Fail-closed enforcement + non-finite money guards (hardening) | `@suluk/hono`, `@suluk/stripe` | `f97fc78` | hono 28 · stripe 32 |
+| Advisory facet **shapes** — `SulukRateLimit` + RFC-9457 `ProblemDetails`/status-table (ported verbatim from `route-handler.ts:24-86`) + property-level locus | `@suluk/core` | `c580c91` | core 31 |
+| **Error model** — typed-throw→status mapper + `onError` bridge + `emitV4` synthesizes RFC-9457 error responses + `deny()` refactored onto the shared envelope | `@suluk/hono` | `e2d1338` | hono 39 |
+| **Rate-limit middleware** — facet-driven, swappable `RateLimitStore` (dev `MemoryRateLimitStore`; durable backing → `@suluk/deploy`), 429 + Retry-After | `@suluk/hono` | `1af9e96` | hono 48 |
+| Scope-aware **`verifyApiKey`** (→ `{scopes}` Principal) + GDPR **`beforeDeleteCascade`** | `@suluk/better-auth` | `4f97399` | better-auth 34 |
+| **Money-correctness** + **error-conformance** acceptance emitters (PARITY §2) | `@suluk/testgen` | `f550dd0` | testgen 13 |
+
+**Key calls made during implementation** (the grounding workflow's adversarial review caught these):
+- `ExternalServiceError → 502` was kept (the roadmap's abbreviated status list dropped it); the port is faithful to `route-handler.ts`.
+- The facet **shapes** live in `@suluk/core` (not a per-facet package like `@suluk/cost`) because the error envelope + rate-limit shape are read across `hono`/`sdk`/`testgen`/`reference` — the deciding rule is *who reads it*.
+- `x-suluk-ratelimit` reconciled with **C012/#43** (out-of-scope for the *normative* spec) as a vendor extension — orthogonal, not a deviation (receipt `seg-9ae626b8c4`).
+- Receipted deviations: `permissionsToScopes` drops saastarter's `API_SCOPES` catalog filter (app vocabulary); key-auth identity-from-key is an invented composition; rate-limit per-op key vs saastarter bare-IP; money exact-invariants are originations stronger than saastarter.
+- Pre-existing unrelated `@suluk/sdk` test failure (stale `Authorization` assertion) predates this work — verified at `f97fc78`, **not** touched.
+
+**Next: Phase 1** (core parity mechanisms) — the three new packages (`@suluk/email`, `@suluk/i18n`, `@suluk/theme`) + payment/data depth. See below.
+
+---
+
 ## Phase 0 — trust & correctness (smallest code, highest stakes)
 
 Verified holes where the advisory-facet model leaves the server unguarded. **Enforcement must be EXTRACTED into
