@@ -40,6 +40,8 @@ export interface ReferenceOptions {
   whoamiUrl?: string;
   /** a URL serving a generated TypeScript SDK (@suluk/sdk) → a prominent "Download SDK" affordance. */
   sdkUrl?: string;
+  /** a URL serving a generated conformance suite (@suluk/testgen) → a "Download conformance tests" affordance. */
+  conformanceUrl?: string;
   plugins?: ReferencePlugin[];
 }
 
@@ -188,7 +190,7 @@ export function referenceHtml(doc: OpenAPIv4Document, opts: ReferenceOptions = {
   ${lens}
   <nav id="nav" aria-label="Operations">${nav}</nav>
   <div class="side-foot">
-    ${opts.sdkUrl ? `<a class="sdk-dl" href="${escapeHtml(opts.sdkUrl)}" download>⬇ TypeScript SDK</a>` : ""}<a href="/openapi.json">⬇ OpenAPI v4 document</a><a href="#hardening">🛡 Hardening ${hardening.grade}</a><a href="#cost-explorer">Cost Explorer</a><a href="#ada">ADA Playground</a><a href="#reachability">Reachability matrix</a>${models ? '<a href="#models">Models</a>' : ""}${security ? '<a href="#security">Authentication</a>' : ""}
+    ${opts.sdkUrl ? `<a class="sdk-dl" href="${escapeHtml(opts.sdkUrl)}" download>⬇ TypeScript SDK</a>` : ""}${opts.conformanceUrl ? `<a class="sdk-dl alt" href="${escapeHtml(opts.conformanceUrl)}" download title="a runnable suite asserting the server ENFORCES the contract (access on the wire, status, schema, cost)">⬇ Conformance tests</a>` : ""}<a href="/openapi.json">⬇ OpenAPI v4 document</a><a href="#hardening">🛡 Hardening ${hardening.grade}</a><a href="#cost-explorer">Cost Explorer</a><a href="#ada">ADA Playground</a><a href="#reachability">Reachability matrix</a>${models ? '<a href="#models">Models</a>' : ""}${security ? '<a href="#security">Authentication</a>' : ""}
   </div>
 </aside>
 <main id="main">

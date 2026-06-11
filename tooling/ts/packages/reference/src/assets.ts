@@ -19,7 +19,7 @@ code,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}a{color:var(-
 nav{overflow:auto;flex:1;margin:0 -6px}.nav-group{margin-bottom:10px}.nav-tag{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700;padding:4px 8px}
 .nav-op{display:flex;gap:8px;align-items:center;padding:4px 8px;border-radius:6px;color:var(--fg);text-decoration:none;font-size:13px;border-left:2px solid transparent}.nav-op:hover{background:var(--accentbg)}.nav-op.active{background:var(--accentbg);border-left-color:var(--accent);font-weight:600}.nav-op .nm{font-size:9px;font-weight:800;min-width:38px}
 .side-foot{font-size:11px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px;display:flex;flex-direction:column;gap:4px}
-.sdk-dl{background:var(--accent);color:#fff !important;border-radius:7px;padding:6px 10px;font-weight:700;text-align:center;text-decoration:none;margin-bottom:4px}.sdk-dl:hover{filter:brightness(1.1)}
+.sdk-dl{background:var(--accent);color:#fff !important;border-radius:7px;padding:6px 10px;font-weight:700;text-align:center;text-decoration:none;margin-bottom:4px}.sdk-dl:hover{filter:brightness(1.1)}.sdk-dl.alt{background:var(--panel2);color:var(--fg) !important;border:1px solid var(--line)}
 main{flex:1;max-width:980px;margin:0 auto;padding:28px 36px 90px;min-width:0}
 .hero{border-bottom:1px solid var(--line);padding-bottom:20px;margin-bottom:18px}
 .badges{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}.badge{font-size:12px;font-weight:600;padding:3px 10px;border-radius:999px;background:var(--code);color:var(--muted)}.badge.v4{background:var(--accent);color:#fff}.badge.cost{background:var(--accentbg);color:var(--accent);border:1px solid var(--accentline)}
