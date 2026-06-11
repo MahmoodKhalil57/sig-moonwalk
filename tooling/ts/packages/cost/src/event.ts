@@ -59,9 +59,30 @@ export interface EventCostInput {
   suppliedPrincipal?: string;
 }
 
-/** Build the CostEvent for a FIRED background event — pure. Stamps the trigger, resolves principal + dedupeKey. */
+/**
+ * Resolve the ACTUAL charged amount (in µ$) from the event when the model is `payload-reconciled` (C026), else
+ * undefined. Reads the runtime amount-expression (e.g. the Stripe event amount) and converts from its declared unit
+ * — so the recorded cost is the third party's real invoice line, not the operator's declared estimate.
+ */
+export function reconciledAmount(model: CostModel, event: Record<string, unknown>): number | undefined {
+  if (model.reconciliationBasis !== "payload-reconciled" || !model.amountExpression) return undefined;
+  const raw = resolveEventExpression(model.amountExpression, event);
+  const n = raw == null ? NaN : Number(raw);
+  if (!Number.isFinite(n)) return undefined;
+  const unit = model.amountUnit ?? "micro-usd";
+  return Math.round(unit === "cents" ? n * 10_000 : unit === "usd" ? n * 1_000_000 : n);
+}
+
+/** Build the CostEvent for a FIRED background event — pure. Stamps the trigger, resolves principal + dedupeKey,
+ *  and (C026) uses the payload-reconciled amount as the authoritative total when the model declares one. */
 export function eventCostEvent(input: EventCostInput): CostEvent {
-  const { breakdown, totalMicroUsd } = computeCost(input.model, input.usage ?? []);
+  let { breakdown, totalMicroUsd } = computeCost(input.model, input.usage ?? []);
+  const reconciled = reconciledAmount(input.model, input.event);
+  if (reconciled !== undefined) {
+    const source = input.model.components[0]?.source ?? "reconciled";
+    breakdown = [{ source, microUsd: reconciled }]; // the actual charge replaces the estimate
+    totalMicroUsd = reconciled;
+  }
   const dedupeKey = input.model.idempotencyKey ? resolveEventExpression(input.model.idempotencyKey, input.event) : undefined;
   return {
     at: input.at,
@@ -69,6 +90,7 @@ export function eventCostEvent(input: EventCostInput): CostEvent {
     principal: attributePrincipal(input.model, input.event, input.suppliedPrincipal),
     trigger: input.model.trigger ?? "synchronous",
     ...(dedupeKey ? { dedupeKey } : {}),
+    ...(reconciled !== undefined ? { reconciled: true } : {}),
     breakdown,
     totalMicroUsd,
   };

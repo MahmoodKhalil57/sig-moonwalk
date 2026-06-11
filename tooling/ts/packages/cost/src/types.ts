@@ -68,7 +68,21 @@ export interface CostModel {
   /** a runtime-expression yielding a stable id to DEDUPE at-least-once delivery (e.g. "{$event.id}") — prevents
    *  double-counting a cost charged on both the receipt op and the triggered op. Runtime-only. */
   idempotencyKey?: string;
+  /**
+   * How the amount RECONCILES with the third party's actual charge (C026; default "declared-estimate"). A declared
+   * estimate is a guess; "payload-reconciled" reads the ACTUAL charged amount from the event at runtime (the real
+   * invoice line — proration/tax/refund included), so the recorded cost is authoritative, not an approximation.
+   */
+  reconciliationBasis?: ReconciliationBasis;
+  /** for "payload-reconciled": a runtime-expression yielding the ACTUAL amount (e.g. "{$event.body#/amount}").
+   *  Runtime-only — never the static matcher. Interpreted in `amountUnit`. */
+  amountExpression?: string;
+  /** the unit `amountExpression` yields (default "micro-usd"). "cents" (Stripe) → ×10_000; "usd" → ×1_000_000. */
+  amountUnit?: "micro-usd" | "cents" | "usd";
 }
+
+/** Whether a cost's amount is a declared guess or read from the event payload at runtime (C026). */
+export type ReconciliationBasis = "declared-estimate" | "payload-reconciled";
 
 /** The principal sentinel for a background cost that resolved to NO principal — billed to nobody, but never silent. */
 export const UNATTRIBUTED = "@unattributed" as const;
@@ -93,6 +107,8 @@ export interface CostEvent {
   trigger?: CostTrigger;
   /** Dedupe id for at-least-once event delivery — two events with the same key are the SAME charge (C024). */
   dedupeKey?: string;
+  /** true ⇒ totalMicroUsd is the third party's ACTUAL charge read from the event (C026), not a declared estimate. */
+  reconciled?: boolean;
   /** Per-source breakdown (µ$). */
   breakdown: { source: string; microUsd: number }[];
   /** Total µ$ for the request. */

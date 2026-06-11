@@ -9,6 +9,8 @@ export {
   type CostBasis, type CostComponent, type CostModel, type UsageReport, type CostEvent, formatMicroUsd,
   // C024 — background-event cost: WHEN it fires (trigger) + WHO pays (attribution), orthogonal to basis (HOW it meters).
   type CostTrigger, type CostAttribution, UNATTRIBUTED,
+  // C026 — reconciliation: declared-estimate vs the third party's actual (payload-reconciled) charge.
+  type ReconciliationBasis,
 } from "./types";
 export {
   COST_EXT, annotateCosts, costOf, costAudit, costTable, computeCost, type CostFinding,
@@ -19,6 +21,6 @@ export {
 } from "./meter";
 // C024 — the Context-free background-event cost path (a fired webhook/cron/queue event, no live caller).
 export {
-  resolveEventExpression, attributePrincipal, eventCostEvent, recordEventCost, type EventCostInput,
+  resolveEventExpression, attributePrincipal, eventCostEvent, recordEventCost, reconciledAmount, type EventCostInput,
 } from "./event";
 export { summarize, principalCost, type CostSummary } from "./ledger";

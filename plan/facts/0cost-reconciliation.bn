@@ -1,0 +1,26 @@
+# Closes the LAST deferred piece of the cost-on-event topic (C024/C025): reconciliation. A declared/estimate cost
+# is NOT the third party's authoritative invoice amount (proration/tax/refund/chargeback). CONVERGENT — the C024
+# council's enterprise-integrator voice literally proposed "a reconciliationBasis discriminator with two honest
+# values: declared-estimate, payload-reconciled" (wf_026469fd-1f3). So resolved DIRECTLY (no new panel), adversarial
+# self-check below + converge backstop. Pairs with ADR C026. Ceiling tracks C024 (~0.58 Originated).
+
+# THE AXIS: x-suluk-cost gains `reconciliationBasis: "declared-estimate" (default) | "payload-reconciled"`. A
+# payload-reconciled cost reads the ACTUAL charged amount from the event at runtime via `amountExpression` (a C018
+# runtime-expression, e.g. {$event.body#/amount}) in a declared `amountUnit` (micro-usd default | cents | usd) — so
+# the recorded CostEvent.totalMicroUsd is the real invoice line (and CostEvent.reconciled=true), not an approximation.
+# STATIC part (reconciliationBasis enum + amountUnit) is locally decidable (hudlow); the amountExpression is
+# RUNTIME-ONLY, never the static matcher — inherited from C024's attribution pattern.
+claim cost_reconciliation_basis_static_amount_runtime: Bool @>=0.58 = True
+falsified_when cost_reconciliation_basis_static_amount_runtime == False
+
+# ADVERSARIAL SELF-CHECK (none fires):
+#  • orthogonality (handrews): reconciliation is a FOURTH orthogonal axis (basis=HOW meters · trigger=WHEN fires ·
+#    attribution=WHO pays · reconciliation=is-the-amount-the-real-charge) — not overloaded onto an existing one.
+#  • static-decidability (hudlow): the enum + unit are static literals; amountExpression stays runtime (same wall
+#    as attribution/idempotency), never the matcher.
+#  • fail-loud (pessimist): a payload-reconciled cost with NO amountExpression can't read the charge → costAudit
+#    `reconciliation-incomplete` (falls back to the estimate, surfaced not silent).
+#  • scope (conservative): still a vendor-extension dimension on x-suluk-cost, orthogonal to the normative core;
+#    does NOT reopen C018 async. Closes the gap 0cost-trigger.bn + 0cost-jobs.bn left as deferred-reconciliation.
+claim cost_reconciliation_orthogonal_fail_loud: Bool @>=0.6 = True
+falsified_when cost_reconciliation_orthogonal_fail_loud == False

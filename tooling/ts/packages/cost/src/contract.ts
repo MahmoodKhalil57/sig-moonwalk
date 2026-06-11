@@ -63,7 +63,7 @@ export function isDeferredCost(model: CostModel | undefined): boolean {
 }
 
 export interface CostFinding {
-  code: "no-cost-model" | "zero-cost" | "unattributed-background-cost" | "unverified-attribution";
+  code: "no-cost-model" | "zero-cost" | "unattributed-background-cost" | "unverified-attribution" | "reconciliation-incomplete";
   severity: "warn" | "info";
   path: string;
   operation: string;
@@ -93,6 +93,10 @@ export function costAudit(doc: OpenAPIv4Document): CostFinding[] {
       } else if (attr.strategy === "event-expression" && attr.trust !== "verified") {
         findings.push({ code: "unverified-attribution", severity: "warn", path, operation: name, message: "attribution reads an UNVERIFIED event payload (attacker-controllable) — require a verified signature" });
       }
+    }
+    // C026: a cost that claims to reconcile against the actual charge but can't read it falls back to the estimate.
+    if (model.reconciliationBasis === "payload-reconciled" && !model.amountExpression) {
+      findings.push({ code: "reconciliation-incomplete", severity: "warn", path, operation: name, message: "declares payload-reconciled but no amountExpression — the actual charge can't be read; it falls back to the estimate" });
     }
   }
   return findings;
