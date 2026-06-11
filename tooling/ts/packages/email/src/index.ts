@@ -18,3 +18,9 @@ export {
   orderConfirmationEmail, orderStatusEmail, newsletterEmail,
   TEMPLATE_STRINGS, type TemplateContext, type OrderLine,
 } from "./templates";
+// audience-sync (Phase 3): mirror the MARKETING module's Newsletter rows to an email-provider audience/list.
+export {
+  consoleAudience, resendAudience, syncNewsletter,
+  type AudienceProvider, type AudienceContact, type AudienceResult,
+  type ConsoleAudienceOptions, type ResendAudienceOptions, type NewsletterRow, type SyncResult,
+} from "./audience";
