@@ -92,6 +92,23 @@ export interface Request {
   /** Applied security, referenced BY NAME (C014 #69). */
   security?: SecurityRequirement[];
   servers?: Server[];
+  /**
+   * PROVENANCE facet (council whuovh6gs, L2): where in the AUTHORED source this operation was projected FROM.
+   * A stable SYMBOLIC pointer (file + exported symbol) — never a line number, never an authz/routing input
+   * (advisory only; C022 inv.5). STAMPED by the projection pass, never hand-authored. Scrub from externally
+   * published projections (it discloses internal layout) — see core's `scrubSource` / `sourceIndex`.
+   */
+  ["x-suluk-source"]?: SulukSource;
+}
+
+/** A stable, symbolic pointer back to the authored source an element was projected from (advisory provenance). */
+export interface SulukSource {
+  /** repo-relative path to the authoring file (e.g. "src/server/schema.ts"). NOT a line number. */
+  file: string;
+  /** the exported symbol within that file (e.g. a Drizzle table export, or the operation's name). */
+  symbol: string;
+  /** what kind of authored thing it is — "drizzle-table" | "operation" | "better-auth" | … (advisory label). */
+  kind?: string;
 }
 
 /** Per-location typed parameter slots (C004 #20). Each slot is a JSON Schema 2020-12 over its instance. */

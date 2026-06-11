@@ -7,7 +7,7 @@
  *
  * When OAS-4 (or a 3.x upgrade adapter) shifts an object shape, only this translator changes.
  */
-import type { OpenAPIv4Document } from "@suluk/core";
+import type { OpenAPIv4Document, SulukSource } from "@suluk/core";
 import { computeSignature, collide, isReference } from "@suluk/core";
 import type { CostModel, AccessFacet, CollisionVerdict } from "./facets";
 
@@ -27,7 +27,7 @@ export interface NormalizedOperation {
   id: string; name: string; method: string; path: string; tag?: string;
   summary?: string; description?: string; deprecated?: boolean;
   request: NormalizedRequest; responses: NormalizedResponse[]; security: string[]; servers: ServerEntry[];
-  cost?: CostModel; access?: AccessFacet; collisions: CollisionNote[]; shareCount: number;
+  cost?: CostModel; access?: AccessFacet; source?: SulukSource; collisions: CollisionNote[]; shareCount: number;
   signature: OpSignature; // the ADA identity tuple (for the resolution playground)
 }
 export interface RefDoc {
@@ -44,7 +44,7 @@ interface RawReq {
   parameterSchema?: Partial<Record<ParamLoc | "body", unknown>>;
   responses?: Record<string, { status: string | number; description?: string; contentType?: string | string[]; contentSchema?: unknown }>;
   security?: Record<string, unknown>[];
-  ["x-suluk-cost"]?: CostModel; ["x-suluk-access"]?: AccessFacet;
+  ["x-suluk-cost"]?: CostModel; ["x-suluk-access"]?: AccessFacet; ["x-suluk-source"]?: SulukSource;
 }
 
 export const slug = (s: string): string => s.replace(/[^a-zA-Z0-9_-]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
@@ -94,7 +94,7 @@ export function normalize(doc: OpenAPIv4Document): RefDoc {
       summary: raw.summary, description: raw.description, deprecated: raw.deprecated,
       request, responses: Object.values(composed), security: (raw.security ?? []).flatMap((o) => Object.keys(o)),
       servers: (raw as { servers?: ServerEntry[] }).servers ?? pathServers,
-      cost: raw["x-suluk-cost"], access: raw["x-suluk-access"], collisions, shareCount,
+      cost: raw["x-suluk-cost"], access: raw["x-suluk-access"], source: raw["x-suluk-source"], collisions, shareCount,
       signature: { method: sig.method, pathShape: sig.path, contentType: sig.contentType },
     };
   };

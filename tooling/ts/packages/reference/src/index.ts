@@ -7,7 +7,7 @@
  * (badge + coverage + drift), access (View-as projection + 3-state reachability matrix), signature collisions,
  * effective-vs-authored composition. Plugin seams (onNormalize + render slots) are locked here at v1.
  */
-import type { OpenAPIv4Document } from "@suluk/core";
+import type { OpenAPIv4Document, SulukSource } from "@suluk/core";
 import {
   escapeHtml, fmtUsd, costEstimate, costRollup, type CostModel,
   type AccessFacet, type Viewer, DEFAULT_VIEWERS, reachable, reachState, crossCut,
@@ -63,6 +63,13 @@ function costBadge(cost: CostModel | undefined): string {
   return `<span class="cost" title="${escapeHtml(parts || "cost")}">⛁ ${fmtUsd(est)} <span class="cost-raw">${Math.round(est)}µ$</span><span class="drift" data-drift></span></span>`;
 }
 const codeBlock = (v: unknown) => `<pre class="json">${escapeHtml(JSON.stringify(v, null, 2))}</pre>`;
+/** PROVENANCE affordance (council L2): a stable, advisory pointer to the authored source this op was projected from.
+ *  Only present when the document carries it — the server scrubs `x-suluk-source` from external/non-maintainer views. */
+function sourceTag(src: SulukSource | undefined): string {
+  if (!src) return "";
+  const base = src.file.split("/").pop() ?? src.file;
+  return `<span class="src" title="projected from ${escapeHtml(src.file)}#${escapeHtml(src.symbol)}${src.kind ? ` (${escapeHtml(src.kind)})` : ""} — advisory provenance, not an access boundary">↗ <code>${escapeHtml(base)}#${escapeHtml(src.symbol)}</code></span>`;
+}
 
 function paramTable(doc: OpenAPIv4Document, label: string, loc: string, params: NormalizedParam[], tryIt: boolean): string {
   if (!params.length) return "";
@@ -108,7 +115,7 @@ function opCard(doc: OpenAPIv4Document, ir: RefDoc, op: NormalizedOperation, vie
       ${op.summary ? `<p class="op-summary">${mdInline(op.summary)}</p>` : ""}
       ${op.description ? `<p class="muted">${mdInline(op.description)}</p>` : ""}
       ${op.security.length ? `<div class="sec">🔒 requires ${op.security.map((x) => `<a class="chip" href="#scheme-${escapeHtml(x)}">${escapeHtml(x)}</a>`).join(" ")}</div>` : ""}
-      <div class="toolbar"><span class="copy" data-copy="${escapeHtml(server + op.path)}">copy path</span><span class="copy deeplink" data-frag="${escapeHtml(op.id)}">copy link</span></div>
+      <div class="toolbar"><span class="copy" data-copy="${escapeHtml(server + op.path)}">copy path</span><span class="copy deeplink" data-frag="${escapeHtml(op.id)}">copy link</span>${sourceTag(op.source)}</div>
       ${sampleTabs}
       ${tryPanel}
       <div class="slots">
