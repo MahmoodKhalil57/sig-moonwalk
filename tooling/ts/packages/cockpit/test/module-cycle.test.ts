@@ -21,9 +21,9 @@ describe("installModule → the cockpit cycle lights up", () => {
   test("the host alone has only User", () => {
     expect(layer(before, "data").items.map((i) => i.label)).toEqual(["User"]);
   });
-  test("after install, the data layer gains Product + Order", () => {
+  test("after install, the data layer gains the ecommerce entities", () => {
     const entities = layer(after, "data").items.map((i) => i.label).sort();
-    expect(entities).toEqual(["Order", "Product", "User"]);
+    expect(entities).toEqual(["Cart", "Discount", "Order", "Product", "Review", "User", "Variant", "Wishlist"]);
   });
   test("the contract layer gains the module's operations (incl. checkout)", () => {
     const ops = layer(after, "contract").items.map((i) => i.label);
@@ -38,7 +38,7 @@ describe("installModule → the cockpit cycle lights up", () => {
   });
   test("the UI layer derives a form/table for the new entities", () => {
     const ui = layer(after, "ui").items.map((i) => i.label).sort();
-    expect(ui).toEqual(["Order", "Product", "User"]);
+    expect(ui).toEqual(["Cart", "Discount", "Order", "Product", "Review", "User", "Variant", "Wishlist"]);
   });
   test("the document still validates against the v4 meta-schema after the merge", () => {
     expect(after.valid).toBe(true);

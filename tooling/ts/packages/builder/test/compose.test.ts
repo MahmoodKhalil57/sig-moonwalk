@@ -58,7 +58,7 @@ describe("composeModules — assemble a platform in one step", () => {
     expect(r.ok).toBe(true);
     expect(r.steps.every((s) => s.installed)).toBe(true);
     const entities = Object.keys(r.doc.components!.schemas!).sort();
-    expect(entities).toEqual(["Contact", "Deal", "Order", "Product", "User"]);
+    expect(entities).toEqual(["Account", "Cart", "Contact", "Deal", "Discount", "Order", "Product", "Review", "Session", "User", "Variant", "Verification", "Wishlist"]);
     // the cross-module references resolved: Order/Deal $ref the User auth provided
     expect(JSON.stringify(r.doc.components!.schemas!.Order)).toContain("#/components/schemas/User");
   });

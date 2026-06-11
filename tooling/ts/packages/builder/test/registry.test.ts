@@ -58,7 +58,7 @@ describe("previewInstall — contract-diff-on-install (no commit)", () => {
   test("a clean install previews what it adds + requires + grade, willInstall true", () => {
     const p = previewInstall(host(), ECOMMERCE);
     expect(p.willInstall).toBe(true);
-    expect(p.addsSchemas).toEqual(["Product", "Order"]);
+    expect(p.addsSchemas).toEqual(["Product", "Variant", "Order", "Cart", "Discount", "Review", "Wishlist"]);
     expect(p.addsOperations).toContain("checkoutOrder");
     expect(p.requires).toEqual(["User"]);
     expect(p.missingRequires).toHaveLength(0);
@@ -70,7 +70,7 @@ describe("previewInstall — contract-diff-on-install (no commit)", () => {
     const p = previewInstall(noUser, ECOMMERCE);
     expect(p.willInstall).toBe(false);
     expect(p.missingRequires).toEqual(["User"]);
-    expect(p.addsSchemas).toEqual(["Product", "Order"]); // still shows what it WOULD add
+    expect(p.addsSchemas).toEqual(["Product", "Variant", "Order", "Cart", "Discount", "Review", "Wishlist"]); // still shows what it WOULD add
     expect(Object.keys(noUser.components!.schemas!)).toHaveLength(0); // untouched
   });
 });

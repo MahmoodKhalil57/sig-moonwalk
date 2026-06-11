@@ -18,14 +18,14 @@ describe("installModule — clean install", () => {
   test("installs and reports what it added", () => {
     expect(r.installed).toBe(true);
     expect(r.conflicts).toHaveLength(0);
-    expect(r.added.schemas).toEqual(["Product", "Order"]);
+    expect(r.added.schemas).toEqual(["Product", "Variant", "Order", "Cart", "Discount", "Review", "Wishlist"]);
     expect(r.added.operations).toContain("listProduct");
     expect(r.added.operations).toContain("createOrder");
     expect(r.added.operations).toContain("checkoutOrder"); // the explicit (non-CRUD) op
   });
   test("merges schemas (incl. the cross-module $ref to User) without losing the host's", () => {
     const s = r.doc.components!.schemas!;
-    expect(Object.keys(s).sort()).toEqual(["Order", "Product", "User"]);
+    expect(Object.keys(s).sort()).toEqual(["Cart", "Discount", "Order", "Product", "Review", "User", "Variant", "Wishlist"]);
     expect(JSON.stringify((s.Order as Record<string, unknown>))).toContain("#/components/schemas/User");
   });
   test("merges the CRUD + checkout paths alongside the host's", () => {
@@ -114,8 +114,8 @@ describe("installModule — collision discipline (adversarial regressions)", () 
 describe("namespaceModule — resolves a collision", () => {
   test("prefixes owned entities + rewrites internal $refs, leaving `requires` intact", () => {
     const ns = namespaceModule(ECOMMERCE, "Shop");
-    expect(ns.provides).toEqual(["ShopProduct", "ShopOrder"]);
-    expect(Object.keys(ns.schemas).sort()).toEqual(["ShopOrder", "ShopProduct"]);
+    expect(ns.provides).toEqual(["ShopProduct", "ShopVariant", "ShopOrder", "ShopCart", "ShopDiscount", "ShopReview", "ShopWishlist"]);
+    expect(Object.keys(ns.schemas).sort()).toEqual(["ShopCart", "ShopDiscount", "ShopOrder", "ShopProduct", "ShopReview", "ShopVariant", "ShopWishlist"]);
     // the Order→User reference is a REQUIRE, so it must NOT be prefixed
     expect(JSON.stringify(ns.schemas.ShopOrder)).toContain("#/components/schemas/User");
     // cost keys for auto-CRUD ops are remapped to the namespaced entity
@@ -141,6 +141,6 @@ describe("namespaceModule — resolves a collision", () => {
     const withEcom = installModule(host(), ECOMMERCE).doc; // already has Product/Order
     const r = installModule(withEcom, namespaceModule(ECOMMERCE, "Shop"));
     expect(r.installed).toBe(true);
-    expect(Object.keys(r.doc.components!.schemas!).sort()).toEqual(["Order", "Product", "ShopOrder", "ShopProduct", "User"]);
+    expect(Object.keys(r.doc.components!.schemas!).sort()).toEqual(["Cart", "Discount", "Order", "Product", "Review", "ShopCart", "ShopDiscount", "ShopOrder", "ShopProduct", "ShopReview", "ShopVariant", "ShopWishlist", "User", "Variant", "Wishlist"]);
   });
 });
