@@ -16,3 +16,9 @@ export {
 } from "./stores";
 // commerce primitive: a framework-agnostic, localStorage-persisted, cross-tab-synced shopping cart.
 export { createCartStore, type CartStore, type CartLine, type CartStoreOptions } from "./cart";
+// the cart's companion: a persisted, synced applied-discount atom.
+export { createDiscountStore, type DiscountStore, type AppliedDiscount, type DiscountStoreOptions } from "./discount";
+// interaction primitives (saastarter felt-UX parity): promise-aware buttons, nav progress, scroll-reveal.
+export { asyncHandler, bindAsyncButton, type AsyncBindOptions } from "./async-button";
+export { createProgressBar, type ProgressBar, type ProgressBarOptions, type ProgressElement } from "./progress";
+export { revealOnScroll, type RevealOptions } from "./reveal";
