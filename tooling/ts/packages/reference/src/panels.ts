@@ -3,9 +3,10 @@
  *   • Cost Explorer + Workflow Calculator — every op by declared cost/source; tick a sequence → cumulative µ$ + ×N/mo
  *   • ADA Resolution Playground — enter a request, see which NAMED operation it resolves to (unique/collision/runtime)
  */
-import { escapeHtml, fmtUsd, costEstimate } from "./facets";
+import { escapeHtml, fmtUsd, costEstimate, costTriggerLabel, type CostModel } from "./facets";
 import type { RefDoc } from "./ir";
 import type { DocAudit, Grade } from "@suluk/harden";
+import { rateLimitIndex, rateLimitCoverage, type OpenAPIv4Document } from "@suluk/core";
 
 const embed = (v: unknown) => JSON.stringify(v).replace(/</g, "\\u003c");
 
@@ -24,6 +25,44 @@ export function hardeningPanel(audit: DocAudit): string {
   return `<div class="section" id="hardening"><h2>Hardening — input-validation grade ${hardenBadge(audit.grade, `${audit.score}/100`)} <span class="muted">${audit.score}/100</span></h2>
     <p class="muted">Untrusted input is the attack surface. Every string wants a <b>maxLength</b> + a <b>pattern</b> (a character allowlist), every number a <b>maximum</b>, every array a <b>maxItems</b>, every object <b>closed</b> (additionalProperties:false) + typed, and <b>no any/unknown</b> — so malformed or oversized input can't break the system. <b>${audit.bySeverity.high}</b> high · <b>${audit.bySeverity.medium}</b> medium · <b>${audit.bySeverity.low}</b> low findings.${audit.grade !== "A" ? ` Harden the operations below to reach grade <b>${next[audit.grade]}</b>.` : ""}</p>
     ${worst.length === 0 ? '<p class="ok-line">✓ every input is fully bounded — grade A.</p>' : worst.map((o) => `<div class="harden-op"><div class="harden-op-head">${hardenBadge(o.grade, "")} <a href="#${escapeHtml(o.operation)}"><code>${escapeHtml(o.operation)}</code></a> <span class="muted">${o.findings.length} finding${o.findings.length > 1 ? "s" : ""}</span></div><ul class="harden-list">${o.findings.slice(0, 8).map((f) => `<li><span class="sev sev-${f.severity}">${f.severity}</span> ${escapeHtml(f.message)} → <span class="muted">${escapeHtml(f.fix)}</span></li>`).join("")}</ul></div>`).join("")}</div>`;
+}
+
+/** Walk every cost locus (paths + webhooks + jobs) for a BACKGROUND-triggered cost (C024/C025). */
+function deferredCosts(doc: OpenAPIv4Document): { name: string; locus: string; label: string; est: number | null; attributed: boolean }[] {
+  const out: { name: string; locus: string; label: string; est: number | null; attributed: boolean }[] = [];
+  const visit = (name: string, locus: string, node: unknown) => {
+    const cost = (node as Record<string, unknown>)["x-suluk-cost"] as CostModel | undefined;
+    const label = costTriggerLabel(cost);
+    if (!label) return; // synchronous (or no cost) — not a background cost
+    const a = cost?.attribution;
+    out.push({ name, locus, label, est: costEstimate(cost), attributed: !!a && (a.strategy !== "event-expression" || !!a.expression) });
+  };
+  for (const [path, pi] of Object.entries(doc.paths ?? {})) for (const [n, r] of Object.entries((pi as { requests?: Record<string, unknown> }).requests ?? {})) visit(n, path, r);
+  for (const [n, r] of Object.entries((doc as { webhooks?: Record<string, unknown> }).webhooks ?? {})) visit(n, `webhooks/${n}`, r);
+  for (const [n, j] of Object.entries((doc as { ["x-suluk-jobs"]?: Record<string, unknown> })["x-suluk-jobs"] ?? {})) visit(n, `jobs/${n}`, j);
+  return out;
+}
+
+/**
+ * Facet panels — the v4 OPERATIONAL facets a 3.x tool can't host: who's rate-metered (x-suluk-ratelimit), and
+ * which costs accrue on a BACKGROUND event rather than the route (x-suluk-cost trigger, C024/C025). Doc-derived.
+ */
+export function facetsPanel(doc: OpenAPIv4Document): string {
+  const limits = rateLimitIndex(doc);
+  const cov = rateLimitCoverage(doc);
+  const rl = limits.length
+    ? `<table class="matrix"><thead><tr><th>operation</th><th>route</th><th>budget</th><th>key</th></tr></thead><tbody>${limits.map((l) => `<tr><td><a href="#${escapeHtml(l.operation)}"><code>${escapeHtml(l.operation)}</code></a></td><td class="muted">${escapeHtml(l.method.toUpperCase())} ${escapeHtml(l.path)}</td><td>${l.maxRequests} / ${Math.round(l.windowMs / 1000)}s</td><td class="muted">${escapeHtml(l.key)}</td></tr>`).join("")}</tbody></table>`
+    : '<p class="muted">no <code>x-suluk-ratelimit</code> budgets declared.</p>';
+
+  const deferred = deferredCosts(doc);
+  const bg = deferred.length
+    ? `<table class="matrix"><thead><tr><th>operation</th><th>locus</th><th>charged on</th><th>est</th><th>who pays</th></tr></thead><tbody>${deferred.map((d) => `<tr><td><code>${escapeHtml(d.name)}</code></td><td class="muted">${escapeHtml(d.locus)}</td><td>${escapeHtml(d.label)}</td><td>${d.est != null ? `${fmtUsd(d.est)} <span class="muted">${Math.round(d.est)}µ$</span>` : "—"}</td><td>${d.attributed ? "✓ attributed" : '<span class="sev sev-medium">⚠ unattributed</span>'}</td></tr>`).join("")}</tbody></table>`
+    : '<p class="muted">no background-triggered costs — every cost accrues on its own route.</p>';
+
+  return `<div class="section" id="facets"><h2>Facet panels — v4 operational facets</h2>
+    <p class="muted">Advisory facets a v4 contract carries beyond shape — what a 3.x tool can't host. <b>Rate limits</b>: the declared per-op budget. <b>Background costs</b> (C024/C025): costs that accrue when an EVENT fires (a webhook / cron / queue), not when the route runs — with who gets charged.</p>
+    <h3>Rate limits <span class="muted">${cov.limited}/${cov.total} operations metered</span></h3>${rl}
+    <h3>Background-event costs <span class="muted">${deferred.length} deferred</span></h3>${bg}</div>`;
 }
 
 export function costExplorer(ir: RefDoc): string {

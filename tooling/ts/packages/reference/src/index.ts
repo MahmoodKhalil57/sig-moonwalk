@@ -15,7 +15,7 @@ import {
 import { schemaHtml, sampleOf, constraintNotes } from "./schema";
 import { normalize, type RefDoc, type NormalizedOperation, type NormalizedParam, type ServerEntry } from "./ir";
 import { codeSamples } from "./codegen";
-import { costExplorer, adaPlayground, projectionMap, hardeningPanel, hardenBadge } from "./panels";
+import { costExplorer, adaPlayground, projectionMap, hardeningPanel, hardenBadge, facetsPanel } from "./panels";
 import { auditDocument, type OpAudit, type DocAudit } from "@suluk/harden";
 import { STYLE, SCRIPT } from "./assets";
 
@@ -211,6 +211,7 @@ export function referenceHtml(doc: OpenAPIv4Document, opts: ReferenceOptions = {
   ${webhooks}
   ${projectionMap(ir)}
   ${hardeningPanel(hardening)}
+  ${facetsPanel(doc)}
   ${costExplorer(ir)}
   ${adaPlayground(ir)}
   ${matrix}
@@ -231,6 +232,6 @@ export { normalize, type RefDoc, type NormalizedOperation } from "./ir";
 export { escapeHtml, crossCut, reachable, reachState, costRollup, DEFAULT_VIEWERS, type Viewer, type AccessFacet, type CostModel, type CrossCutRow } from "./facets";
 export { schemaHtml, sampleOf, constraintNotes } from "./schema";
 export { codeSamples } from "./codegen";
-export { costExplorer, adaPlayground, projectionMap, hardeningPanel, hardenBadge } from "./panels";
+export { costExplorer, adaPlayground, projectionMap, hardeningPanel, hardenBadge, facetsPanel } from "./panels";
 export { portalHtml, portalResponse, type PortalEntry, type PortalOptions } from "./portal";
 export { auditDocument, auditOperation, assertGrade, type DocAudit, type OpAudit, type Grade } from "@suluk/harden";
