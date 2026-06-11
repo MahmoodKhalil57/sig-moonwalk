@@ -33,7 +33,7 @@ export const PROVIDER_CATALOG: Record<string, ProviderImpl[]> = {
     { id: "ses", facet: "email", title: "Amazon SES", description: "Low-cost bulk email; same EmailProvider interface." },
   ],
   storage: [
-    { id: "r2", facet: "storage", title: "Cloudflare R2", description: "S3-compatible, zero egress; the reference StorageProvider." },
+    { id: "r2", facet: "storage", title: "Cloudflare R2", pkg: "@suluk/deploy", description: "S3-compatible, zero egress; the reference StorageProvider (@suluk/deploy r2Storage)." },
     { id: "s3", facet: "storage", title: "Amazon S3", description: "Object storage; same StorageProvider interface." },
     { id: "gcs", facet: "storage", title: "Google Cloud Storage", description: "Object storage; same StorageProvider interface." },
   ],

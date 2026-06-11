@@ -80,11 +80,17 @@ export function durableBindings(doc: OpenAPIv4Document, appName = "app"): Bindin
   if (hasCostFacet(doc)) {
     bindings.push({ kind: "kv", binding: "COST_SINK", resource: `${appName}-cost`, reason: "x-suluk-cost needs a durable sink (MemoryCostSink is dev-only)." });
   }
-  const steps: DeployStep[] = bindings
-    .filter((b) => b.kind === "kv")
-    .map((b) => ({ cmd: `wrangler kv namespace create ${b.resource}`, note: `Create the ${b.binding} KV namespace, then put its id in wrangler.jsonc.` }));
+  // a bound `storage` provider slot (x-suluk-providers.storage) needs an R2 bucket (the StorageProvider's backing).
+  const providers = (doc as { ["x-suluk-providers"]?: Record<string, string> })["x-suluk-providers"];
+  if (providers?.storage) {
+    bindings.push({ kind: "r2", binding: "MEDIA", resource: `${appName}-media`, reason: `the ${providers.storage} storage provider needs an R2 bucket (memoryStorage is dev-only).` });
+  }
+  const steps: DeployStep[] = bindings.map((b) =>
+    b.kind === "r2"
+      ? { cmd: `wrangler r2 bucket create ${b.resource}`, note: `Create the ${b.binding} R2 bucket, then bind it in wrangler.jsonc under r2_buckets.` }
+      : { cmd: `wrangler kv namespace create ${b.resource}`, note: `Create the ${b.binding} KV namespace, then put its id in wrangler.jsonc.` });
   const notes = bindings.length
-    ? ["Add each binding to wrangler.jsonc under kv_namespaces (binding → id from the create step)."]
+    ? ["Add each binding to wrangler.jsonc (kv_namespaces for KV, r2_buckets for R2) — binding name → resource from the create step."]
     : ["No durable bindings required by the contract's facets."];
   return { bindings, steps, notes };
 }

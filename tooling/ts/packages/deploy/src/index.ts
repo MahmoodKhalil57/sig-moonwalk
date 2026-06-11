@@ -14,6 +14,11 @@ export {
   secretPushPlan, durableBindings,
   type SecretPushPlan, type BindingPlan, type DurableBinding,
 } from "./secrets";
+// the StorageProvider binding (Phase 3): the media/upload slot — R2 (reference) + a dev memory impl.
+export {
+  r2Storage, memoryStorage,
+  type StorageProvider, type StoredObject, type R2BucketLike,
+} from "./storage";
 
 import { cloudflare } from "./cloudflare";
 import type { DeployProvider } from "./types";
