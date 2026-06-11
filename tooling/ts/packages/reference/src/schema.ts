@@ -13,6 +13,27 @@ export function refName(ref: unknown): string | null {
   return isReference(ref) ? String((ref as { $ref: string }).$ref).split("/").pop() ?? "ref" : null;
 }
 
+/** Resolve a $ref WITHOUT throwing: a dangling/typo'd ref returns null (the renderer degrades to a chip) instead
+ *  of crashing the whole page — @suluk/core's resolveRef throws on a missing key. */
+function safeDeref(doc: OpenAPIv4Document, schema: unknown): unknown | null {
+  try { return deref(doc, schema); } catch { return null; }
+}
+
+/** Format JSON-Schema validation keywords (constraints) into compact chips. `format` is omitted here (it's in typeOf). */
+export function constraintNotes(s: Schema): string {
+  const c: string[] = [];
+  const num = (k: string, pre: string) => { if (s[k] != null) c.push(`${pre} ${s[k]}`); };
+  num("minLength", "min len"); num("maxLength", "max len");
+  num("minimum", "≥"); num("maximum", "≤"); num("exclusiveMinimum", ">"); num("exclusiveMaximum", "<");
+  num("multipleOf", "×of"); num("minItems", "min items"); num("maxItems", "max items");
+  if (s.uniqueItems) c.push("unique");
+  if (s.pattern) c.push(`pattern <code>${escapeHtml(String(s.pattern))}</code>`);
+  if (s.nullable) c.push("nullable");
+  if (s.readOnly) c.push("readOnly"); if (s.writeOnly) c.push("writeOnly");
+  if (s.deprecated) c.push("deprecated");
+  return c.length ? `<span class="constraints">${c.map((x) => `<span class="cn">${x}</span>`).join("")}</span>` : "";
+}
+
 export function typeOf(s: Schema): string {
   if (Array.isArray(s.type)) return (s.type as string[]).join(" | ");
   if (typeof s.type === "string") return s.format ? `${s.type}<${s.format}>` : (s.type as string);
@@ -32,7 +53,7 @@ export function schemaHtml(doc: OpenAPIv4Document, schema: unknown, depth = 0, s
   if (ref) {
     const id = String((schema as { $ref: string }).$ref);
     if (seen.has(id) || depth > 6) return `<a class="chip ref-link" href="#model-${escapeHtml(ref)}">${escapeHtml(ref)} ↗</a>`;
-    const resolved = deref(doc, schema);
+    const resolved = safeDeref(doc, schema);
     if (resolved && !isReference(resolved)) {
       return `<div class="ref"><a class="ref-name" href="#model-${escapeHtml(ref)}">${escapeHtml(ref)}</a>${schemaHtml(doc, resolved, depth + 1, new Set([...seen, id]))}</div>`;
     }
@@ -63,12 +84,13 @@ export function schemaHtml(doc: OpenAPIv4Document, schema: unknown, depth = 0, s
       const desc = typeof meta.description === "string" ? meta.description : "";
       const def = meta.default !== undefined ? `<span class="pdefault">= ${escapeHtml(JSON.stringify(meta.default))}</span>` : "";
       const enumv = Array.isArray(meta.enum) ? `<span class="penum">${(meta.enum as unknown[]).slice(0, 6).map((e) => `<code>${escapeHtml(JSON.stringify(e))}</code>`).join(" ")}</span>` : "";
+      const cons = (typeof ps === "object" && ps && !isReference(ps)) ? constraintNotes(meta) : "";
       const nested = (typeof ps === "object" && ps && !isReference(ps) && ((ps as Schema).properties || (ps as Schema).items)) ? `<div class="pnest">${schemaHtml(doc, ps, depth + 1, seen)}</div>` : "";
-      return `<tr><td class="pname">${escapeHtml(k)}${required.has(k) ? '<span class="req">*</span>' : ""}</td><td class="ptype">${escapeHtml(String(t))}</td><td class="pdesc">${escapeHtml(desc)} ${def} ${enumv}${nested}</td></tr>`;
+      return `<tr><td class="pname">${escapeHtml(k)}${required.has(k) ? '<span class="req">*</span>' : ""}</td><td class="ptype">${escapeHtml(String(t))}</td><td class="pdesc">${escapeHtml(desc)} ${def} ${enumv} ${cons}${nested}</td></tr>`;
     }).join("");
     return `<table class="props"><thead><tr><th>field</th><th>type</th><th>notes</th></tr></thead><tbody>${rows}</tbody></table>`;
   }
-  return `<span class="chip">${escapeHtml(typeOf(s))}</span>`;
+  return `<span class="chip">${escapeHtml(typeOf(s))}</span> ${constraintNotes(s)}`;
 }
 
 /** A representative sample VALUE for a schema (for request/response examples). Cycle/depth-guarded. */
@@ -77,7 +99,8 @@ export function sampleOf(doc: OpenAPIv4Document, schema: unknown, depth = 0, see
   if (isReference(schema)) {
     const id = String((schema as { $ref: string }).$ref);
     if (seen.has(id) || depth > 6) return {};
-    return sampleOf(doc, deref(doc, schema), depth + 1, new Set([...seen, id]));
+    const r = safeDeref(doc, schema);
+    return r == null ? {} : sampleOf(doc, r, depth + 1, new Set([...seen, id]));
   }
   const s = schema as Schema;
   if (s.example !== undefined) return s.example;

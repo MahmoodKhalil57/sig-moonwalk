@@ -54,17 +54,24 @@ export const DEFAULT_VIEWERS: Viewer[] = [
   { id: "admin", label: "Admin", authenticated: true, admin: true },
 ];
 
-/** Can a viewer reach an operation, given its access facet? An absent facet means public (reachable by all). */
-export function reachable(facet: AccessFacet | undefined, v: Viewer): boolean {
+export type ReachState = "full" | "scoped" | "none";
+/**
+ * Three-valued reachability — `full` (●), `scoped` (◐, reachable but restricted to the caller's OWN rows), or
+ * `none` (·). Honest about owner-scoping: a signed-in user can call an owner-scoped op, but only over their own
+ * data — not the same as full access. (The View-as lens treats full+scoped as "shown", none as "hidden".)
+ */
+export function reachState(facet: AccessFacet | undefined, v: Viewer): ReachState {
   switch (facet?.requires ?? "anyone") {
-    case "anyone": return true;
-    case "authenticated": return v.authenticated;
-    case "admin": return v.admin;
-    default: return true;
+    case "anyone": return "full";
+    case "authenticated": return v.authenticated ? (facet?.scope === "owner" && !v.admin ? "scoped" : "full") : "none";
+    case "admin": return v.admin ? "full" : "none";
+    default: return "full";
   }
 }
+/** Can a viewer reach an operation at all (full OR scoped)? Drives the View-as lens hide/show. */
+export function reachable(facet: AccessFacet | undefined, v: Viewer): boolean { return reachState(facet, v) !== "none"; }
 
-export interface CrossCutRow { path: string; name: string; method: string; requires: string; scope?: string; reach: Record<string, boolean> }
+export interface CrossCutRow { path: string; name: string; method: string; requires: string; scope?: string; reach: Record<string, ReachState> }
 /** The reachability matrix: every operation × every viewer. The projection made explicit (the contract refracted). */
 export function crossCut(doc: OpenAPIv4Document, viewers: Viewer[] = DEFAULT_VIEWERS): { viewers: Viewer[]; rows: CrossCutRow[] } {
   const rows: CrossCutRow[] = [];
@@ -72,7 +79,7 @@ export function crossCut(doc: OpenAPIv4Document, viewers: Viewer[] = DEFAULT_VIE
     const pi = piRaw as { requests?: Record<string, V4Request> };
     for (const [name, req] of Object.entries(pi.requests ?? {})) {
       const facet = (req as unknown as Record<string, unknown>)["x-suluk-access"] as AccessFacet | undefined;
-      rows.push({ path, name, method: req.method.toLowerCase(), requires: facet?.requires ?? "anyone", scope: facet?.scope, reach: Object.fromEntries(viewers.map((v) => [v.id, reachable(facet, v)])) });
+      rows.push({ path, name, method: req.method.toLowerCase(), requires: facet?.requires ?? "anyone", scope: facet?.scope, reach: Object.fromEntries(viewers.map((v) => [v.id, reachState(facet, v)])) });
     }
   }
   return { viewers, rows };

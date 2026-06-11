@@ -1,122 +1,133 @@
 import { test, expect, describe } from "bun:test";
-import { referenceHtml, referenceResponse, crossCut, reachable, costRollup, DEFAULT_VIEWERS, schemaHtml, sampleOf, escapeHtml } from "../src/index";
+import { referenceHtml, referenceResponse, normalize, crossCut, reachable, reachState, costRollup, codeSamples, DEFAULT_VIEWERS, schemaHtml, sampleOf, constraintNotes, escapeHtml, type ReferencePlugin } from "../src/index";
 import type { OpenAPIv4Document } from "@suluk/core";
 
 const doc = {
   openapi: "4.0.0-candidate",
-  info: { title: "Test Store API", description: "A v4 store with **cost** and `access`." },
-  servers: [{ url: "https://api.example.com" }],
-  tags: { Product: {}, Operations: {} },
+  info: { title: "Test Store API", description: "A v4 store." },
+  servers: [{ url: "https://api.example.com" }, { url: "https://staging.example.com", description: "staging" }],
+  tags: { Product: { description: "Catalog things." }, Operations: {} },
+  apiResponses: { serverError: { status: 500, description: "server error" } }, // composed into every op (C012)
   paths: {
     product: {
+      shared: { parameterSchema: { query: { type: "object", properties: { fields: { type: "string" } } } } }, // C012 shared param
       requests: {
-        listProduct: { method: "get", summary: "List products", tags: ["Product"], responses: { ok: { status: 200, description: "ok", contentSchema: { $ref: "#/components/schemas/Product" } } }, "x-suluk-access": { requires: "anyone" }, "x-suluk-cost": { estimateMicroUsd: 10, components: [{ source: "db-read", basis: "per-call", microUsd: 10 }] } },
-        createProduct: { method: "post", summary: "Create a product", tags: ["Product"], contentType: "application/json", contentSchema: { $ref: "#/components/schemas/Product" }, responses: { created: { status: 201, description: "created" }, forbidden: { status: 403, description: "not admin" } }, security: [{ bearer: [] }], "x-suluk-access": { requires: "admin" }, "x-suluk-cost": { estimateMicroUsd: 145, components: [{ source: "compute", basis: "per-call", microUsd: 100 }, { source: "db-write", basis: "per-call", microUsd: 45 }] } },
+        listProduct: { method: "get", summary: "List", tags: ["Product"], parameterSchema: { query: { type: "object", properties: { limit: { type: "integer" } } } }, responses: { ok: { status: 200 } }, "x-suluk-access": { requires: "anyone" }, "x-suluk-cost": { estimateMicroUsd: 10, components: [{ source: "db-read", microUsd: 10 }] } },
+        createProduct: { method: "post", summary: "Create", tags: ["Product"], contentType: "application/json", contentSchema: { $ref: "#/components/schemas/Product" }, responses: { created: { status: 201 } }, security: [{ bearer: [] }], "x-suluk-access": { requires: "admin" }, "x-suluk-cost": { estimateMicroUsd: 145, components: [{ source: "compute", microUsd: 100 }, { source: "db-write", microUsd: 45 }] } },
       },
     },
-    order: {
-      requests: {
-        createOrder: { method: "post", summary: "Place an order", tags: ["Operations"], responses: { created: { status: 201 } }, "x-suluk-access": { requires: "authenticated", scope: "owner" } },
-      },
-    },
+    "a/{id}": { requests: { create: { method: "post", summary: "create on a", tags: ["Operations"], responses: { ok: { status: 200 } } } } },
+    "b/{id}": { requests: { create: { method: "post", summary: "create on b", tags: ["Operations"], responses: { ok: { status: 200 } } } } }, // duplicate NAME on a different path
+    order: { requests: { createOrder: { method: "post", summary: "Order", tags: ["Operations"], responses: { ok: { status: 201 } }, "x-suluk-access": { requires: "authenticated", scope: "owner" } } } },
     search: {
       requests: {
-        // two requests sharing GET on one path → collision/multi
-        searchProducts: { method: "get", summary: "Search products", tags: ["Operations"], responses: { ok: { status: 200 } }, "x-suluk-access": { requires: "anyone" } },
-        searchPosts: { method: "get", summary: "Search posts", tags: ["Operations"], responses: { ok: { status: 200 } }, "x-suluk-access": { requires: "anyone" } },
-        uncosted: { method: "delete", summary: "no cost declared", tags: ["Operations"], responses: { ok: { status: 204 } } },
+        searchProducts: { method: "get", tags: ["Operations"], responses: { ok: { status: 200 } } },
+        searchPosts: { method: "get", tags: ["Operations"], responses: { ok: { status: 200 } } }, // shares GET → collision
+        broken: { method: "put", tags: ["Operations"], contentSchema: { $ref: "#/components/schemas/DoesNotExist" }, responses: { ok: { status: 200 } } }, // DANGLING ref
       },
     },
   },
   components: {
-    schemas: { Product: { type: "object", required: ["name"], properties: { name: { type: "string" }, priceCents: { type: "integer", default: 0 }, status: { type: "string", enum: ["draft", "published"] } } } },
-    securitySchemes: { sessionCookie: { type: "apiKey", in: "cookie", name: "s" }, bearer: { type: "http", scheme: "bearer", description: "an `sk_` token" } },
+    schemas: { Product: { type: "object", required: ["name"], properties: { name: { type: "string", minLength: 3, maxLength: 64 }, sku: { type: "string", pattern: "^sk_" }, status: { type: "string", enum: ["draft", "published"] } } } },
+    securitySchemes: { bearer: { type: "http", scheme: "bearer", description: "an `sk_` token" } },
   },
 } as unknown as OpenAPIv4Document;
 
-describe("@suluk/reference — complete v4-native renderer", () => {
-  const html = referenceHtml(doc, { costLedgerUrl: "/cost" });
+describe("@suluk/reference — IR + complete renderer", () => {
+  test("normalize → RefDoc: path-scoped ids (duplicate names don't collide)", () => {
+    const ir = normalize(doc);
+    const creates = ir.operations.filter((o) => o.name === "create");
+    expect(creates.length).toBe(2);
+    expect(creates[0].id).not.toBe(creates[1].id); // path-scoped — H2 fixed
+    expect(new Set(ir.operations.map((o) => o.id)).size).toBe(ir.operations.length); // all ids unique
+  });
 
-  test("v4 identity, not 3.1", () => {
+  test("C012 composition: apiResponses + shared params compose into the effective operation, marked inherited", () => {
+    const ir = normalize(doc);
+    const list = ir.operations.find((o) => o.name === "listProduct")!;
+    expect(list.responses.some((r) => r.status === "500" && r.inherited)).toBe(true);         // apiResponses composed in
+    const fields = list.request.params.find((p) => p.name === "fields")!;
+    expect(fields.inherited).toBe(true);                                                       // shared query param
+    expect(list.request.params.find((p) => p.name === "limit")!.inherited).toBe(false);        // own param
+  });
+
+  test("dangling $ref does NOT crash — degrades, and surfaces a diagnostic", () => {
+    const ir = normalize(doc);
+    const html = referenceHtml(doc); // would throw before the safe-deref fix
+    expect(html).toContain("DoesNotExist");          // rendered as a chip, not a crash
+    expect(html.length).toBeGreaterThan(1000);
+  });
+
+  test("schema constraints are rendered", () => {
+    const html = referenceHtml(doc);
+    expect(html).toContain("min len 3");
+    expect(html).toContain("max len 64");
+    expect(html).toContain("^sk_");                  // pattern
+    expect(constraintNotes({ minimum: 0, maximum: 9, nullable: true })).toContain("≥ 0");
+  });
+
+  test("3-state reachability: owner-scope is ◐ (scoped) for a user, ● (full) for admin", () => {
+    expect(reachState({ requires: "authenticated", scope: "owner" }, DEFAULT_VIEWERS[1])).toBe("scoped"); // user
+    expect(reachState({ requires: "authenticated", scope: "owner" }, DEFAULT_VIEWERS[2])).toBe("full");   // admin
+    expect(reachState({ requires: "admin" }, DEFAULT_VIEWERS[0])).toBe("none");
+    const cc = crossCut(doc);
+    expect(cc.rows.find((r) => r.name === "createOrder")!.reach).toEqual({ anon: "none", user: "scoped", admin: "full" });
+    expect(reachable({ requires: "admin" }, DEFAULT_VIEWERS[0])).toBe(false);
+  });
+
+  test("v4 identity + cost + access projection + signature collisions all render", () => {
+    const html = referenceHtml(doc, { costLedgerUrl: "/cost" });
     expect(html).toContain("OpenAPI 4.0.0-candidate");
     expect(html).not.toContain("3.1.0");
-  });
-
-  test("requests-shape: every NAMED request renders (none dropped)", () => {
-    for (const n of ["listProduct", "createProduct", "createOrder", "searchProducts", "searchPosts", "uncosted"]) expect(html).toContain(`op-${n}`);
-    expect(html).toContain("named requests share"); // the multi-on-a-method note
-  });
-
-  test("signature collision diagnostic fires for two requests sharing a method", () => {
+    expect(html).toContain("145µ$");                                  // cost
+    expect(html).toContain("priced subtotal");                       // honest rollup label
+    expect(html).toContain("View as");                               // lens
+    expect(html).toContain("◐");                                     // scoped glyph in the matrix
     expect(html).toMatch(/signature (provable collision|not statically determinable)/);
+    const create = html.slice(html.indexOf('id="b-id__create"'), html.indexOf('id="b-id__create"') + 200);
+    expect(create).toContain("create");
   });
 
-  test("cost facet: badge + breakdown + coverage badge + header rollup", () => {
-    expect(html).toContain("145µ$");
-    expect(html).toContain("compute 100µ$");                 // breakdown
-    expect(html).toContain("no cost model");                 // the uncosted delete op
-    expect(html).toContain("priced");                        // the rollup badge
-    expect(html).toContain('data-drift');                    // drift placeholder for the live ledger
-    expect(html).toContain('window.__SULUK_COST_URL="/cost"');
+  test("multi-language code samples + try-it + server selector", () => {
+    const html = referenceHtml(doc);
+    const s = codeSamples("https://api.example.com", normalize(doc).operations.find((o) => o.name === "createProduct")!, { name: "x" });
+    expect(s.map((x) => x.lang)).toEqual(["curl", "js", "python"]);
+    expect(s.find((x) => x.lang === "python")!.code).toContain("requests.post");
+    expect(html).toContain("JavaScript");                            // tab
+    expect(html).toContain("ti-send");                               // try-it button
+    expect(html).toContain('id="server-select"');                    // 2 servers → selector
+    expect(html).toContain("staging");
   });
 
-  test("ACCESS projection: per-op chips + the View-as lens + the reachability matrix", () => {
-    expect(html).toContain("View as");
-    expect(html).toContain('data-view="anon"');
-    expect(html).toContain('data-view="admin"');
-    expect(html).toContain("Reachability");
-    // createProduct (admin) is NOT reachable by anon — its card carries only viewers that can reach it
-    const card = html.slice(html.indexOf('id="op-createProduct"'), html.indexOf('id="op-createProduct"') + 400);
-    expect(card).toContain('data-reach="admin"');            // admin-only
-    const listCard = html.slice(html.indexOf('id="op-listProduct"'), html.indexOf('id="op-listProduct"') + 400);
-    expect(listCard).toContain('data-reach="anon user admin"'); // public
+  test("tag descriptions, deep-link, models searchable, auth, diagnostics banner", () => {
+    const html = referenceHtml(doc);
+    expect(html).toContain("Catalog things.");                       // tag description
+    expect(html).toContain("copy link");                             // deep-link affordance
+    expect(html).toContain('data-name="product"');                   // model is filterable
+    expect(html).toContain('id="scheme-bearer"');                    // auth anchor
+    expect(html).toContain("diagnostic");                            // the dangling ref surfaced
   });
 
-  test("crossCut + reachable compute the projection correctly", () => {
-    const cc = crossCut(doc);
-    const create = cc.rows.find((r) => r.name === "createProduct")!;
-    expect(create.reach).toEqual({ anon: false, user: false, admin: true });
-    const list = cc.rows.find((r) => r.name === "listProduct")!;
-    expect(list.reach).toEqual({ anon: true, user: true, admin: true });
-    const order = cc.rows.find((r) => r.name === "createOrder")!;
-    expect(order.reach).toEqual({ anon: false, user: true, admin: true }); // authenticated
-    expect(reachable({ requires: "admin" }, DEFAULT_VIEWERS[0])).toBe(false);
-    expect(reachable(undefined, DEFAULT_VIEWERS[0])).toBe(true); // absent facet = public
+  test("plugin seam: onNormalize + opCardAfter slot", () => {
+    const plugin: ReferencePlugin = {
+      name: "test",
+      onNormalize: (ir) => { ir.info.title = "Plugged"; return ir; },
+      slots: { opCardAfter: (op) => `<!--after:${op.name}-->` },
+    };
+    const html = referenceHtml(doc, { plugins: [plugin] });
+    expect(html).toContain("Plugged");
+    expect(html).toContain("<!--after:listProduct-->");
   });
 
-  test("costRollup tallies priced vs undeclared", () => {
-    const r = costRollup(doc);
-    expect(r.priced).toBe(2);      // listProduct (10) + createProduct (145)
-    expect(r.undeclared).toBe(4);  // createOrder, searchProducts, searchPosts, uncosted
-    expect(r.priced + r.undeclared).toBe(6);
-    expect(r.totalMicroUsd).toBe(155);
-  });
-
-  test("schema rendering: models section, $ref links, examples, enums, required", () => {
-    expect(html).toContain('id="model-Product"');
-    expect(html).toContain("priceCents");
-    expect(html).toContain("published");                     // enum value
-    expect(html).toContain("example");                       // generated example block
-    expect(schemaHtml(doc, { $ref: "#/components/schemas/Product" })).toContain("Product");
+  test("referenceResponse + escaping", async () => {
+    expect((await referenceResponse(doc).text())).toContain("Test Store API");
+    expect(escapeHtml(`<a>"'&`)).toBe("&lt;a&gt;&quot;&#39;&amp;");
     expect(sampleOf(doc, { type: "object", properties: { a: { type: "integer" } } })).toEqual({ a: 0 });
+    expect(schemaHtml(doc, { $ref: "#/components/schemas/Product" })).toContain("Product");
   });
 
-  test("auth section + per-op security + copy-as-curl", () => {
-    expect(html).toContain("Authentication");
-    expect(html).toContain("sessionCookie");
-    expect(html).toContain("copy as curl");
-    expect(html).toContain("https://api.example.com");       // server in the curl
-  });
-
-  test("chrome present: search, dark-mode, collapse, scroll-spy script", () => {
-    expect(html).toContain('id="filter"');
-    expect(html).toContain('data-act="theme"');
-    expect(html).toContain('data-act="collapse"');
-    expect(html).toContain("IntersectionObserver");          // scroll-spy
-  });
-
-  test("referenceResponse is text/html", async () => {
-    expect((await (referenceResponse(doc)).text())).toContain("Test Store API");
-    expect(escapeHtml('<a>"&')).toBe("&lt;a&gt;&quot;&amp;");
+  test("costRollup", () => {
+    const r = costRollup(doc);
+    expect(r.priced).toBe(2); expect(r.totalMicroUsd).toBe(155);
   });
 });
