@@ -1,0 +1,33 @@
+# Follow-on to C024 (cost-on-event): the `x-suluk-jobs` vendor map gives cron/queue cost a FIRST-CLASS HOME.
+# CONVERGENT — not a new contested Step: C024's council already blessed the DIRECTION ("their first-class home,
+# a thin x-suluk-jobs vendor map NOT a normative kind, is a future Step"; 0cost-trigger.bn claim
+# cost_trigger_jobs_and_reconciliation_deferred @0.6). So resolved DIRECTLY (no new panel), as the spine resolved
+# convergent items directly (Wave-1 batch) — with the adversarial self-check below + the converge backstop.
+# Pairs with ADR C025. Ceiling tracks C024 (~0.58 Originated).
+
+# THE MAP: a top-level `x-suluk-jobs` NAME-keyed map (C009) of SulukJob entries — non-HTTP background work
+# (scheduled cron / queue-consumed) that has NO inbound Request, so it cannot live in `paths` (no uriTemplate) or
+# `webhooks` (those ARE incoming HTTP operations with a Request). A SulukJob carries its STATIC trigger +
+# schedule(cron)/queue + the same advisory x-suluk-* facets an operation does (notably x-suluk-cost with a matching
+# scheduled/queue-consumed trigger). @suluk/cost walks it (eachJob/costLoci → costAudit/costTable); @suluk/reference
+# rolls its (deferred) cost into the total.
+claim cost_jobs_toplevel_vendor_map: Bool @>=0.58 = True
+falsified_when cost_jobs_toplevel_vendor_map == False
+
+# ADVERSARIAL SELF-CHECK (the council's lenses, applied; none fires):
+#  • conservative / C018-scope: does this REOPEN the deferred async space? NO — it is a VENDOR map (x-suluk-*),
+#    explicitly NOT a normative async object kind; it describes WHERE background work costs, asserting no event
+#    channel/stream/delivery protocol. Exactly the move C024 pre-blessed + x-suluk-ratelimit vs C012/#43.
+#  • contrarian / duplication: does it DUPLICATE webhooks? NO — a webhook is an INCOMING HTTP operation (has a
+#    Request, lives in `webhooks`); a job is NON-HTTP (cron tick / queue drain, no Request). Disjoint loci.
+#  • hudlow / static-decidability: the STATIC fields (trigger enum + cron string + queue name) are locally decidable
+#    from the document alone; the cost ATTRIBUTION stays runtime-only (inherited from C024), never in the matcher.
+#  • handrews / whose-job: cost+jobs stay a vendor extension; core only gains a STRUCTURAL SulukJob shape (no new
+#    normative control keyword), consistent with reusing C009 named maps + the x-suluk-* facet namespace.
+claim cost_jobs_no_async_reopen_no_webhook_dup: Bool @>=0.6 = True
+falsified_when cost_jobs_no_async_reopen_no_webhook_dup == False
+
+# DEFERRED still (not closed by this Step): reconciliation (declared-estimate vs the third party's actual invoice
+# amount — proration/tax/refund/chargeback) remains a future reconciliationBasis extension, out of scope here.
+claim cost_jobs_reconciliation_still_deferred: Bool @>=0.6 = True
+falsified_when cost_jobs_reconciliation_still_deferred == False

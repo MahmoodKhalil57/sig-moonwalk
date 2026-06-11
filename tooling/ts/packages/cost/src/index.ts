@@ -12,7 +12,7 @@ export {
 } from "./types";
 export {
   COST_EXT, annotateCosts, costOf, costAudit, costTable, computeCost, type CostFinding,
-  eachOperation, triggerOf, isDeferredCost, type CostRow,
+  eachOperation, eachJob, triggerOf, isDeferredCost, type CostRow,
 } from "./contract";
 export {
   costMeter, recordUsage, MemoryCostSink, type CostSink, type CostMeterOptions,

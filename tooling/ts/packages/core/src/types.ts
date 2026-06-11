@@ -23,7 +23,34 @@ export interface OpenAPIv4Document {
   apiResponses?: Record<string, Response>;
   /** Incoming operations not hosted at the API's own paths (§14, C018). */
   webhooks?: Record<string, Request>;
+  /**
+   * JOBS vendor map (C025) — non-HTTP background work (cron / queue consumers) that has NO inbound Request, so it
+   * can't live in `paths` or `webhooks`. The first-class home C024 pre-blessed for its `scheduled`/`queue-consumed`
+   * cost triggers. A VENDOR EXTENSION (the `x-suluk-*` namespace) — NOT a normative async construct (C018 scope held).
+   */
+  ["x-suluk-jobs"]?: Record<string, SulukJob>;
   components?: Components;
+  [ext: `x-${string}`]: unknown;
+}
+
+/**
+ * A background job (C025) — non-HTTP work fired by a `scheduled` (cron) or `queue-consumed` trigger. It carries no
+ * Request/Response (there is no HTTP exchange); its STATIC fields (trigger + schedule/queue) are locally decidable,
+ * and it carries the same advisory `x-suluk-*` facets an operation does (notably `x-suluk-cost` with a matching
+ * `trigger`, so a job's cost is declared + audited like any other). Provenance via `x-suluk-source`.
+ */
+export interface SulukJob {
+  /** the non-HTTP trigger that fires this job. */
+  trigger: "scheduled" | "queue-consumed";
+  /** for "scheduled": a cron expression (statically declared — e.g. "0 0 * * *"). */
+  schedule?: string;
+  /** for "queue-consumed": the queue name the consumer drains. */
+  queue?: string;
+  summary?: string;
+  description?: string;
+  /** where in the authored source this job was projected from (advisory provenance; mirrors Request). */
+  ["x-suluk-source"]?: SulukSource;
+  /** any other vendor facet — notably `x-suluk-cost` (the job's declared cost, read by @suluk/cost). */
   [ext: `x-${string}`]: unknown;
 }
 

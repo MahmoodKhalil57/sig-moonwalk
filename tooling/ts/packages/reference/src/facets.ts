@@ -55,6 +55,8 @@ export function costRollup(doc: OpenAPIv4Document): CostRollup {
     for (const req of Object.values((pi as { requests?: Record<string, V4Request> }).requests ?? {})) count(req);
   }
   for (const req of Object.values((doc as { webhooks?: Record<string, V4Request> }).webhooks ?? {})) count(req);
+  // C025 — background jobs (cron/queue) carry x-suluk-cost too; their (deferred) costs roll into the total.
+  for (const job of Object.values((doc as { ["x-suluk-jobs"]?: Record<string, unknown> })["x-suluk-jobs"] ?? {})) count(job);
   return { priced, undeclared, totalMicroUsd, deferred };
 }
 

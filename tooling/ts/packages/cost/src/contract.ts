@@ -4,10 +4,23 @@
  * `x-*`), Scalar/Swagger render it, and a coverage audit can flag operations that never declared a cost.
  * The contract tells you what an operation *should* cost; the runtime meter tells you what it *did*.
  */
-import type { OpenAPIv4Document, PathItem, Request } from "@suluk/core";
+import type { OpenAPIv4Document, PathItem, Request, SulukJob } from "@suluk/core";
 import { UNATTRIBUTED, type CostModel, type CostTrigger, type UsageReport } from "./types";
 
 export const COST_EXT = "x-suluk-cost";
+
+/** Every background JOB (C025) on the document, as {path, name, job} — non-HTTP cron/queue work. */
+export function eachJob(doc: OpenAPIv4Document): { path: string; name: string; job: SulukJob }[] {
+  const jobs = (doc as { ["x-suluk-jobs"]?: Record<string, SulukJob> })["x-suluk-jobs"] ?? {};
+  return Object.entries(jobs).map(([name, job]) => ({ path: `jobs/${name}`, name, job }));
+}
+
+/** Every cost LOCUS in the document — path requests, C018 webhooks, AND C025 jobs — with its declared model. */
+function costLoci(doc: OpenAPIv4Document): { path: string; name: string; model: CostModel | undefined }[] {
+  const out = eachOperation(doc).map(({ path, name, req }) => ({ path, name, model: costOf(req) }));
+  for (const { path, name, job } of eachJob(doc)) out.push({ path, name, model: (job as unknown as Record<string, unknown>)[COST_EXT] as CostModel | undefined });
+  return out;
+}
 
 /**
  * Every named operation in the document — path requests AND C018 webhooks (which are Requests carrying facets) —
@@ -64,8 +77,7 @@ export interface CostFinding {
  */
 export function costAudit(doc: OpenAPIv4Document): CostFinding[] {
   const findings: CostFinding[] = [];
-  for (const { path, name, req } of eachOperation(doc)) {
-    const model = costOf(req);
+  for (const { path, name, model } of costLoci(doc)) {
     if (!model) {
       findings.push({ code: "no-cost-model", severity: "warn", path, operation: name, message: "operation declares no cost — its cost to you is unknown (not assumed zero)" });
       continue;
@@ -88,11 +100,10 @@ export function costAudit(doc: OpenAPIv4Document): CostFinding[] {
 
 export interface CostRow { operation: string; path: string; estimateMicroUsd: number; sources: string[]; trigger: CostTrigger }
 
-/** The declared costs across the document (paths + webhooks), for display (the cockpit/admin show this raw). */
+/** The declared costs across the document (paths + webhooks + jobs), for display (the cockpit/admin show this raw). */
 export function costTable(doc: OpenAPIv4Document): CostRow[] {
   const rows: CostRow[] = [];
-  for (const { path, name, req } of eachOperation(doc)) {
-    const model = costOf(req);
+  for (const { path, name, model } of costLoci(doc)) {
     if (!model) continue;
     const fixed = model.components.filter((c) => c.basis === "per-call").reduce((s, c) => s + c.microUsd, 0);
     rows.push({ operation: name, path, estimateMicroUsd: model.estimateMicroUsd ?? fixed, sources: [...new Set(model.components.map((c) => c.source))], trigger: triggerOf(model) });
