@@ -15,6 +15,12 @@ export interface AuthMethods {
   bearer?: boolean;
   /** API key (the apiKey plugin). `true` ⇒ default "x-api-key" header; or pass a custom header. */
   apiKey?: boolean | { header?: string };
+  /** twoFactor plugin — MFA on top of the session (no new wire scheme; gates via the `mfa:verified` scope). */
+  twoFactor?: boolean;
+  /** passkey (WebAuthn) plugin — a credential method that authenticates INTO a session (no new wire scheme). */
+  passkey?: boolean;
+  /** organization plugin — multi-tenancy via `org:<id>:<scope>` scopes (no new wire scheme). */
+  organization?: boolean;
 }
 
 export interface AuthSecurity {
@@ -22,6 +28,8 @@ export interface AuthSecurity {
   securitySchemes: Record<string, SecurityScheme>;
   /** Convenience: the scheme names, to build by-name security requirements. */
   names: string[];
+  /** Enabled session-based plugins (NOT wire schemes — they gate into the session via scope-encoding). */
+  plugins: { twoFactor: boolean; passkey: boolean; organization: boolean };
 }
 
 const DEFAULT_SESSION_COOKIE = "better-auth.session_token";
@@ -41,5 +49,9 @@ export function authSecuritySchemes(methods: AuthMethods): AuthSecurity {
     const header = typeof methods.apiKey === "object" ? methods.apiKey.header ?? DEFAULT_APIKEY_HEADER : DEFAULT_APIKEY_HEADER;
     securitySchemes.apiKey = { type: "apiKey", in: "header", name: header };
   }
-  return { securitySchemes, names: Object.keys(securitySchemes) };
+  return {
+    securitySchemes,
+    names: Object.keys(securitySchemes),
+    plugins: { twoFactor: !!methods.twoFactor, passkey: !!methods.passkey, organization: !!methods.organization },
+  };
 }

@@ -10,6 +10,7 @@ import {
   buildCycle, buildBuilderModel, docChecks, deployPlan, previewHtml,
 } from "@suluk/cockpit";
 import { layout, renderCycle, renderBuilder, renderChecks, renderDeploy } from "./render";
+import { renderDataIndex, renderEntityAdmin } from "./render-data";
 
 export interface AdminOptions {
   /** The hub v4 document — a value, or a function (so the panel reflects live state per request). */
@@ -45,6 +46,9 @@ export function adminApp(opts: AdminOptions): Hono {
 
   app.get(base, async (c) => c.html(page("", renderCycle(buildCycle(await resolveDoc(opts, c))))));
   app.get(`${base}/builder`, async (c) => c.html(page("builder", renderBuilder(buildBuilderModel(await resolveDoc(opts, c)).tree))));
+  // data-admin: an entity index + per-entity list/create page, projected from components.schemas.
+  app.get(`${base}/data`, async (c) => c.html(page("data", renderDataIndex(await resolveDoc(opts, c), base))));
+  app.get(`${base}/data/:entity`, async (c) => c.html(page("data", renderEntityAdmin(await resolveDoc(opts, c), c.req.param("entity"), base))));
   app.get(`${base}/checks`, async (c) => c.html(page("checks", renderChecks(docChecks(await resolveDoc(opts, c))))));
   app.get(`${base}/deploy`, async (c) => c.html(page("deploy", renderDeploy(deployPlan(await resolveDoc(opts, c))))));
   app.get(`${base}/docs`, async (c) => {
