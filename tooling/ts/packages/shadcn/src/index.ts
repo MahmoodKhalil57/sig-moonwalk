@@ -22,5 +22,8 @@ export {
 
 export { renderFormTsx, type RenderFormOptions } from "./render-form";
 export { renderTableTsx, type RenderTableOptions } from "./render-table";
+// read-only detail (show) view + loading skeletons (Phase 3) — completes the CRUD UI set.
+export { renderDetailTsx, type RenderDetailOptions } from "./render-detail";
+export { renderFormSkeletonTsx, renderTableSkeletonTsx, renderDetailSkeletonTsx, type RenderSkeletonOptions } from "./render-skeleton";
 // theme integration (Phase 2): a @suluk/theme TokenSpec → the shadcn globals.css + components.json.
 export { renderShadcnTheme, renderGlobalsCss, renderComponentsJson, type ShadcnThemeOptions } from "./theme";
