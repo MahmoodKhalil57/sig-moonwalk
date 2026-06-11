@@ -1,251 +1,218 @@
 /**
- * @suluk/reference — render an OpenAPI v4 "Suluk" document NATIVELY, as v4.
+ * @suluk/reference — a COMPLETE, v4-native OpenAPI reference renderer. Reads an OpenAPIv4Document directly (never
+ * the 3.1 downgrade) and renders, in one self-contained server-rendered page (no client build, no CDN — runs in a
+ * Cloudflare Worker), everything a senior API-reference would ship PLUS the v4-only facets a 3.x tool cannot host:
  *
- * Scalar and Swagger UI are OpenAPI 3.x renderers, so @suluk/scalar / @suluk/swagger first DOWNGRADE the v4
- * document to 3.1 (@suluk/openapi-compat) and hand the result to an existing tool. That projection is faithful
- * for the data, but the SURFACE a human reads then announces itself as "OpenAPI 3.1.0", flattens the v4
- * requests-shape into bare HTTP methods, and buries the cost facet — Suluk's identity vanishes at the docs.
- *
- * This renderer reads the v4 document directly and shows what a 3.x tool cannot:
- *   • the real identity            — "OpenAPI 4.0.0-candidate", projected from ONE contract
- *   • the requests-shape           — a path has NAMED requests (operations); several may share one HTTP method
- *                                     (the headline v4 capability the 3.1 downgrade has to drop, C003)
- *   • the cost facet               — x-suluk-cost rendered as a first-class per-operation badge + breakdown
- *   • per-operation security        — referenced by name into components.securitySchemes
- *
- * Self-contained server-rendered HTML (one string; a tiny inline script only for sidebar filtering). No client
- * build, no CDN, no node:fs — it runs in a Cloudflare Worker as happily as in a CLI.
+ *   identity   — operations as NAMED requests (method is a chip, not the key); multiple requests can share a method
+ *   dispatch   — the 3-valued ADA collision verdict over a path's request set (provably-disjoint/collision/?)
+ *   cost       — x-suluk-cost as a per-op badge + source breakdown, a coverage rollup, and declared-vs-actual drift
+ *   projection — x-suluk-access → a "View-as" lens that recomputes the reachable operation SET per viewer + a matrix
+ *   structure  — typed parameter slots, named-response variants, $ref models, webhooks
+ *   chrome     — ⌘K search, scroll-spy, deep-linking, collapse, dark mode, copy-as-curl, generated examples
  */
 import type { OpenAPIv4Document } from "@suluk/core";
-import { isReference, deref } from "@suluk/core";
+import {
+  escapeHtml, fmtUsd, costEstimate, costRollup, type CostModel,
+  type AccessFacet, type Viewer, DEFAULT_VIEWERS, reachable, crossCut, collisionsFor,
+} from "./facets";
+import { schemaHtml, sampleOf } from "./schema";
+import { STYLE, SCRIPT } from "./assets";
 
 export interface ReferenceOptions {
-  /** Browser tab title (defaults to the document title). */
   pageTitle?: string;
-  /** A short tagline under the title (defaults to a "one contract" line). */
   tagline?: string;
+  /** the viewers the View-as lens can project for (default: Anonymous / Signed-in user / Admin). */
+  viewers?: Viewer[];
+  /** a same-origin URL returning the cost ledger (with a byOperation map) → enables live declared-vs-actual drift. */
+  costLedgerUrl?: string;
 }
 
-type AnySchema = Record<string, unknown> | boolean;
-interface CostComponent { source?: string; basis?: string; microUsd?: number }
-interface CostModel { estimateMicroUsd?: number; components?: CostComponent[] }
-interface V4Request {
-  method: string; summary?: string; description?: string; operationId?: string; tags?: string[]; deprecated?: boolean;
+interface V4Req {
+  method: string; summary?: string; description?: string; deprecated?: boolean; tags?: string[];
   contentType?: string | string[]; contentSchema?: unknown;
   parameterSchema?: { query?: unknown; path?: unknown; header?: unknown; cookie?: unknown; body?: unknown };
   responses?: Record<string, { status: string | number; description?: string; contentType?: string | string[]; contentSchema?: unknown }>;
   security?: Record<string, unknown>[];
-  ["x-suluk-cost"]?: CostModel;
+  ["x-suluk-cost"]?: CostModel; ["x-suluk-access"]?: AccessFacet;
   [k: string]: unknown;
 }
 
-export function escapeHtml(s: string): string {
-  return s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
-}
+const METHOD_COLOR: Record<string, string> = { get: "#0e7490", post: "#15803d", put: "#a16207", patch: "#7c3aed", delete: "#b91c1c", head: "#475569", options: "#475569" };
+const id = (s: string) => s.replace(/[^a-zA-Z0-9_-]/g, "-");
+const mdInline = (s: string) => escapeHtml(s).replace(/`([^`]+)`/g, "<code>$1</code>").replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>");
+const statusClass = (st: string | number) => { const s = String(st); return s.startsWith("2") ? "s2" : s.startsWith("4") ? "s4" : s.startsWith("5") ? "s5" : "sd"; };
 
-const METHOD_COLOR: Record<string, string> = {
-  get: "#0e7490", post: "#15803d", put: "#a16207", patch: "#7c3aed", delete: "#b91c1c", head: "#475569", options: "#475569",
+const ACCESS_CHIP: Record<string, { icon: string; label: string; cls: string }> = {
+  anyone: { icon: "🌐", label: "public", cls: "acc-any" },
+  authenticated: { icon: "👤", label: "signed-in", cls: "acc-auth" },
+  admin: { icon: "🔒", label: "admin", cls: "acc-admin" },
 };
-
-/** Format µ$ as a compact dollar string (operations here are 1–300 µ$ → sub-cent). */
-function fmtUsd(microUsd: number): string {
-  const usd = microUsd / 1_000_000;
-  return usd >= 0.01 ? `$${usd.toFixed(2)}` : usd >= 0.0001 ? `$${usd.toFixed(6).replace(/0+$/, "")}` : `${microUsd} µ$`;
+function accessChip(facet: AccessFacet | undefined): string {
+  const a = ACCESS_CHIP[facet?.requires ?? "anyone"];
+  return `<span class="acc ${a.cls}" title="reachable by: ${a.label}${facet?.scope === "owner" ? " (own rows only)" : ""}">${a.icon} ${a.label}${facet?.scope === "owner" ? " · own" : ""}</span>`;
 }
-
-/**
- * The cost facet as a first-class badge + a breakdown by source (compute / db / third-party). An operation with
- * NO declared cost gets an honest "no cost model" badge — never a silent $0, which would misrepresent coverage.
- */
 function costBadge(cost: CostModel | undefined): string {
-  if (!cost || (cost.estimateMicroUsd == null && !(cost.components ?? []).length)) {
-    return `<span class="cost uncosted" title="this operation declares no x-suluk-cost">⛁ no cost model</span>`;
-  }
-  const est = Number(cost.estimateMicroUsd ?? (cost.components ?? []).reduce((s, c) => s + Number(c.microUsd ?? 0), 0));
-  const parts = (cost.components ?? []).map((c) => `${escapeHtml(c.source ?? "?")} ${c.microUsd ?? 0}µ$`).join(" · ");
-  return `<span class="cost" title="${escapeHtml(parts || "cost")}">⛁ ${fmtUsd(est)} <span class="cost-raw">${est}µ$</span></span>`;
+  const est = costEstimate(cost);
+  if (est == null) return `<span class="cost uncosted" title="this operation declares no x-suluk-cost">⛁ no cost model</span>`;
+  const parts = (cost?.components ?? []).map((c) => `${escapeHtml(c.source ?? "?")} ${c.microUsd ?? 0}µ$`).join(" · ");
+  return `<span class="cost" title="${escapeHtml(parts || "cost")}">⛁ ${fmtUsd(est)} <span class="cost-raw">${Math.round(est)}µ$</span><span class="drift" data-drift></span></span>`;
 }
 
-const typeOf = (s: Record<string, unknown>): string => {
-  if (Array.isArray(s.type)) return (s.type as string[]).join(" | ");
-  if (typeof s.type === "string") return s.type as string;
-  if (s.enum) return "enum";
-  if (s.allOf || s.anyOf || s.oneOf) return "composed";
-  return "any";
-};
+const codeBlock = (v: unknown) => `<pre class="json">${escapeHtml(JSON.stringify(v, null, 2))}</pre>`;
+const slot = (doc: OpenAPIv4Document, label: string, schema: unknown) => schema == null ? "" : `<div class="slot"><div class="slot-label">${label}</div>${schemaHtml(doc, schema)}</div>`;
 
-/** Render a JSON Schema (2020-12) compactly: object → a property table; scalar → a type chip. Derefs $ref once. */
-function schemaHtml(doc: OpenAPIv4Document, schema: unknown, depth = 0): string {
-  if (schema == null) return "";
-  if (isReference(schema)) {
-    const name = String((schema as { $ref: string }).$ref).split("/").pop() ?? "ref";
-    const resolved = depth < 2 ? deref(doc, schema) : null;
-    return resolved && !isReference(resolved)
-      ? `<div class="ref"><span class="ref-name">${escapeHtml(name)}</span>${schemaHtml(doc, resolved, depth + 1)}</div>`
-      : `<span class="chip">${escapeHtml(name)}</span>`;
-  }
-  if (typeof schema === "boolean") return `<span class="chip">${schema ? "any" : "never"}</span>`;
-  const s = schema as Record<string, unknown>;
-  if (s.type === "object" || s.properties) {
-    const props = (s.properties ?? {}) as Record<string, unknown>;
-    const required = new Set((s.required as string[] | undefined) ?? []);
-    const keys = Object.keys(props);
-    if (!keys.length) return `<span class="chip">object</span>`;
-    const rows = keys.map((k) => {
-      const ps = props[k] as Record<string, unknown>;
-      const t = isReference(ps) ? String((ps as { $ref: string }).$ref).split("/").pop() : typeOf(ps);
-      const desc = !isReference(ps) && typeof ps.description === "string" ? ps.description : "";
-      return `<tr><td class="pname">${escapeHtml(k)}${required.has(k) ? '<span class="req">*</span>' : ""}</td><td class="ptype">${escapeHtml(String(t))}</td><td class="pdesc">${escapeHtml(desc)}</td></tr>`;
-    }).join("");
-    return `<table class="props"><tbody>${rows}</tbody></table>`;
-  }
-  if (s.enum) return `<span class="chip">enum</span> <span class="muted">${(s.enum as unknown[]).map((e) => escapeHtml(JSON.stringify(e))).join(", ")}</span>`;
-  return `<span class="chip">${escapeHtml(typeOf(s))}</span>`;
+function curlFor(server: string, method: string, uri: string, ct: string | undefined, sample: unknown): string {
+  const path = uri.replace(/\{[?&][^}]*\}/g, "").replace(/^\/?/, "/");
+  let c = `curl -X ${method.toUpperCase()} ${server}${path}`;
+  if (sample !== undefined && method.toLowerCase() !== "get") c += ` \\\n  -H '${ct || "application/json"}' \\\n  -d '${JSON.stringify(sample)}'`;
+  return c;
 }
 
-const paramSlot = (doc: OpenAPIv4Document, label: string, schema: unknown): string =>
-  schema == null ? "" : `<div class="slot"><div class="slot-label">${label}</div>${schemaHtml(doc, schema)}</div>`;
-
-function requestCard(doc: OpenAPIv4Document, uri: string, name: string, req: V4Request, shareCount: number): string {
+function requestCard(doc: OpenAPIv4Document, server: string, uri: string, name: string, req: V4Req, shareCount: number, collideHtml: string, reach: string[]): string {
   const m = req.method.toLowerCase();
-  const color = METHOD_COLOR[m] ?? "#475569";
   const ps = req.parameterSchema ?? {};
   const body = req.contentSchema ?? ps.body;
+  const ct = Array.isArray(req.contentType) ? req.contentType[0] : req.contentType;
   const sec = (req.security ?? []).flatMap((o) => Object.keys(o));
-  const responses = Object.entries(req.responses ?? {}).map(([rname, r]) =>
-    `<div class="resp"><span class="status">${escapeHtml(String(r.status))}</span> <span class="rname">${escapeHtml(rname)}</span>${r.description ? ` <span class="muted">${escapeHtml(r.description)}</span>` : ""}${r.contentSchema ? `<div class="resp-schema">${schemaHtml(doc, r.contentSchema)}</div>` : ""}</div>`).join("");
-  return `<section class="op" id="op-${escapeHtml(name)}" data-name="${escapeHtml((name + " " + uri).toLowerCase())}">
+  const est = costEstimate(req["x-suluk-cost"]);
+  const responses = Object.entries(req.responses ?? {}).map(([rname, r]) => {
+    const sample = r.contentSchema != null ? sampleOf(doc, r.contentSchema) : undefined;
+    return `<div class="resp"><span class="status ${statusClass(r.status)}">${escapeHtml(String(r.status))}</span> <span class="rname">${escapeHtml(rname)}</span>${r.description ? ` <span class="muted">${mdInline(r.description)}</span>` : ""}${r.contentSchema ? `<div class="resp-schema">${schemaHtml(doc, r.contentSchema)}</div>${sample !== undefined ? `<div class="example"><div class="slot-label">example <span class="copy" data-copy='${escapeHtml(JSON.stringify(sample))}'>copy</span></div>${codeBlock(sample)}</div>` : ""}` : ""}</div>`;
+  }).join("");
+  const bodySample = body != null ? sampleOf(doc, body) : undefined;
+  return `<section class="op" id="op-${id(name)}" data-name="${escapeHtml((name + " " + uri + " " + m).toLowerCase())}" data-reach="${escapeHtml(reach.join(" "))}" data-op="${escapeHtml(name)}" data-cost="${est ?? ""}">
     <div class="op-head">
-      <span class="method" style="background:${color}">${escapeHtml(req.method.toUpperCase())}</span>
+      <span class="method" style="background:${METHOD_COLOR[m] ?? "#475569"}">${escapeHtml(req.method.toUpperCase())}</span>
       <code class="op-path">${escapeHtml(uri)}</code>
       <span class="op-name">${escapeHtml(name)}</span>
       ${req.deprecated ? '<span class="dep">deprecated</span>' : ""}
+      <span class="spacer"></span>
+      ${accessChip(req["x-suluk-access"])}
       ${costBadge(req["x-suluk-cost"])}
+      <span class="caret">▾</span>
     </div>
-    ${shareCount > 1 ? `<div class="multi">▸ ${shareCount} requests share <b>${escapeHtml(req.method.toUpperCase())}</b> on this path — a v4 capability a 3.1 view cannot show (it would drop all but one).</div>` : ""}
-    ${req.summary ? `<p class="op-summary">${escapeHtml(req.summary)}</p>` : ""}
-    ${req.description ? `<p class="muted">${escapeHtml(req.description)}</p>` : ""}
-    ${sec.length ? `<div class="sec">🔒 ${sec.map((x) => `<span class="chip">${escapeHtml(x)}</span>`).join(" ")}</div>` : ""}
-    <div class="slots">
-      ${paramSlot(doc, "Path", ps.path)}${paramSlot(doc, "Query", ps.query)}${paramSlot(doc, "Header", ps.header)}
-      ${body != null ? `<div class="slot"><div class="slot-label">Request body${req.contentType ? ` <span class="muted">(${escapeHtml(Array.isArray(req.contentType) ? req.contentType.join(", ") : req.contentType)})</span>` : ""}</div>${schemaHtml(doc, body)}</div>` : ""}
+    <div class="op-body">
+      ${shareCount > 1 ? `<div class="multi">▸ ${shareCount} named requests share <b>${escapeHtml(req.method.toUpperCase())}</b> on this path — a v4 capability a 3.1 view cannot represent.</div>` : ""}
+      ${collideHtml}
+      ${req.summary ? `<p class="op-summary">${mdInline(req.summary)}</p>` : ""}
+      ${req.description ? `<p class="muted">${mdInline(req.description)}</p>` : ""}
+      ${sec.length ? `<div class="sec">🔒 requires ${sec.map((x) => `<span class="chip">${escapeHtml(x)}</span>`).join(" ")}</div>` : ""}
+      <div class="toolbar"><span class="copy" data-copy="${escapeHtml(server + uri)}">copy path</span><span class="copy" data-copy="${escapeHtml(curlFor(server, m, uri, ct, bodySample))}">copy as curl</span></div>
+      <div class="slots">
+        ${slot(doc, "Path params", ps.path)}${slot(doc, "Query params", ps.query)}${slot(doc, "Headers", ps.header)}${slot(doc, "Cookies", ps.cookie)}
+        ${body != null ? `<div class="slot"><div class="slot-label">Request body${ct ? ` <span class="muted">(${escapeHtml(ct)})</span>` : ""}</div>${schemaHtml(doc, body)}${bodySample !== undefined ? `<div class="example"><div class="slot-label">example <span class="copy" data-copy='${escapeHtml(JSON.stringify(bodySample))}'>copy</span></div>${codeBlock(bodySample)}</div>` : ""}</div>` : ""}
+      </div>
+      ${responses ? `<div class="responses"><div class="slot-label">Responses (by name)</div>${responses}</div>` : ""}
     </div>
-    ${responses ? `<div class="responses"><div class="slot-label">Responses</div>${responses}</div>` : ""}
   </section>`;
 }
 
-/** Render a v4 document to a self-contained native HTML reference page. */
 export function referenceHtml(doc: OpenAPIv4Document, opts: ReferenceOptions = {}): string {
   const title = opts.pageTitle ?? doc.info?.title ?? "API Reference";
   const tagline = opts.tagline ?? "One typed v4 contract — projected into CRUD · client · UI · cost · docs.";
+  const viewers = opts.viewers ?? DEFAULT_VIEWERS;
+  const server = doc.servers?.[0]?.url ?? "";
 
-  // group operations by their first tag (falls back to the path) — preserves the v4 requests-shape per path.
-  const groups = new Map<string, string[]>(); // tag → operation HTML[]
-  const navByGroup = new Map<string, { name: string; method: string }[]>();
+  // walk paths → named requests, computing per-op facets (cost / access-reach / collisions)
+  const groups = new Map<string, string[]>();
+  const navByGroup = new Map<string, string>();
   let opCount = 0;
   for (const [uri, piRaw] of Object.entries(doc.paths ?? {})) {
-    const pi = piRaw as { requests?: Record<string, V4Request> };
+    const pi = piRaw as { requests?: Record<string, V4Req> };
     const reqs = Object.entries(pi.requests ?? {});
     const byMethod = new Map<string, number>();
     for (const [, r] of reqs) byMethod.set(r.method.toLowerCase(), (byMethod.get(r.method.toLowerCase()) ?? 0) + 1);
+    const collisions = collisionsFor(uri, pi.requests as never);
     for (const [name, req] of reqs) {
       opCount++;
       const tag = req.tags?.[0] ?? uri;
-      const card = requestCard(doc, uri, name, req, byMethod.get(req.method.toLowerCase()) ?? 1);
+      const reach = viewers.filter((v) => reachable(req["x-suluk-access"], v)).map((v) => v.id);
+      const myCollisions = collisions.filter((c) => c.a === name || c.b === name);
+      const collideHtml = myCollisions.map((c) => `<div class="collide ${c.verdict}"><b>signature ${c.verdict.replace(/-/g, " ")}</b> with <code>${escapeHtml(c.a === name ? c.b : c.a)}</code> — ${escapeHtml(c.reason)}</div>`).join("");
+      const card = requestCard(doc, server, uri, name, req, byMethod.get(req.method.toLowerCase()) ?? 1, collideHtml, reach);
       (groups.get(tag) ?? groups.set(tag, []).get(tag)!).push(card);
-      (navByGroup.get(tag) ?? navByGroup.set(tag, []).get(tag)!).push({ name, method: req.method.toLowerCase() });
+      const navItem = `<a class="nav-op" href="#op-${id(name)}" data-name="${escapeHtml((name + " " + uri).toLowerCase())}" data-reach="${escapeHtml(reach.join(" "))}"><span class="nm" style="color:${METHOD_COLOR[req.method.toLowerCase()] ?? "#475569"}">${escapeHtml(req.method.toUpperCase())}</span>${escapeHtml(name)}</a>`;
+      navByGroup.set(tag, (navByGroup.get(tag) ?? "") + navItem);
     }
   }
 
-  const nav = [...navByGroup.entries()].map(([tag, ops]) =>
-    `<div class="nav-group"><div class="nav-tag">${escapeHtml(tag)}</div>${ops.map((o) =>
-      `<a class="nav-op" href="#op-${escapeHtml(o.name)}" data-name="${escapeHtml(o.name.toLowerCase())}"><span class="nm" style="color:${METHOD_COLOR[o.method] ?? "#475569"}">${escapeHtml(o.method.toUpperCase())}</span>${escapeHtml(o.name)}</a>`).join("")}</div>`).join("");
+  const nav = [...navByGroup.entries()].map(([tag, items]) => `<div class="nav-group"><div class="nav-tag">${escapeHtml(tag)}</div>${items}</div>`).join("");
+  const body = [...groups.entries()].map(([tag, cards]) => `<div class="group"><h2 id="tag-${id(tag)}">${escapeHtml(tag)}</h2>${cards.join("")}</div>`).join("");
 
-  const body = [...groups.entries()].map(([tag, cards]) =>
-    `<div class="group"><h2 id="tag-${escapeHtml(tag)}">${escapeHtml(tag)}</h2>${cards.join("")}</div>`).join("");
+  // the cost coverage rollup (priced / undeclared / total)
+  const roll = costRollup(doc);
+  const costBadgeHero = `<span class="badge cost" title="${roll.priced} priced · ${roll.undeclared} undeclared">⛁ ${fmtUsd(roll.totalMicroUsd)} total · ${roll.priced}/${roll.priced + roll.undeclared} priced</span>`;
 
-  const schemes = doc.components?.securitySchemes ? Object.keys(doc.components.securitySchemes) : [];
+  // the View-as lens (sidebar) + the reachability matrix (section)
+  const lens = `<div class="lens"><div class="lens-label">View as</div><div class="lens-btns">
+    <button class="lens-btn" data-view="all">Everything <span class="cnt" id="view-count">${opCount}</span></button>
+    ${viewers.map((v) => `<button class="lens-btn" data-view="${escapeHtml(v.id)}">${escapeHtml(v.label)}</button>`).join("")}
+  </div></div>`;
+  const cc = crossCut(doc, viewers);
+  const matrix = `<div class="section" id="reachability"><h2>Reachability — the contract refracted per viewer</h2>
+    <p class="muted">Access is a contract facet (<code>x-suluk-access</code>). Each operation × each viewer: ● reachable / · not. The <b>View as</b> lens recomputes the visible operation set from this.</p>
+    <table class="matrix"><thead><tr><th>operation</th><th>requires</th>${viewers.map((v) => `<th>${escapeHtml(v.label)}</th>`).join("")}</tr></thead><tbody>
+    ${cc.rows.map((r) => `<tr><td class="opn">${escapeHtml(r.name)}</td><td><span class="acc ${ACCESS_CHIP[r.requires]?.cls ?? "acc-any"}">${escapeHtml(r.requires)}${r.scope === "owner" ? " · own" : ""}</span></td>${viewers.map((v) => `<td class="cell ${r.reach[v.id] ? "yes" : "no"}">${r.reach[v.id] ? "●" : "·"}</td>`).join("")}</tr>`).join("")}
+    </tbody></table></div>`;
+
+  // webhooks
+  const webhookEntries = Object.entries(doc.webhooks ?? {});
+  const webhooks = webhookEntries.length ? `<div class="section" id="webhooks"><h2>Webhooks — operations the API receives</h2>${webhookEntries.map(([name, req]) => requestCard(doc, server, `webhooks/${name}`, name, req as unknown as V4Req, 1, "", viewers.map((v) => v.id))).join("")}</div>` : "";
+
+  // models (components.schemas)
+  const schemas = doc.components?.schemas ? Object.entries(doc.components.schemas) : [];
+  const models = schemas.length ? `<div class="section" id="models"><h2>Models</h2>${schemas.map(([n, s]) => `<div class="model" id="model-${id(n)}"><h3>${escapeHtml(n)}</h3>${schemaHtml(doc, s)}</div>`).join("")}</div>` : "";
+
+  // security schemes
+  const schemes = doc.components?.securitySchemes ? Object.entries(doc.components.securitySchemes) : [];
+  const security = schemes.length ? `<div class="section" id="security"><h2>Authentication</h2>${schemes.map(([n, s]) => { const o = s as unknown as Record<string, unknown>; return `<div class="scheme"><b>${escapeHtml(n)}</b> <span class="chip">${escapeHtml(String(o.type ?? ""))}${o.scheme ? " · " + escapeHtml(String(o.scheme)) : ""}${o.in ? " · in " + escapeHtml(String(o.in)) : ""}</span>${o.description ? `<p class="muted">${mdInline(String(o.description))}</p>` : ""}</div>`; }).join("")}</div>` : "";
+
+  const costInit = opts.costLedgerUrl ? `<script>window.__SULUK_COST_URL=${JSON.stringify(opts.costLedgerUrl)};</script>` : "";
 
   return `<!doctype html><html lang="en"><head>
 <meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>${escapeHtml(opts.pageTitle ?? title)}</title>
 <style>${STYLE}</style></head><body>
+<button class="iconbtn menu-toggle" data-act="menu" aria-label="menu">☰</button>
 <aside class="side">
-  <div class="side-head"><div class="logo">⛬ Suluk</div><div class="ver">v4 reference</div></div>
-  <input id="filter" placeholder="Filter operations…" autocomplete="off"/>
+  <div class="side-head"><div class="logo">⛬ Suluk</div><div class="side-actions"><button class="iconbtn" data-act="theme" title="theme" aria-label="theme">◑</button></div></div>
+  <div style="position:relative"><input id="filter" placeholder="Filter operations…" autocomplete="off"/><span class="kbd" style="position:absolute;right:8px;top:8px">⌘K</span></div>
+  ${lens}
   <nav id="nav">${nav}</nav>
+  <div class="side-foot">
+    <a href="/openapi.json">⬇ OpenAPI v4 document</a>
+    <a href="#reachability">Reachability matrix</a>
+    ${models ? '<a href="#models">Models</a>' : ""}
+    ${security ? '<a href="#security">Authentication</a>' : ""}
+  </div>
 </aside>
 <main>
   <header class="hero">
-    <div class="badges"><span class="badge v4">OpenAPI ${escapeHtml(doc.openapi ?? "4.0.0-candidate")}</span><span class="badge">${opCount} operations</span>${schemes.length ? `<span class="badge">${schemes.length} auth scheme${schemes.length > 1 ? "s" : ""}</span>` : ""}</div>
+    <div class="badges"><span class="badge v4">OpenAPI ${escapeHtml(doc.openapi ?? "4.0.0-candidate")}</span><span class="badge">${opCount} operations</span>${costBadgeHero}${schemes.length ? `<span class="badge">${schemes.length} auth scheme${schemes.length > 1 ? "s" : ""}</span>` : ""}</div>
     <h1>${escapeHtml(title)}</h1>
     <p class="tagline">${escapeHtml(tagline)}</p>
-    ${doc.info?.description ? `<p class="muted">${escapeHtml(doc.info.description)}</p>` : ""}
-    <p class="native-note">Rendered natively from the v4 document — the <b>requests</b>-shape and the <b>⛁ cost</b> facet shown as-is, not flattened to a 3.1 view.</p>
+    ${doc.info?.description ? `<p class="muted">${mdInline(doc.info.description)}</p>` : ""}
+    <p class="native-note">Rendered natively from the v4 document — the <b>requests</b>-shape, the <b>⛁ cost</b> facet, signature <b>collisions</b>, and the <b>View-as</b> access projection shown as-is, not flattened to a 3.1 view.</p>
   </header>
+  <div class="toolbar"><button class="tbtn" data-act="expand">Expand all</button><button class="tbtn" data-act="collapse">Collapse all</button></div>
   ${body}
+  ${webhooks}
+  ${matrix}
+  ${models}
+  ${security}
   <footer class="foot">CANDIDATE — not official OpenAPI. Rendered by <b>@suluk/reference</b> directly from the v4 contract.</footer>
 </main>
-<script>
-(function(){
-  var f=document.getElementById('filter');
-  f&&f.addEventListener('input',function(){
-    var q=this.value.trim().toLowerCase();
-    document.querySelectorAll('.nav-op').forEach(function(a){a.style.display=!q||a.dataset.name.indexOf(q)>=0?'':'none';});
-    document.querySelectorAll('.op').forEach(function(s){s.style.display=!q||s.dataset.name.indexOf(q)>=0?'':'none';});
-  });
-})();
-</script>
+${costInit}
+<script>${SCRIPT}</script>
 </body></html>`;
 }
 
-/** Convenience for Hono / Bun.serve / fetch handlers: the native v4 reference as a text/html Response. */
 export function referenceResponse(doc: OpenAPIv4Document, opts: ReferenceOptions = {}): Response {
   return new Response(referenceHtml(doc, opts), { headers: { "content-type": "text/html; charset=utf-8" } });
 }
 
-export const STYLE = `
-:root{--bg:#f8fafc;--panel:#fff;--fg:#0f172a;--muted:#64748b;--line:#e2e8f0;--accent:#6366f1;--accentbg:#eef2ff}
-*{box-sizing:border-box}body{margin:0;font:15px/1.55 Inter,system-ui,-apple-system,sans-serif;color:var(--fg);background:var(--bg);display:flex}
-code,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
-.side{width:280px;min-width:280px;height:100vh;position:sticky;top:0;overflow:auto;border-right:1px solid var(--line);background:var(--panel);padding:16px}
-.side-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px}
-.logo{font-weight:800;font-size:18px;color:var(--accent)}.ver{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
-#filter{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-size:13px;margin-bottom:12px;background:var(--bg)}
-.nav-group{margin-bottom:12px}.nav-tag{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700;padding:4px 6px}
-.nav-op{display:flex;gap:8px;align-items:center;padding:4px 8px;border-radius:6px;color:var(--fg);text-decoration:none;font-size:13px}
-.nav-op:hover{background:var(--accentbg)}.nav-op .nm{font-size:10px;font-weight:800;min-width:38px}
-main{flex:1;max-width:920px;margin:0 auto;padding:32px 36px 80px}
-.hero{border-bottom:1px solid var(--line);padding-bottom:22px;margin-bottom:24px}
-.badges{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
-.badge{font-size:12px;font-weight:600;padding:3px 10px;border-radius:999px;background:#f1f5f9;color:var(--muted)}
-.badge.v4{background:var(--accent);color:#fff}
-h1{font-size:30px;margin:.1em 0}.tagline{color:var(--fg);font-size:16px;margin:.2em 0}
-.native-note{font-size:13px;color:var(--muted);background:var(--accentbg);border:1px solid #e0e7ff;border-radius:10px;padding:10px 12px;margin-top:14px}
-.muted{color:var(--muted)}
-.group{margin:34px 0}.group>h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);border-bottom:1px solid var(--line);padding-bottom:8px}
-.op{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:14px 0}
-.op-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.method{color:#fff;font-size:11px;font-weight:800;padding:3px 9px;border-radius:6px;letter-spacing:.03em}
-.op-path{font-size:14px;background:#f1f5f9;padding:2px 8px;border-radius:6px}
-.op-name{font-weight:700}.dep{font-size:11px;color:#b91c1c;background:#fee2e2;padding:2px 7px;border-radius:5px}
-.cost{margin-left:auto;font-size:12px;font-weight:700;color:#3730a3;background:var(--accentbg);border:1px solid #e0e7ff;padding:3px 9px;border-radius:999px;white-space:nowrap}
-.cost.uncosted{color:#92400e;background:#fffbeb;border-color:#fde68a}
-.cost-raw{color:var(--muted);font-weight:500}
-.multi{font-size:12px;color:#7c2d12;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:7px 10px;margin:10px 0}
-.op-summary{margin:.5em 0 .2em;font-weight:500}
-.sec{font-size:12px;margin:8px 0}
-.slots{display:flex;flex-direction:column;gap:10px;margin-top:10px}
-.slot-label{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700;margin-bottom:4px}
-.chip{display:inline-block;font-size:12px;font-family:ui-monospace,monospace;background:#f1f5f9;color:#334155;padding:1px 7px;border-radius:5px}
-.props{width:100%;border-collapse:collapse;font-size:13px;background:var(--bg);border:1px solid var(--line);border-radius:8px;overflow:hidden}
-.props td{padding:6px 10px;border-bottom:1px solid var(--line);vertical-align:top}.props tr:last-child td{border-bottom:0}
-.pname{font-family:ui-monospace,monospace;font-weight:600;white-space:nowrap}.req{color:var(--accent);font-weight:800;margin-left:2px}
-.ptype{color:#0e7490;font-family:ui-monospace,monospace;white-space:nowrap}.pdesc{color:var(--muted)}
-.ref{border-left:2px solid var(--accentbg);padding-left:8px}.ref-name{font-size:12px;font-family:ui-monospace,monospace;color:var(--accent);font-weight:600}
-.responses{margin-top:12px;border-top:1px dashed var(--line);padding-top:10px}
-.resp{margin:6px 0;font-size:13px}.status{font-weight:800;color:#15803d}.rname{font-family:ui-monospace,monospace;color:var(--muted)}
-.resp-schema{margin-top:4px}
-.foot{margin-top:50px;padding-top:18px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
-@media(max-width:760px){.side{display:none}main{padding:20px}}
-`;
+export {
+  escapeHtml, crossCut, reachable, costRollup, DEFAULT_VIEWERS,
+  type Viewer, type AccessFacet, type CostModel, type CrossCutRow,
+} from "./facets";
+export { schemaHtml, sampleOf } from "./schema";
