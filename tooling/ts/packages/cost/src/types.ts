@@ -25,11 +25,53 @@ export interface CostComponent {
   description?: string;
 }
 
+/**
+ * WHEN/WHAT fires a cost (C024) — a STATIC, locally-decidable enum (the same KIND as {@link CostBasis}). Default
+ * "synchronous" ⇒ every existing declaration is unchanged (zero migration). Strictly DESCRIPTIVE: it names where the
+ * cost accrues, asserting NO event-channel / delivery-protocol semantics — the fence that keeps it orthogonal to
+ * C018's deliberately-deferred async scope. Three axes stay orthogonal: `basis` = HOW it meters, `trigger` = WHEN it
+ * fires, `attribution` = WHO pays.
+ */
+export type CostTrigger =
+  | "synchronous"        // accrues when this operation's own route runs (default; backwards-compatible)
+  | "webhook-received"   // accrues when an incoming webhook (C018) fires
+  | "scheduled"          // accrues when a scheduled / cron job runs
+  | "queue-consumed"     // accrues when a queue consumer processes a message
+  | "callback-completed"; // accrues when an out-of-band callback (C018) completes
+
+/**
+ * WHO is charged when a third party fires the event with no live session (C024) — a declared STRATEGY the runtime
+ * resolves a concrete principal from, modeled on `SulukRateLimit.key`. The `expression` is RUNTIME-ONLY: a C018
+ * runtime-expression that NEVER enters the static matcher (D1-consistent, exactly as C018 walls its callback keys).
+ */
+export interface CostAttribution {
+  /** session = the live caller (the existing path); event-expression = read the principal from the event payload at
+   *  runtime; job-stamped = the job carries its own principal. */
+  strategy: "session" | "event-expression" | "job-stamped";
+  /** for event-expression: a C018 runtime-expression (e.g. "{$event.body#/customer}"). Runtime-resolved only. */
+  expression?: string;
+  /** is the attribution input authentic? An event-expression off an UNVERIFIED webhook payload is attacker-controlled
+   *  — honor it as authoritative only when "verified" (a signature/secret check the runtime performs). */
+  trust?: "verified" | "unverified-payload";
+}
+
 export interface CostModel {
   components: CostComponent[];
   /** Optional typical total for one call (µ$), for display + tests when usage isn't yet known. */
   estimateMicroUsd?: number;
+  /** WHEN/WHAT fires this cost (C024; default "synchronous"). STATIC — decouples accrual-time from the declaring op. */
+  trigger?: CostTrigger;
+  /** the by-name handle (C009) of the webhook/callback/op whose firing accrues this cost (for a non-sync trigger). */
+  triggerRef?: string;
+  /** WHO is charged when there is no live session (runtime strategy; the expression never enters the static matcher). */
+  attribution?: CostAttribution;
+  /** a runtime-expression yielding a stable id to DEDUPE at-least-once delivery (e.g. "{$event.id}") — prevents
+   *  double-counting a cost charged on both the receipt op and the triggered op. Runtime-only. */
+  idempotencyKey?: string;
 }
+
+/** The principal sentinel for a background cost that resolved to NO principal — billed to nobody, but never silent. */
+export const UNATTRIBUTED = "@unattributed" as const;
 
 /** A measured usage report for one variable component during a request (e.g. {source:"openai", units: 1350}). */
 export interface UsageReport {
@@ -47,6 +89,10 @@ export interface CostEvent {
   operation: string;
   /** The frontend action that triggered it (a button-click id), if the client tagged the request. */
   action?: string;
+  /** How this cost fired (C024; default "synchronous"). A non-sync value marks a background charge. */
+  trigger?: CostTrigger;
+  /** Dedupe id for at-least-once event delivery — two events with the same key are the SAME charge (C024). */
+  dedupeKey?: string;
   /** Per-source breakdown (µ$). */
   breakdown: { source: string; microUsd: number }[];
   /** Total µ$ for the request. */

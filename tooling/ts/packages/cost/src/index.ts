@@ -7,9 +7,12 @@
  */
 export {
   type CostBasis, type CostComponent, type CostModel, type UsageReport, type CostEvent, formatMicroUsd,
+  // C024 — background-event cost: WHEN it fires (trigger) + WHO pays (attribution), orthogonal to basis (HOW it meters).
+  type CostTrigger, type CostAttribution, UNATTRIBUTED,
 } from "./types";
 export {
   COST_EXT, annotateCosts, costOf, costAudit, costTable, computeCost, type CostFinding,
+  eachOperation, triggerOf, isDeferredCost, type CostRow,
 } from "./contract";
 export {
   costMeter, recordUsage, MemoryCostSink, type CostSink, type CostMeterOptions,

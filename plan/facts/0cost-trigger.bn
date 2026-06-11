@@ -1,0 +1,46 @@
+# Operator-surfaced gap (cost-on-background-event): cost is OFTEN incurred not when a route runs, but when a
+# BACKGROUND EVENT fires (a Stripe webhook charges you; a cron/scheduled job; a queue consumer; a callback
+# completes). x-suluk-cost was request-relative only. ORIGINATED — no SIG design. Council panel (C006/C007
+# classes, C010 pattern; run wf_026469fd-1f3): A=hudlow0.78/handrews0.70/rafalkrupinski0.70, +B/C lenses.
+# Pairs with ADR C024. Honestly-low Originated ceiling (~0.58). Does NOT reopen C018's deferred async scope.
+
+# THREE ORTHOGONAL AXES (handrews double-duty objection): basis=HOW it meters (UNCHANGED — no per-event member,
+# rejecting candidate-a), trigger=WHEN it fires, attribution=WHO pays. The trigger is a STATIC closed string
+# enum on the x-suluk-cost CostModel: synchronous (default, zero-migration) | webhook-received | scheduled |
+# queue-consumed | callback-completed; strictly DESCRIPTIVE (names where cost accrues, asserts NO event-channel/
+# delivery-protocol semantics — the fence keeping it orthogonal to C018's deferred async). Locally decidable
+# from the document alone (passes hudlow): a linter/docs-renderer/costAudit decides "non-synchronous" + "what
+# fires it" (triggerRef, a C009 by-name handle) with no request issued. Rides the Request-attached x-* facet
+# that already bubbles to Scalar/Swagger; a C018 webhook IS a Request so it carries it with ZERO new object kind.
+claim cost_trigger_static_enum_on_facet: Bool @>=0.58 = True
+falsified_when cost_trigger_static_enum_on_facet == False
+
+# ATTRIBUTION is RUNTIME-ONLY, modeled on SulukRateLimit.key: a declared STRATEGY (session | event-expression |
+# job-stamped) the runtime resolves a concrete principal from. The event-expression (a C018 runtime-expression,
+# e.g. {$event.body#/customer}) NEVER enters the static matcher (D1-consistent, exactly as C018 walls callback
+# runtime-expression keys). No-session strategies sit at a lower ceiling pending the Principal-model (Open-Dec #5).
+claim cost_attribution_runtime_strategy_out_of_matcher: Bool @>=0.55 = True
+falsified_when cost_attribution_runtime_strategy_out_of_matcher == False
+
+# FAIL-LOUD disciplines (pessimist + security-reviewer + platform-architect): a deferred cost that resolves NO
+# principal bills to the @unattributed sentinel and raises costAudit `unattributed-background-cost` (never a
+# silent zero); an event-expression read off an UNVERIFIED payload is attacker-controllable -> `unverified-
+# attribution` (honor as authoritative only behind a verified signature). costAudit/annotateCosts/costTable now
+# iterate doc.webhooks (not just doc.paths); CostEvent gains a dedupeKey for at-least-once delivery.
+claim cost_background_audit_fail_loud: Bool @>=0.58 = True
+falsified_when cost_background_audit_fail_loud == False
+
+# Vendor-extension scope (conservative + C012/x-suluk-ratelimit precedent): the trigger dimension lives on the
+# x-suluk-* vendor facet, ORTHOGONAL to the normative HTTP core — it does NOT add a normative jobs/events object
+# kind (rejecting candidate-d) and does NOT reopen cbwh_runtime_expr_grammar_and_async_deferred (it annotates
+# WHERE cost accrues, asserting no event-streaming protocol). cites cbwh_reuse_existing_primitives @0.6,
+# cbwh_callbacks_runtime_expr_keyed @0.55, s43_rate_limits_out_of_scope @0.74.
+claim cost_trigger_vendor_ext_not_normative_kind: Bool @>=0.6 = True
+falsified_when cost_trigger_vendor_ext_not_normative_kind == False
+
+# DEFERRED (honest coverage limits, declared not silently filled): cron/queue ops with NO inbound Request have
+# no path/webhook host to hang x-suluk-cost on — their first-class home (a thin x-suluk-jobs vendor map, NOT a
+# normative kind) is a future Step; and reconciliation (declared-estimate vs the third party's actual invoice
+# amount, with proration/tax/refund/chargeback) is a future reconciliationBasis extension, out of scope here.
+claim cost_trigger_jobs_and_reconciliation_deferred: Bool @>=0.6 = True
+falsified_when cost_trigger_jobs_and_reconciliation_deferred == False

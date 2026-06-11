@@ -9,7 +9,7 @@
  */
 import type { OpenAPIv4Document, SulukSource } from "@suluk/core";
 import {
-  escapeHtml, fmtUsd, costEstimate, costRollup, type CostModel,
+  escapeHtml, fmtUsd, costEstimate, costRollup, costTriggerLabel, type CostModel,
   type AccessFacet, type Viewer, DEFAULT_VIEWERS, reachable, reachState, crossCut,
 } from "./facets";
 import { schemaHtml, sampleOf, constraintNotes } from "./schema";
@@ -62,7 +62,10 @@ function costBadge(cost: CostModel | undefined): string {
   const est = costEstimate(cost);
   if (est == null) return `<span class="cost uncosted" title="declares no x-suluk-cost">⛁ no cost model</span>`;
   const parts = (cost?.components ?? []).map((c) => `${escapeHtml(c.source ?? "?")} ${c.microUsd ?? 0}µ$`).join(" · ");
-  return `<span class="cost" title="${escapeHtml(parts || "cost")}">⛁ ${fmtUsd(est)} <span class="cost-raw">${Math.round(est)}µ$</span><span class="drift" data-drift></span></span>`;
+  // C024 — a background-triggered cost is flagged so a reader sees it accrues on an EVENT, not this op's own run.
+  const trig = costTriggerLabel(cost);
+  const trigBadge = trig ? ` <span class="cost-trigger" title="this cost accrues on a background event, not when the route runs">↯ ${escapeHtml(trig)}</span>` : "";
+  return `<span class="cost" title="${escapeHtml(parts || "cost")}">⛁ ${fmtUsd(est)} <span class="cost-raw">${Math.round(est)}µ$</span><span class="drift" data-drift></span></span>${trigBadge}`;
 }
 const codeBlock = (v: unknown) => `<pre class="json">${escapeHtml(JSON.stringify(v, null, 2))}</pre>`;
 /** PROVENANCE affordance (council L2): a stable, advisory pointer to the authored source this op was projected from.

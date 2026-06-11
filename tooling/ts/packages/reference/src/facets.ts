@@ -16,7 +16,8 @@ export function escapeHtml(s: string): string {
 
 // ── COST ─────────────────────────────────────────────────────────────────────────────────────────────────────
 export interface CostComponent { source?: string; basis?: string; microUsd?: number }
-export interface CostModel { estimateMicroUsd?: number; components?: CostComponent[] }
+/** C024 — the cost facet may declare a non-synchronous trigger (the cost accrues on a background event). */
+export interface CostModel { estimateMicroUsd?: number; components?: CostComponent[]; trigger?: string; triggerRef?: string; attribution?: { strategy?: string; expression?: string } }
 
 export function fmtUsd(microUsd: number): string {
   const usd = microUsd / 1_000_000;
@@ -30,17 +31,31 @@ export function costEstimate(cost: CostModel | undefined): number | null {
   return null;
 }
 
-/** Document-wide cost coverage: how many operations declare a cost, how many don't, and the total estimate. */
-export interface CostRollup { priced: number; undeclared: number; totalMicroUsd: number }
+/** A human label for a cost's trigger when it is a BACKGROUND event (null for the synchronous default). C024. */
+export function costTriggerLabel(cost: CostModel | undefined): string | null {
+  const t = cost?.trigger;
+  if (!t || t === "synchronous") return null;
+  const noun = { "webhook-received": "incoming webhook", "scheduled": "scheduled job", "queue-consumed": "queue message", "callback-completed": "callback" }[t] ?? t;
+  return `charged on: ${noun}${cost?.triggerRef ? ` (${cost.triggerRef})` : ""}`;
+}
+
+/** Document-wide cost coverage: how many operations declare a cost, how many don't, and the total estimate.
+ *  Walks paths AND webhooks (C024) — a background cost lives on a webhook op, so it must roll into the total. */
+export interface CostRollup { priced: number; undeclared: number; totalMicroUsd: number; deferred: number }
 export function costRollup(doc: OpenAPIv4Document): CostRollup {
-  let priced = 0, undeclared = 0, totalMicroUsd = 0;
+  let priced = 0, undeclared = 0, totalMicroUsd = 0, deferred = 0;
+  const count = (req: unknown) => {
+    const cost = (req as Record<string, unknown>)["x-suluk-cost"] as CostModel | undefined;
+    const est = costEstimate(cost);
+    if (est == null) { undeclared++; return; }
+    priced++; totalMicroUsd += est;
+    if (cost?.trigger && cost.trigger !== "synchronous") deferred++;
+  };
   for (const pi of Object.values(doc.paths ?? {})) {
-    for (const req of Object.values((pi as { requests?: Record<string, V4Request> }).requests ?? {})) {
-      const est = costEstimate((req as unknown as Record<string, unknown>)["x-suluk-cost"] as CostModel | undefined);
-      if (est == null) undeclared++; else { priced++; totalMicroUsd += est; }
-    }
+    for (const req of Object.values((pi as { requests?: Record<string, V4Request> }).requests ?? {})) count(req);
   }
-  return { priced, undeclared, totalMicroUsd };
+  for (const req of Object.values((doc as { webhooks?: Record<string, V4Request> }).webhooks ?? {})) count(req);
+  return { priced, undeclared, totalMicroUsd, deferred };
 }
 
 // ── ACCESS → the View-as projection ──────────────────────────────────────────────────────────────────────────
