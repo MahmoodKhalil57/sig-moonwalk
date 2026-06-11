@@ -22,3 +22,5 @@ export { createDiscountStore, type DiscountStore, type AppliedDiscount, type Dis
 export { asyncHandler, bindAsyncButton, type AsyncBindOptions } from "./async-button";
 export { createProgressBar, type ProgressBar, type ProgressBarOptions, type ProgressElement } from "./progress";
 export { revealOnScroll, type RevealOptions } from "./reveal";
+// the reusable slide-in panel controller (cart, mobile nav, sheet) — open/close + inert focus-trap + restore.
+export { createDrawer, type Drawer, type DrawerOptions, type PanelEl } from "./drawer";

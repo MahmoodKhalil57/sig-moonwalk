@@ -3,6 +3,7 @@ import { createDiscountStore, type AppliedDiscount } from "../src/discount";
 import { asyncHandler } from "../src/async-button";
 import { createProgressBar } from "../src/progress";
 import { revealOnScroll } from "../src/reveal";
+import { createDrawer } from "../src/drawer";
 
 function discountHarness(seed?: AppliedDiscount) {
   const m = new Map<string, string>();
@@ -83,6 +84,46 @@ describe("createProgressBar — asymptotic, testable, paints an element", () => 
     const p = createProgressBar({ el });
     p.set(0.5); expect(width).toBe("50.0%"); expect(active).toBe(true);
     p.done(); expect(active).toBe(false); // 1 is not "active"
+  });
+});
+
+describe("createDrawer — open/close state machine + inert focus-trap", () => {
+  function panel() { const c = new Set<string>(); const a: Record<string, string> = {}; return { hidden: true, classList: { add: (x: string) => c.add(x), remove: (x: string) => c.delete(x), has: (x: string) => c.has(x) }, setAttribute: (n: string, v: string) => (a[n] = v), _cls: c, _a: a }; }
+  test("open shows + adds class + inerts chrome + focuses; close reverses + restores", () => {
+    const drawer = panel(), backdrop = panel();
+    const chrome = [{ inert: false }, { inert: false }];
+    let focused = false, hidTimer: (() => void) | null = null;
+    const d = createDrawer({
+      drawer, backdrop,
+      inertTargets: () => chrome,
+      initialFocus: () => ({ focus: () => (focused = true) }),
+      raf: (fn) => fn(),
+      setHideTimer: (fn) => { hidTimer = fn; },
+    });
+    expect(d.isOpen()).toBe(false);
+    d.open();
+    expect(d.isOpen()).toBe(true);
+    expect(drawer.hidden).toBe(false);
+    expect(drawer._cls.has("open")).toBe(true);
+    expect(drawer._a["aria-hidden"]).toBe("false");
+    expect(chrome.every((c) => c.inert)).toBe(true);
+    expect(focused).toBe(true);
+    d.close();
+    expect(d.isOpen()).toBe(false);
+    expect(drawer._cls.has("open")).toBe(false);
+    expect(drawer._a["aria-hidden"]).toBe("true");
+    expect(chrome.every((c) => !c.inert)).toBe(true);
+    expect(drawer.hidden).toBe(false); // not hidden until the timer fires
+    hidTimer!();
+    expect(drawer.hidden).toBe(true); // now hard-hidden
+  });
+  test("onOpen/onClose hooks fire; toggle alternates; re-open is idempotent", () => {
+    const drawer = panel();
+    let opens = 0, closes = 0;
+    const d = createDrawer({ drawer, onOpen: () => opens++, onClose: () => closes++, raf: (fn) => fn(), setHideTimer: (fn) => fn() });
+    d.toggle(); expect(d.isOpen()).toBe(true); expect(opens).toBe(1);
+    d.open(); expect(opens).toBe(1); // already open → no double onOpen
+    d.toggle(); expect(d.isOpen()).toBe(false); expect(closes).toBe(1);
   });
 });
 
