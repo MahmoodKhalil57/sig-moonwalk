@@ -5,11 +5,13 @@ import { AUTH } from "./auth";
 import { ECOMMERCE } from "./ecommerce";
 import { CRM } from "./crm";
 import { BILLING } from "./billing";
+import { MARKETING } from "./marketing";
 
 export { AUTH } from "./auth";
 export { ECOMMERCE } from "./ecommerce";
 export { CRM } from "./crm";
 export { BILLING } from "./billing";
+export { MARKETING } from "./marketing";
 // `preview` is a session-establishing fragment — exported so a deploy flow can install it DELIBERATELY, but
 // intentionally ABSENT from FIRST_PARTY_REGISTRY.modules and every STACK_TEMPLATE below: it must never be
 // marketplace-browsable (suluk.installModule) or auto-composed (suluk.composePlatform). Supply-chain discipline.
@@ -23,6 +25,7 @@ export const FIRST_PARTY_REGISTRY: ModuleRegistry = {
     { title: "Ecommerce", description: "Products, orders, checkout — billed per operation; a swappable payments slot.", module: ECOMMERCE },
     { title: "CRM", description: "Contacts and a deal pipeline, owned by your users.", module: CRM },
     { title: "Billing", description: "Invoices and subscriptions for your users; swappable payments.", module: BILLING },
+    { title: "Marketing", description: "FAQ + newsletter content — the entities a landing page projects from.", module: MARKETING },
   ],
 };
 

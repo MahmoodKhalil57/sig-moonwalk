@@ -29,7 +29,13 @@ export {
   type SulukModule, type InstallResult, type ModuleCost, type ModuleRegistry, type ModuleEntry, type ModuleGrade, type InstallPreview,
 } from "./module";
 // the curated first-party module registry (M2) + stack templates (L2)
-export { AUTH, ECOMMERCE, CRM, BILLING, PREVIEW, PREVIEW_ONLY_MARKER, FIRST_PARTY_REGISTRY, STACK_TEMPLATES, resolveTemplate, type StackTemplate } from "./modules";
+export { AUTH, ECOMMERCE, CRM, BILLING, MARKETING, PREVIEW, PREVIEW_ONLY_MARKER, FIRST_PARTY_REGISTRY, STACK_TEMPLATES, resolveTemplate, type StackTemplate } from "./modules";
+// the marketing SECTION tier (Phase 2): landing-as-projection + seoMeta + JSON-LD
+export {
+  buildMarketing, marketingPage, seoMeta, jsonLd, MARKETING_COMPONENTS,
+  type MarketingSpec, type BuiltMarketing, type PlanSpec, type ProjectionSource,
+  type SeoMeta, type SeoMetaInput, type JsonLdKind,
+} from "./marketing";
 // composition (L2): plan + install a set of modules in dependency order — the non-developer "compose a platform" flow
 export { planComposition, composeModules, type CompositionPlan, type ComposeResult, type ComposeStep } from "./compose";
 // provider slots (M3): swap a facet binding (payments/auth/email/storage) for another impl of the same interface
