@@ -20,6 +20,8 @@ export interface PaymentProvider {
   subscribeMetered(input: { customerId: string; priceId: string }): Promise<Subscription>;
   /** Report usage for billing — one meter event (the value you price on). `at` is an input (reproducible). */
   reportUsage(input: { customerId: string; eventName: string; value: number; at?: number }): Promise<void>;
+  /** Open the hosted customer billing portal (manage saved cards + invoices). Optional — not every processor has one. */
+  billingPortalUrl?(input: { customerId: string; returnUrl: string }): Promise<{ url: string }>;
   /** Verify + parse a webhook from the raw body + signature. */
   verifyWebhook(rawBody: string, signature: string): WebhookEvent;
 }
@@ -34,5 +36,7 @@ export interface StripeLike {
     meters: { create(params: Record<string, unknown>): Promise<{ id: string }> };
     meterEvents: { create(params: Record<string, unknown>): Promise<{ identifier?: string }> };
   };
+  /** The Billing customer portal. Optional — present on the real SDK + the REST adapter, omitted by minimal mocks. */
+  billingPortal?: { sessions: { create(params: Record<string, unknown>): Promise<{ url: string }> } };
   webhooks: { constructEvent(body: string, sig: string, secret: string): { type: string; data: unknown } };
 }

@@ -7,7 +7,7 @@
 export type { PaymentProvider, StripeLike, Customer, Subscription, WebhookEvent } from "./types";
 export {
   customerParams, productParams, meterParams, meteredPriceParams, subscriptionParams, meterEventParams,
-  setupUsageBilling, stripeProvider, usageEventsFromCost, reportCostUsage,
+  billingPortalSessionParams, setupUsageBilling, stripeProvider, usageEventsFromCost, reportCostUsage,
   type UsageBillingConfig, type CostBillingConfig,
 } from "./stripe";
 export {

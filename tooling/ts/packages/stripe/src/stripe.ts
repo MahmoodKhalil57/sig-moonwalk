@@ -41,6 +41,13 @@ export function subscriptionParams(i: { customerId: string; priceId: string }): 
   return { customer: i.customerId, items: [{ price: i.priceId }] };
 }
 
+/** A Billing customer-portal session — the hosted page where a customer manages saved cards + invoices. */
+export function billingPortalSessionParams(i: { customerId: string; returnUrl: string; configuration?: string }): Record<string, unknown> {
+  const p: Record<string, unknown> = { customer: i.customerId, return_url: i.returnUrl };
+  if (i.configuration) p.configuration = i.configuration; // an explicit portal configuration id (else Stripe's default)
+  return p;
+}
+
 /** A meter event — reports usage for a customer (the `value` is what you price on). */
 export function meterEventParams(i: { eventName: string; customerId: string; value: number; at?: number }): Record<string, unknown> {
   const payload: Record<string, unknown> = { stripe_customer_id: i.customerId, value: String(i.value) };
@@ -75,6 +82,10 @@ export function stripeProvider(client: StripeLike, cfg: { webhookSecret?: string
     async createCustomer(i) { return { id: (await client.customers.create(customerParams(i))).id }; },
     async subscribeMetered(i) { return { id: (await client.subscriptions.create(subscriptionParams(i))).id }; },
     async reportUsage(i) { await client.billing.meterEvents.create(meterEventParams(i)); },
+    async billingPortalUrl(i) {
+      if (!client.billingPortal) throw new Error("This Stripe client has no billingPortal support (the REST adapter / SDK provides it).");
+      return { url: (await client.billingPortal.sessions.create(billingPortalSessionParams(i))).url };
+    },
     verifyWebhook(body, signature) {
       const e = client.webhooks.constructEvent(body, signature, cfg.webhookSecret ?? "");
       return { type: e.type, data: e.data };

@@ -2,7 +2,7 @@ import { test, expect, describe } from "bun:test";
 import type { CostEvent } from "@suluk/cost";
 import {
   customerParams, meterParams, meteredPriceParams, subscriptionParams, meterEventParams,
-  setupUsageBilling, stripeProvider, usageEventsFromCost, reportCostUsage, type StripeLike,
+  billingPortalSessionParams, setupUsageBilling, stripeProvider, usageEventsFromCost, reportCostUsage, type StripeLike,
 } from "../src/index";
 
 /** A recording mock that satisfies StripeLike — records every call + returns fake ids. */
@@ -18,6 +18,7 @@ function mockStripe() {
       meters: { create: rec("billing.meters.create", "mtr_1") },
       meterEvents: { create: rec("billing.meterEvents.create", "evt_1") },
     },
+    billingPortal: { sessions: { create: async (params: Record<string, unknown>) => { calls.push({ method: "billingPortal.sessions.create", params }); return { url: "https://billing.stripe.com/p/session_1" }; } } },
     webhooks: { constructEvent: (b, s, secret) => { calls.push({ method: "webhooks.constructEvent", params: { b, s, secret } }); return { type: "invoice.paid", data: { ok: true } }; } },
   };
   return { client, calls };
@@ -41,6 +42,10 @@ describe("pure param builders → exact Stripe payloads", () => {
     expect(customerParams({ email: "a@b.c" })).toEqual({ email: "a@b.c" });
     expect(subscriptionParams({ customerId: "cus_1", priceId: "price_1" })).toEqual({ customer: "cus_1", items: [{ price: "price_1" }] });
   });
+  test("billing-portal session params (customer + return_url, optional configuration)", () => {
+    expect(billingPortalSessionParams({ customerId: "cus_1", returnUrl: "https://x.dev/account" })).toEqual({ customer: "cus_1", return_url: "https://x.dev/account" });
+    expect(billingPortalSessionParams({ customerId: "cus_1", returnUrl: "https://x.dev/account", configuration: "bpc_1" })).toMatchObject({ configuration: "bpc_1" });
+  });
 });
 
 describe("flows over a StripeLike client", () => {
@@ -59,6 +64,8 @@ describe("flows over a StripeLike client", () => {
     expect((await stripe.createCustomer({ email: "a@b.c" })).id).toBe("cus_1");
     expect((await stripe.subscribeMetered({ customerId: "cus_1", priceId: "price_1" })).id).toBe("sub_1");
     await stripe.reportUsage({ customerId: "cus_1", eventName: "api_cost", value: 4050 });
+    expect((await stripe.billingPortalUrl!({ customerId: "cus_1", returnUrl: "https://x.dev/account" })).url).toBe("https://billing.stripe.com/p/session_1");
+    expect(calls.find((c) => c.method === "billingPortal.sessions.create")!.params).toEqual({ customer: "cus_1", return_url: "https://x.dev/account" });
     const evt = stripe.verifyWebhook("{raw}", "sig_1");
     expect(evt.type).toBe("invoice.paid");
     expect(calls.find((c) => c.method === "billing.meterEvents.create")!.params).toMatchObject({ event_name: "api_cost", payload: { stripe_customer_id: "cus_1", value: "4050" } });
