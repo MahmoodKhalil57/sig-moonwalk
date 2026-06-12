@@ -68,4 +68,15 @@ describe("data-admin mode — entity models projected from the contract", () => 
     expect(renderEntityAdmin(doc, "Product", "/superadmin")).toContain("New Product");
     expect(renderEntityAdmin(doc, "Nope", "/superadmin")).toContain("No such entity");
   });
+
+  test("renderEntityAdmin is a FUNCTIONAL CRUD page: live load + create/edit/delete against the entity's CRUD route", () => {
+    const html = renderEntityAdmin(doc, "Product", "/superadmin");
+    expect(html).toContain('"/product"');                       // resolves the entity's CRUD path
+    expect(html).toContain('id="adm-rows"');                    // a live-loaded table body
+    expect(html).toContain('id="adm-form"');                    // the create/edit form
+    expect(html).toContain('method:id?"PATCH":"POST"');         // create POST, edit PATCH
+    expect(html).toContain('method:"DELETE"');                  // per-row delete
+    expect(html).toContain("fetch(PATH");                       // loads from the CRUD route
+    expect(html).toContain('credentials:"same-origin"');        // carries the admin session
+  });
 });
