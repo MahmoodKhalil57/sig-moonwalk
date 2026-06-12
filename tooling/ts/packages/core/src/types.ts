@@ -29,6 +29,17 @@ export interface OpenAPIv4Document {
    * cost triggers. A VENDOR EXTENSION (the `x-suluk-*` namespace) — NOT a normative async construct (C018 scope held).
    */
   ["x-suluk-jobs"]?: Record<string, SulukJob>;
+  /**
+   * AGENTS vendor map (C027) — `x-suluk-agents`. A composition manifest layered ON TOP of the API: each SulukAgent
+   * is an LLM-orchestrated unit of SKILLS (model-bearing instruction bundles) + deterministic ROUTES (by-name
+   * $refs into EXISTING operations, no `model`) + optional sub-AGENTS (by-name refs; recursion bounded by a
+   * REQUIRED `maxDepth` + a cycle-linter, never the schema). A VENDOR EXTENSION riding the C025 `x-suluk-jobs`
+   * precedent EXACTLY — NOT a normative kind, NEVER read by the DOM→ADA matcher (D1 held; see
+   * plan/facts/0agents-d1.bn + test/agents-d1-invariance.test.ts). Selection/tiering is RUNTIME-ADVISORY;
+   * determinism is DECLARED, never enforced. Severable: a 3.1 downgrade DROPS this map whole and the routes
+   * survive as the ordinary operations they always referenced. Originated, low ceiling (~0.52); pairs with ADR C027.
+   */
+  ["x-suluk-agents"]?: Record<string, SulukAgent>;
   components?: Components;
   [ext: `x-${string}`]: unknown;
 }
@@ -52,6 +63,79 @@ export interface SulukJob {
   ["x-suluk-source"]?: SulukSource;
   /** any other vendor facet — notably `x-suluk-cost` (the job's declared cost, read by @suluk/cost). */
   [ext: `x-${string}`]: unknown;
+}
+
+/**
+ * A composition agent (C027) — an LLM-orchestrated unit. The map KEY is its stable wire-level identity (the emitted
+ * MCP-tool / OpenRouter-function id; C009 by-name, never by index). It carries NO Request/Response and is NEVER
+ * consulted by the request→operation matcher (D1). `description` is required + routing-oriented (the field the
+ * serving LLM selects on). `routes` are deterministic (a by-name `operationRef` into an existing operation, NO
+ * `model`); `skills` are LLM (a `model` is present). `agents` are by-name sub-agent refs; `maxDepth` is REQUIRED
+ * whenever `agents` is non-empty (a typed LEAF = `maxDepth` 0, `agents` {}), and a cycle-linter rejects name-cycles
+ * at author/install time (JSON-Schema cannot express acyclicity). A child's effective scope is INTERSECTION(child,
+ * caller), never union. Determinism is DECLARED, never schema-enforced.
+ */
+export interface SulukAgent {
+  /** required, routing-oriented — the field the serving LLM selects on (a lint rejects empty/one-word). */
+  description: string;
+  /** static resource:action authz; the agent's complete reachable surface is statically enumerable from the document. */
+  scope?: string[];
+  /** instruction bundles; PRESENCE of `model` is the hard static skill(LLM)-vs-route(deterministic) discriminator. */
+  skills?: Record<string, SulukSkillRef>;
+  /** deterministic routes: by-name `$ref`s into EXISTING operations; NO `model` field, ever. */
+  routes?: Record<string, SulukRouteRef>;
+  /** by-name sub-agent refs (never inline — inlining would fork C009 identity). */
+  agents?: Record<string, SulukAgentRef>;
+  /** REQUIRED when `agents` is non-empty (a lint, not the schema): the recursion depth ceiling; a leaf is 0. */
+  maxDepth?: number;
+  /** marks a tier whose retrieved / lower-tier content may NOT escalate scope or upgrade a figure's provenance. */
+  trustBoundary?: "untrusted";
+  /** advisory per-tier context budget (basis: estimate); fail-loud, never silent-zero. */
+  contextBudget?: { tokens: number; basis: "estimate" };
+  /** any other vendor facet — notably `x-suluk-cost` (an agent/skill boundary's declared cost; PROVISIONAL per C026). */
+  [ext: `x-${string}`]: unknown;
+}
+
+/** A by-name reference to a sub-agent within the same `x-suluk-agents` map (C009/C013; resolved at projection time, never by the matcher). */
+export interface SulukAgentRef {
+  /** a by-name `$ref` like `#/x-suluk-agents/<key>` (never an inline agent). */
+  ref: string;
+}
+
+/**
+ * A SKILL within an agent — an instruction bundle (the LLM tier). PRESENCE of `model` is what makes this a skill
+ * (the system-text path) rather than a deterministic route. Skill text is a PROVENANCE POINTER (source URL +
+ * content-hash + version), not inlined mutable prose: the served instructions are the single source of truth and a
+ * projected SKILL.md is GENERATED from it, the content-hash binding making drift tool-detectable and fail-loud.
+ */
+export interface SulukSkillRef {
+  /** model preference list (e.g. OpenRouter ids), cheap→capable; a resident tier may use a cheaper model. */
+  model?: string[];
+  /** static serving partition: `resident` (default tools/list) vs `cold-tail` (revealed via discover_tools). */
+  tier?: "resident" | "cold-tail";
+  /** routing-oriented precondition prose (runtime-advisory; never a request-value selector — D1). */
+  whenToUse?: string;
+  /** author-declared (trusted) vs retrieved (untrusted) content (a retrieved skill may not escalate scope/provenance). */
+  trust?: "author-declared" | "retrieved";
+  scope?: string[];
+  /** single source of truth + staleness binding (SKILL.md is generated from `source`, hashed to detect drift). */
+  provenance?: { source: string; contentHash: string; version?: string };
+  [ext: `x-${string}`]: unknown;
+}
+
+/**
+ * A deterministic ROUTE within an agent — EXCLUSIVELY a by-name `operationRef` into an EXISTING
+ * paths[*]/webhooks/x-suluk-jobs operation (never an inline re-declaration — inlining forks C009 identity and
+ * strands the operation on a 3.1 downgrade). It has NO `model` field, ever — that absence is the hard static
+ * route-vs-skill discriminator. `guarantee` is DECLARED intent, never schema-enforced (mirrors C026 PROVISIONAL).
+ */
+export interface SulukRouteRef {
+  /** a by-name `$ref` into an existing operation (resolve-linted; a dangling ref fails burhan-converge). */
+  operationRef: string;
+  /** declared determinism intent (advisory, unverifiable-by-schema); NOT enforced. */
+  guarantee?: "same-in-same-out" | "idempotent" | "safe";
+  scope?: string[];
+  // NB: NO `model` field — by construction. A route never carries a model.
 }
 
 export interface Info {

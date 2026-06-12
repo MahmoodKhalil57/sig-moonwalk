@@ -91,3 +91,27 @@ _Avoid_: assumption, copy
 **Deviation**:
 A point where the Candidate departs from a Prior. Permitted only with a recorded justification receipt — the contested claim, its cite-chain, why the Prior was insufficient, and the new confidence ceiling. Never silent.
 _Avoid_: change, override, fix (when unrecorded)
+
+## Composable units ([C027](./doc/architecture/decisions/C027-suluk-agents-composition-map.md))
+
+> Four "composable-unit" nouns that must NOT collapse — if they blur, codegen/conformance mislabels a stochastic thing as deterministic. Each is a distinct locus with a distinct determinism posture.
+
+**Route** (deterministic):
+An ordinary Suluk operation (`paths[*]` / `webhooks` / `x-suluk-jobs`) — same input → same output, statically matched (the DOM→ADA matcher). Inside an agent it appears ONLY as a by-name `operationRef` `$ref`, never inlined, and never carries a `model`.
+_Avoid_: tool (ambiguous with MCP tool), endpoint (3.x flavour)
+
+**Skill** (LLM):
+An instruction bundle inside an agent — the system-text tier, identified by the PRESENCE of a `model`. Its text is a provenance pointer (`source` + `contentHash` + `version`) the projected `SKILL.md` is generated from, not inlined prose.
+_Avoid_: prompt (too narrow), instruction (when meaning the served source of truth)
+
+**Agent** (orchestrator):
+A `SulukAgent` in the top-level `x-suluk-agents` map — an LLM-orchestrated unit composed of skills + deterministic routes + (optional, by-name) sub-agents. A vendor extension layered ON TOP of the API, never read by the matcher. Projects to a Claude plugin AND an OpenRouter manifest.
+_Avoid_: assistant, bot, module (a different noun — see below)
+
+**Module** ([C021](./doc/architecture/decisions/C021-modules-contract-merge-marketplace.md)):
+A contract-merge fragment distributed through the signed marketplace — a *packaging/governance* unit of the document, NOT an LLM orchestration. An agent may ship AS a module; an agent is not itself a module.
+_Avoid_: agent, package, plugin (a plugin is one projection target, not the unit)
+
+**Job** ([C025](./doc/architecture/decisions/C025-jobs-vendor-map.md)):
+A `SulukJob` in `x-suluk-jobs` — non-HTTP background work (cron / queue) with no inbound Request. Disjoint from a route (which has a Request) and from an agent (which orchestrates).
+_Avoid_: route, webhook, task

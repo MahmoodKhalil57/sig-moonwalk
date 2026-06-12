@@ -1,0 +1,19 @@
+# EMPIRICAL witnesses for the C027 D1 gate (the reasoning + cite-chain is in 0agents-d1.bn). These record an
+# EXECUTABLE regression test as a receipt.observation-grade fact — a methodology DISTINCT from the code-reading,
+# the independent witness mizan_verify_claim asked for. Distinct claim names (not a re-declaration of
+# d1_agent_selector_safe) keep the ledger single-definition; this file STRENGTHENS that claim, never redefines it.
+#
+# THE TEST: tooling/ts/packages/core/test/agents-d1-invariance.test.ts (bun test, 2026-06-12: 3 pass, 0 fail,
+# 8 expect() calls). It is a MAINTAINED tripwire — the day anyone makes the matcher read an agent field, the ADA
+# stops being invariant to an `x-suluk-agents` block and this fails loud.
+
+# (1) buildAda(docWithAgents) projects identically to buildAda(docWithoutAgents); matchRequest resolves every
+#     operation identically with vs without the block. => the matcher is empirically blind to x-suluk-agents.
+claim d1_matcher_invariance_test_green: Bool @>=0.6 = True
+falsified_when d1_matcher_invariance_test_green == False
+
+# (2) a deliberately CYCLIC, maxDepth-less agents block ALSO leaves the matcher's ADA unchanged. => recursion
+#     well-foundedness is an author/install LINT concern (cycle + maxDepth), provably IRRELEVANT to the matcher;
+#     a sub-agent call re-enters through the front door (a new matchRequest), never an in-matcher graph traversal.
+claim agents_cyclic_block_no_matcher_perturbation: Bool @>=0.6 = True
+falsified_when agents_cyclic_block_no_matcher_perturbation == False

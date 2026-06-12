@@ -1,0 +1,64 @@
+# C027 (x-suluk-agents) — the D1 SAFETY GATE. This ledger fires BEFORE the ADR may land (the council's
+# pre-landing gate, council workflow wf_9e8712c7-871, 2026-06-12). The whole agent construct's central safety
+# argument leans on D1, which the ledger itself caps at 0.139 (`d1_is_soft_guardrail_cap_0139` — sole-witness soft
+# guardrail, STATE.md L68). So the burden on anything touching D1 is HIGHER, and `d1_agent_selector_safe` must
+# carry an INDEPENDENT witness beyond the code-reading (the core ADA-invariance test added alongside —
+# buildAda(docWithAgents) deep-equals buildAda(docWithoutAgents)), or it sits at the 0.139 floor.
+
+# THE MAP (structural, mirrors C025 EXACTLY): a top-level `x-suluk-agents` NAME-keyed map (C009) of SulukAgent — a
+# composition manifest (skills + by-name route $refs + by-name sub-agent refs) riding the x-suluk-jobs precedent:
+# OPTIONAL, additionalProperties-legal under the `[ext: x-${string}]` catch-all (types.ts:33), NO new normative
+# kind, NO meta-schema change. A pre-agents 4.0 doc and an agents-bearing one validate byte-identically.
+claim agents_toplevel_vendor_map: Bool @>=0.52 = True
+falsified_when agents_toplevel_vendor_map == False
+
+# THE D1 GATE (the load-bearing safety claim). The DOM->ADA request->operation matcher is UNTOUCHED by agents:
+#  - buildAda (ada.ts:31-39) iterates Object.entries(doc.paths) ONLY — it never reads x-suluk-jobs, webhooks, or
+#    any x-* sibling, so a top-level x-suluk-agents map is invisible to it BY THE SAME CONSTRUCTION that already
+#    keeps x-suluk-jobs out (C025 self-check; hudlow @0.78).
+#  - matchRequest (ada.ts:69-85) reads only op.request.method + the compiled path-template; computeSignature reads
+#    only method/contentType/contentSchema/uriTemplate. NONE of the agent fields (whenToUse, model, tier, scope,
+#    description) exist on Request or feed the signature. An agents-stripped doc yields a BYTE-IDENTICAL Ada.
+#  - There is deliberately NO field in SulukAgent referencing request/DOM/header/body/query values; selection
+#    (which skill/route/sub-agent fires) is runtime-advisory prose, walled exactly as C018 walls callback
+#    runtime-expressions and C024 walls attribution.
+# WITNESS (independent of the code-reading, lifts the 0.139 floor): a build-time core test asserts
+# buildAda(docWithAgents) deep-equals buildAda(docWithoutAgents); plus (future) the @suluk/agents parser is a
+# separate package @suluk/core provably never imports (a build-time import-boundary invariant).
+claim d1_agent_selector_safe: Bool @>=0.55 = True
+falsified_when d1_agent_selector_safe == False
+
+# A selector/strategy field co-located in the agent object that gates routing on request data is INADMISSIBLE —
+# forbidden outright, not resolved by precedence (hudlow, highest weight). The #20 parameterSchema static-matcher
+# tripwire (STATE.md:69, live in-repo) is declined IDENTICALLY here, by removal-by-design: a BLOCKING linter
+# rejects any agent field whose value pattern-matches a C018 runtime-expression / a JSON-Pointer into request
+# locations.
+claim agents_no_request_value_selector: Bool @>=0.55 = True
+falsified_when agents_no_request_value_selector == False
+
+# DETERMINISM IS DECLARED, NOT ENFORCED (originated honesty, mirrors C026 PROVISIONAL): a `guarantee:
+# same-in-same-out` marker asserts INTENT; the schema cannot stop a cheap model calling a retrieval tool to invent
+# a number. The ADR + confidence map say so plainly; never laundered as enforced. A route is EXCLUSIVELY a by-name
+# $ref into an existing paths[*]/webhooks/x-suluk-jobs operation (never an inline re-declaration — inlining forks
+# C009 identity and strands the op on a 3.1 downgrade); presence/absence of `model` is the hard static
+# route-vs-skill discriminator.
+claim agents_determinism_declared_not_enforced: Bool @>=0.58 = True
+falsified_when agents_determinism_declared_not_enforced == False
+
+# RECURSION is well-founded by LINT, not by schema (JSON-Schema cannot express acyclicity): sub-agents are by-name
+# refs into the finite x-suluk-agents map; a BLOCKING author/install linter rejects name-cycles and enforces a
+# REQUIRED maxDepth (a typed leaf = maxDepth 0, agents {}); a sub-agent call re-enters through the FRONT DOOR (a
+# new independent matchRequest / MCP tool-call), never an in-matcher graph traversal — so the matcher never
+# recurses. Cycle-detection is REUSED shipped infra (builder/src/compose.ts planComposition topo-order + cycle
+# flag, C021), not new invention. Effective child scope = INTERSECTION(child, caller), never union (no escalation).
+claim agents_recursion_lint_bounded_frontdoor: Bool @>=0.55 = True
+falsified_when agents_recursion_lint_bounded_frontdoor == False
+
+# HONEST CEILING: clean-room Originated, witness-thin, leaning on the ledger's weakest guardrail (D1 @0.139). The
+# construct carries a LOW ceiling (<=0.58, tracking C024/C025) in the confidence map and the ADR provenance. The
+# operator's headline "tiering SOLVES the context problem" is DEVIATED-FROM and reframed to "makes context
+# allocation EXPLICIT and per-tier cost AUDITABLE — a CONDITIONAL reduction a conforming serving adapter must
+# actively deliver" — because tiering RELOCATES+DUPLICATES context (conserved, not destroyed; contrarian VERIFIED
+# in Conin code: the public MCP tools/list ships the FULL catalog, saving ZERO context in the served path today).
+claim agents_ceiling_originated_low_context_reframed: Bool @>=0.5 = True
+falsified_when agents_ceiling_originated_low_context_reframed == False
