@@ -1,0 +1,20 @@
+{
+  "name": "@suluk/agents",
+  "version": "0.1.0",
+  "description": "Suluk Agent composition (C027): lint + project an `x-suluk-agents` map (skills + deterministic routes + by-name sub-agents) to a Claude plugin AND an OpenRouter/OpenAI-compatible manifest — one contract, two artifacts, zero network at generate time. Determinism is DECLARED not enforced; the matcher never reads an agent field. CANDIDATE tooling — NOT official OAS.",
+  "publishConfig": { "access": "public" },
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MahmoodKhalil57/suluk.git",
+    "directory": "tooling/ts/packages/agents"
+  },
+  "homepage": "https://github.com/MahmoodKhalil57/suluk#readme",
+  "bugs": "https://github.com/MahmoodKhalil57/suluk/issues",
+  "type": "module",
+  "main": "src/index.ts",
+  "exports": { ".": "./src/index.ts" },
+  "dependencies": { "@suluk/core": "workspace:^" },
+  "devDependencies": { "@types/bun": "latest", "@suluk/builder": "workspace:^" },
+  "scripts": { "test": "bun test", "typecheck": "tsc --noEmit -p ." }
+}
