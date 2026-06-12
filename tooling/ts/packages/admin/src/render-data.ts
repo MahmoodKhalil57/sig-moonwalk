@@ -147,16 +147,16 @@ export function renderEntityAdmin(doc: OpenAPIv4Document, name: string, base: st
   const ent = esc(entity.name);
 
   return `<style>
-      .adm-tablewrap { overflow-x:auto; border:1px solid #1e2433; border-radius:8px; margin:8px 0 18px; }
+      .adm-tablewrap { overflow-x:auto; border:1px solid var(--line); border-radius:8px; margin:8px 0 18px; }
       .adm-tablewrap table { white-space:nowrap; } .adm-tablewrap td { max-width:280px; overflow:hidden; text-overflow:ellipsis; }
       .adm-form { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:12px 16px; align-items:end; max-width:920px; }
-      .adm-field { display:flex; flex-direction:column; gap:4px; font-size:12px; color:#9399b2; }
-      .adm-field input, .adm-field select, .adm-field textarea { font:13px ui-monospace,monospace; background:#11141c; color:#cdd6f4; border:1px solid #1e2433; border-radius:7px; padding:7px 9px; }
+      .adm-field { display:flex; flex-direction:column; gap:4px; font-size:12px; color:var(--muted); }
+      .adm-field input, .adm-field select, .adm-field textarea { font:13px ui-monospace,monospace; background:var(--panel); color:var(--fg); border:1px solid var(--line); border-radius:7px; padding:7px 9px; }
       .adm-field input[type=checkbox] { width:18px; height:18px; }
       .adm-actions { grid-column:1/-1; display:flex; gap:8px; margin-top:4px; }
-      .adm-actions button, #adm-rows button { font:13px ui-monospace,monospace; background:#8aadf4; color:#0b0e14; border:0; border-radius:7px; padding:7px 13px; cursor:pointer; }
-      #adm-rows button { background:#11141c; color:#8aadf4; border:1px solid #1e2433; padding:4px 9px; }
-      #adm-rows .adel { color:#e5484d; } #adm-cancel { background:#11141c; color:#9399b2; border:1px solid #1e2433; }
+      .adm-actions button, #adm-rows button { font:13px ui-monospace,monospace; background:var(--accent); color:var(--on-accent); border:0; border-radius:7px; padding:7px 13px; cursor:pointer; }
+      #adm-rows button { background:var(--panel); color:var(--accent); border:1px solid var(--line); padding:4px 9px; }
+      #adm-rows .adel { color:var(--danger,#e5484d); } #adm-cancel { background:var(--panel); color:var(--muted); border:1px solid var(--line); }
     </style>
     <h2>${ent}</h2>
     <p class="muted">access — list: ${esc(a.list ?? "—")} · create: ${esc(a.create ?? "—")} · update: ${esc(a.update ?? "—")} · delete: ${esc(a.delete ?? "—")} · <code>${esc(path)}</code></p>

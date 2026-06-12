@@ -1,10 +1,52 @@
 import { test, expect, describe } from "bun:test";
 import {
   oklch, clampOklch, formatOklch, parseOklch, withLightness,
-  cssVarName, deriveDark, themeFromLight,
+  cssVarName, deriveDark, themeFromLight, parseShadcnCss,
   toCssVars, toThemeCss, toTailwindTheme, toShadcnTokens, renderBaseCss,
   graphite, terracotta, ocean, REFERENCE_SCHEMES,
 } from "../src/index";
+
+describe("parseShadcnCss — import a tweakcn theme", () => {
+  const css = `:root {
+    --background: oklch(0.99 0 0); --foreground: oklch(0.1 0 0);
+    --card: oklch(1 0 0); --card-foreground: oklch(0.1 0 0);
+    --primary: oklch(0.55 0.2 250); --primary-foreground: oklch(1 0 0);
+    --muted: oklch(0.97 0 0); --muted-foreground: oklch(0.45 0 0);
+    --border: oklch(0.92 0 0); --ring: oklch(0.55 0.2 250); --radius: 0.5rem;
+  }
+  html[data-theme="dark"] {
+    --background: oklch(0.15 0 0); --foreground: oklch(0.95 0 0);
+    --card: oklch(0.2 0 0); --primary: oklch(0.7 0.18 250); --primary-foreground: oklch(0.1 0 0);
+    --muted: oklch(0.25 0 0); --muted-foreground: oklch(0.65 0 0); --border: oklch(0.3 0 0);
+  }`;
+
+  test("parses explicit light + dark blocks (oklch)", () => {
+    const t = parseShadcnCss(css, "demo")!;
+    expect(t.name).toBe("demo");
+    expect(formatOklch(t.light.background)).toBe("oklch(0.99 0 0)");
+    expect(formatOklch(t.light.primary)).toBe("oklch(0.55 0.2 250)");
+    expect(formatOklch(t.dark.background)).toBe("oklch(0.15 0 0)");
+    expect(formatOklch(t.dark.primary)).toBe("oklch(0.7 0.18 250)");
+  });
+
+  test("fills omitted tokens coherently (surface→bg, fg→foreground, destructive default)", () => {
+    const t = parseShadcnCss(css, "demo")!;
+    expect(t.light.secondary).toEqual(t.light.background);        // omitted surface → background
+    expect(t.light.accentForeground).toEqual(t.light.foreground); // omitted fg → foreground
+    expect(t.light.destructive.c).toBeGreaterThan(0);             // a real red, not null
+  });
+
+  test("derives dark when no dark block is present", () => {
+    const lightOnly = css.replace(/html\[data-theme="dark"\][\s\S]*\}/, "");
+    const t = parseShadcnCss(lightOnly, "lo")!;
+    expect(t.dark.background.l).toBeLessThan(t.light.background.l); // derived dark is darker
+  });
+
+  test("returns null for a non-theme stylesheet", () => {
+    expect(parseShadcnCss("body { color: red }")).toBeNull();
+    expect(parseShadcnCss(":root { --radius: 0.5rem }")).toBeNull(); // no color essentials
+  });
+});
 
 describe("OKLCH value type", () => {
   test("format + parse round-trip (with and without alpha)", () => {

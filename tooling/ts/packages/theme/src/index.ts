@@ -13,6 +13,7 @@ export {
   type ColorTokens, type FontTokens, type TokenSpec, type ThemeSpec,
 } from "./tokens";
 export { deriveDark, themeFromLight } from "./derive";
+export { parseShadcnCss } from "./parse-css";
 export {
   toCssVars, toThemeCss, toTailwindTheme, toShadcnTokens, renderBaseCss,
   type CssVarsOptions, type ThemeCssOptions, type BaseCssOptions,

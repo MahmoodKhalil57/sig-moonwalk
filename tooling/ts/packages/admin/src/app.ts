@@ -22,6 +22,9 @@ export interface AdminOptions {
   authorize?: (c: Context) => boolean | Promise<boolean>;
   /** Page title. */
   title?: string;
+  /** Extra HTML injected into <head> AFTER the default theme — link a stylesheet (e.g. a color-scheme sheet) and a
+   *  no-flash theme stamper so the panel obeys the host app's light/dark + color scheme instead of the built-in. */
+  headHtml?: string | ((c: Context) => string);
 }
 
 async function resolveDoc(opts: AdminOptions, c: Context): Promise<OpenAPIv4Document> {
@@ -43,16 +46,17 @@ export function adminApp(opts: AdminOptions): Hono {
     await next();
   }
 
-  const page = (active: string, body: string) => layout(title, base, active, body);
+  const page = (c: Context, active: string, body: string) =>
+    layout(title, base, active, body, typeof opts.headHtml === "function" ? opts.headHtml(c) : (opts.headHtml ?? ""));
 
-  app.get(base, async (c) => c.html(page("", renderCycle(buildCycle(await resolveDoc(opts, c))))));
-  app.get(`${base}/builder`, async (c) => c.html(page("builder", renderBuilder(buildBuilderModel(await resolveDoc(opts, c)).tree))));
+  app.get(base, async (c) => c.html(page(c, "", renderCycle(buildCycle(await resolveDoc(opts, c))))));
+  app.get(`${base}/builder`, async (c) => c.html(page(c, "builder", renderBuilder(buildBuilderModel(await resolveDoc(opts, c)).tree))));
   // data-admin: an entity index + per-entity list/create page, projected from components.schemas.
-  app.get(`${base}/data`, async (c) => c.html(page("data", renderDataIndex(await resolveDoc(opts, c), base))));
-  app.get(`${base}/data/:entity`, async (c) => c.html(page("data", renderEntityAdmin(await resolveDoc(opts, c), c.req.param("entity"), base))));
-  app.get(`${base}/analytics`, async (c) => c.html(page("analytics", renderAnalytics(await resolveDoc(opts, c)))));
-  app.get(`${base}/checks`, async (c) => c.html(page("checks", renderChecks(docChecks(await resolveDoc(opts, c))))));
-  app.get(`${base}/deploy`, async (c) => c.html(page("deploy", renderDeploy(deployPlan(await resolveDoc(opts, c))))));
+  app.get(`${base}/data`, async (c) => c.html(page(c, "data", renderDataIndex(await resolveDoc(opts, c), base))));
+  app.get(`${base}/data/:entity`, async (c) => c.html(page(c, "data", renderEntityAdmin(await resolveDoc(opts, c), c.req.param("entity"), base))));
+  app.get(`${base}/analytics`, async (c) => c.html(page(c, "analytics", renderAnalytics(await resolveDoc(opts, c)))));
+  app.get(`${base}/checks`, async (c) => c.html(page(c, "checks", renderChecks(docChecks(await resolveDoc(opts, c))))));
+  app.get(`${base}/deploy`, async (c) => c.html(page(c, "deploy", renderDeploy(deployPlan(await resolveDoc(opts, c))))));
   app.get(`${base}/docs`, async (c) => {
     const doc = await resolveDoc(opts, c);
     return c.html(previewHtml(JSON.stringify(doc), "scalar").html);

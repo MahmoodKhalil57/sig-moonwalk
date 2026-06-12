@@ -14,7 +14,7 @@ const SECTIONS = [
   ["", "Overview"], ["builder", "Builder"], ["data", "Data"], ["analytics", "Analytics"], ["docs", "Docs"], ["checks", "Checks"], ["deploy", "Deploy"],
 ] as const;
 
-export function layout(title: string, base: string, active: string, body: string): string {
+export function layout(title: string, base: string, active: string, body: string, headHtml = ""): string {
   const nav = SECTIONS.map(([slug, label]) => {
     const href = slug ? `${base}/${slug}` : base;
     const on = slug === active ? ' class="on"' : "";
@@ -30,21 +30,26 @@ export function layout(title: string, base: string, active: string, body: string
 <meta property="og:image" content="https://raw.githubusercontent.com/MahmoodKhalil57/suluk/main/branding/export/social-card.png"/>
 <meta name="twitter:card" content="summary_large_image"/>
 <style>
-  :root { color-scheme: dark; }
-  body { font: 14px/1.5 ui-monospace, monospace; margin: 0; background: #0b0e14; color: #cdd6f4; }
-  header { padding: 14px 20px; border-bottom: 1px solid #1e2433; display: flex; gap: 18px; align-items: baseline; }
-  header b { color: #f5a97f; letter-spacing: .04em; }
-  nav a { color: #8aadf4; text-decoration: none; margin-right: 14px; }
-  nav a.on { color: #f5a97f; border-bottom: 2px solid #f5a97f; padding-bottom: 2px; }
+  /* Theme-aware: uses the SITE's CSS-var vocabulary so a host app's theme/scheme (injected via headHtml) drives it.
+     Standalone, it ships a light default + a dark variant that follows data-theme or the OS preference. */
+  :root, html[data-theme="light"] { color-scheme: light; --bg:#ffffff; --panel:#ffffff; --line:#ececf1; --fg:#0b0b12; --muted:#646474; --accent:#6366f1; --on-accent:#ffffff; --ok:#16a34a; --danger:#e5484d; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme]) { color-scheme:dark; --bg:#09090c; --panel:#131319; --line:#23232c; --fg:#ededf2; --muted:#8c8c99; --accent:#818cf8; --on-accent:#0b0b12; } }
+  html[data-theme="dark"] { color-scheme:dark; --bg:#09090c; --panel:#131319; --line:#23232c; --fg:#ededf2; --muted:#8c8c99; --accent:#818cf8; --on-accent:#0b0b12; }
+  body { font: 14px/1.5 ui-monospace, monospace; margin: 0; background: var(--bg); color: var(--fg); }
+  header { padding: 14px 20px; border-bottom: 1px solid var(--line); display: flex; gap: 18px; align-items: baseline; }
+  header b { color: var(--accent); letter-spacing: .04em; }
+  nav a { color: var(--accent); text-decoration: none; margin-right: 14px; opacity:.82; }
+  nav a.on { opacity:1; border-bottom: 2px solid var(--accent); padding-bottom: 2px; }
   main { padding: 20px; max-width: 980px; }
-  h2 { color: #f5a97f; font-size: 13px; text-transform: uppercase; letter-spacing: .08em; margin: 22px 0 8px; }
-  .layer { border: 1px solid #1e2433; border-radius: 8px; padding: 10px 14px; margin: 8px 0; }
-  .layer .sum { color: #9399b2; }
+  h2 { color: var(--accent); font-size: 13px; text-transform: uppercase; letter-spacing: .08em; margin: 22px 0 8px; }
+  .layer { border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; margin: 8px 0; }
+  .layer .sum { color: var(--muted); }
   ul { margin: 6px 0; padding-left: 18px; } li { margin: 2px 0; }
-  .muted { color: #6c7086; } .pill { color: #a6da95; }
-  code { color: #eed49f; } pre { background: #11141c; padding: 12px; border-radius: 8px; overflow:auto; }
-  .candidate { color: #6c7086; font-size: 12px; }
-</style></head>
+  .muted { color: var(--muted); } .pill { color: var(--ok); }
+  a { color: var(--accent); }
+  code { color: var(--accent); } pre { background: var(--panel); border:1px solid var(--line); padding: 12px; border-radius: 8px; overflow:auto; }
+  .candidate { color: var(--muted); font-size: 12px; }
+</style>${headHtml}</head>
 <body>
   <header><b>SULUK · SUPERADMIN</b> <span class="candidate">candidate — not official OAS</span></header>
   <header><nav>${nav}</nav></header>

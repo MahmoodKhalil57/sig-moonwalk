@@ -40,9 +40,9 @@ function barChart(rows: { label: string; value: number; display: string }[]): st
   const bars = rows.map((r, i) => {
     const len = Math.max(2, Math.round((r.value / max) * barW));
     const y = i * rowH + 4;
-    return `<text x="0" y="${y + 14}" fill="#cdd6f4" font-size="12">${esc(r.label.slice(0, 18))}</text>` +
+    return `<text x="0" y="${y + 14}" fill="var(--fg)" font-size="12">${esc(r.label.slice(0, 18))}</text>` +
       `<rect x="${labelW}" y="${y + 4}" width="${len}" height="14" rx="3" fill="${PALETTE[i % PALETTE.length]}"/>` +
-      `<text x="${labelW + len + 6}" y="${y + 15}" fill="#9399b2" font-size="11">${esc(r.display)}</text>`;
+      `<text x="${labelW + len + 6}" y="${y + 15}" fill="var(--muted)" font-size="11">${esc(r.display)}</text>`;
   }).join("");
   return `<svg viewBox="0 0 ${w} ${svgH}" width="100%" style="max-width:${w}px" role="img">${bars}</svg>`;
 }
@@ -51,7 +51,7 @@ function barChart(rows: { label: string; value: number; display: string }[]): st
 function gauge(label: string, done: number, total: number): string {
   const pct = total ? Math.round((done / total) * 100) : 0;
   return `<div style="margin:6px 0"><div class="muted" style="font-size:12px">${esc(label)} — ${done}/${total} (${pct}%)</div>
-    <div style="background:#1e2433;border-radius:4px;height:8px;overflow:hidden"><div style="width:${pct}%;height:8px;background:#a6da95"></div></div></div>`;
+    <div style="background:var(--line);border-radius:4px;height:8px;overflow:hidden"><div style="width:${pct}%;height:8px;background:#a6da95"></div></div></div>`;
 }
 
 /** Render the analytics dashboard for a document. */
