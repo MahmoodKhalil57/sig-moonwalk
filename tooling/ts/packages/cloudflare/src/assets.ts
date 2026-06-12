@@ -18,9 +18,10 @@ async function sha256Hex(bytes: Uint8Array): Promise<string> {
   return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-/** The Workers-Assets manifest hash for a file's contents. */
+/** The Workers-Assets manifest hash: the first 32 hex chars (16 bytes) of the contents' SHA-256. The API rejects
+ *  the full 64-char digest ("file hash size of 64 is too large"). */
 export async function assetHash(bytes: Uint8Array): Promise<string> {
-  return sha256Hex(bytes);
+  return (await sha256Hex(bytes)).slice(0, 32);
 }
 
 const toBase64 = (bytes: Uint8Array): string =>

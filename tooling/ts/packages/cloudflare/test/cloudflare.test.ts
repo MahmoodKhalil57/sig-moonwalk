@@ -1,5 +1,5 @@
 import { test, expect, describe } from "bun:test";
-import { CloudflareClient, CloudflareError, deploy, provisionD1, putSecrets, type AssetFile } from "../src/index";
+import { CloudflareClient, CloudflareError, deploy, provisionD1, putSecrets, applyMigrations, assetHash, type AssetFile } from "../src/index";
 
 /** A routing mock fetch: returns the CF `{success,result}` envelope; records every call. */
 function mockCf(routes: [RegExp, unknown | ((ctx: { body: BodyInit | null | undefined }) => unknown)][]) {
@@ -49,6 +49,31 @@ describe("provisioners — idempotent create-or-get", () => {
     const cf = new CloudflareClient({ apiToken: "t", accountId: "a", fetch });
     expect((await provisionD1(cf, "saasuluk-db")).uuid).toBe("db_new");
   });
+  test("assetHash is a 32-char (16-byte) truncated SHA-256 — the API rejects the full 64", async () => {
+    const h = await assetHash(new TextEncoder().encode("hello"));
+    expect(h).toMatch(/^[0-9a-f]{32}$/);
+  });
+
+  test("applyMigrations runs only un-recorded migrations + baselines an 'already exists' error", async () => {
+    const ran: string[] = [];
+    const ok = (result: unknown) => new Response(JSON.stringify({ success: true, errors: [], result }), { status: 200 });
+    const fetch = (async (_url: string, init?: RequestInit) => {
+      const sql = JSON.parse(init!.body as string).sql as string;
+      ran.push(sql);
+      if (/SELECT name FROM _suluk_migrations/.test(sql)) return ok([{ results: [{ name: "0001_done.sql" }] }]);
+      if (/__dup__/.test(sql)) return new Response(JSON.stringify({ success: false, errors: [{ code: 7500, message: "duplicate column name: x: SQLITE_ERROR" }] }), { status: 400 });
+      return ok([{ results: [] }]);
+    }) as unknown as typeof globalThis.fetch;
+    const cf = new CloudflareClient({ apiToken: "t", accountId: "a", fetch });
+    const newly = await applyMigrations(cf, "db", [
+      { name: "0001_done.sql", sql: "SHOULD_NOT_RUN" },     // already in the ledger → skipped
+      { name: "0002_new.sql", sql: "CREATE TABLE n(id)" },  // runs
+      { name: "0003_dup.sql", sql: "ALTER __dup__" },       // idempotency error → baselined, not fatal
+    ], () => 1700000000000);
+    expect(newly).toEqual(["0002_new.sql", "0003_dup.sql"]);
+    expect(ran).not.toContain("SHOULD_NOT_RUN");
+  });
+
   test("putSecrets sets the non-empty secrets only", async () => {
     const { fetch, calls } = mockCf([[/PUT .*\/secrets$/, {}]]);
     const cf = new CloudflareClient({ apiToken: "t", accountId: "a", fetch });
@@ -64,7 +89,7 @@ describe("deploy() — full orchestration in dependency order", () => {
       [/GET \/accounts$/, [{ id: "acct_1" }]],
       [/GET .*\/d1\/database$/, []],
       [/POST .*\/d1\/database$/, { uuid: "db_1", name: "saasuluk-db" }],
-      [/POST .*\/d1\/database\/db_1\/query$/, [{ success: true }]],
+      [/POST .*\/d1\/database\/db_1\/query$/, [{ results: [] }]], // ledger empty → migration runs
       [/POST .*\/assets-upload-session$/, { jwt: "session_jwt", buckets: [] }], // all cached → completion = session jwt
       [/PUT .*\/workers\/scripts\/saasuluk$/, { id: "saasuluk" }],
       [/PUT .*\/workers\/scripts\/saasuluk\/secrets$/, {}],
@@ -77,7 +102,7 @@ describe("deploy() — full orchestration in dependency order", () => {
       module: "export default { fetch(){ return new Response('ok') } }",
       compatibilityDate: "2026-06-01",
       compatibilityFlags: ["nodejs_compat"],
-      d1: { binding: "DB", databaseName: "saasuluk-db", migrationsSql: ["CREATE TABLE t (id INTEGER);"] },
+      d1: { binding: "DB", databaseName: "saasuluk-db", migrations: [{ name: "0000_domain.sql", sql: "CREATE TABLE t (id INTEGER);" }] },
       assets,
       vars: { STRIPE_METER_EVENT_NAME: "saasuluk_cost" },
       secrets: { BETTER_AUTH_SECRET: "shh", MISSING: "" },

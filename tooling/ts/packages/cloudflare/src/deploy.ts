@@ -5,7 +5,7 @@
  * PLAN (bytes, not paths), so it's fully unit-testable; a thin disk-reading wrapper lives in the app's deploy script.
  */
 import { CloudflareClient, type CloudflareClientOptions } from "./client";
-import { provisionD1, provisionKvNamespace, provisionR2Bucket, queryD1, putSecrets } from "./resources";
+import { provisionD1, provisionKvNamespace, provisionR2Bucket, applyMigrations, putSecrets, type Migration } from "./resources";
 import { uploadAssets, type AssetFile } from "./assets";
 import { deployWorker, putCronTriggers, type WorkerBinding } from "./worker";
 
@@ -16,8 +16,8 @@ export interface DeployPlan {
   mainModule?: string;
   compatibilityDate: string;
   compatibilityFlags?: string[];
-  /** provision + bind a D1 database, applying each SQL migration in order. */
-  d1?: { binding: string; databaseName: string; migrationsSql?: string[] };
+  /** provision + bind a D1 database, applying each migration once (ledger-tracked, baseline-safe). */
+  d1?: { binding: string; databaseName: string; migrations?: Migration[] };
   /** provision + bind KV namespaces (binding → title). */
   kv?: { binding: string; title: string }[];
   /** provision + bind R2 buckets (binding → bucketName). */
@@ -60,7 +60,10 @@ export async function deploy(cf: CloudflareClient, plan: DeployPlan, log: Deploy
     log(`D1 "${plan.d1.databaseName}" → ${db.uuid}`);
     bindings.push({ type: "d1", name: plan.d1.binding, id: db.uuid });
     d1 = { binding: plan.d1.binding, id: db.uuid };
-    for (const sql of plan.d1.migrationsSql ?? []) { await queryD1(cf, db.uuid, sql); log(`  applied migration (${sql.length} chars)`); }
+    if (plan.d1.migrations?.length) {
+      const newly = await applyMigrations(cf, db.uuid, plan.d1.migrations);
+      log(newly.length ? `  migrations applied/baselined: ${newly.join(", ")}` : `  migrations: all up to date`);
+    }
   }
 
   const kv: DeployResult["kv"] = [];
