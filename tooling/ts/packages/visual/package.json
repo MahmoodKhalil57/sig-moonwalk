@@ -1,6 +1,6 @@
 {
   "name": "@suluk/visual",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Pixel-confidence by construction: verify each UI primitive's pixels ONCE (a golden snapshot), and confidence propagates to every generated UI via content-hashing + the deterministic generator — re-verify a primitive only when its source changes. CANDIDATE tooling.",
   "publishConfig": { "access": "public" },
   "license": "Apache-2.0",
@@ -17,10 +17,10 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@suluk/core": "workspace:*"
+    "@suluk/core": "workspace:^"
   },
   "peerDependencies": {
-    "@suluk/shadcn": "workspace:*"
+    "@suluk/shadcn": "workspace:^"
   },
   "peerDependenciesMeta": {
     "@suluk/shadcn": {
@@ -28,8 +28,8 @@
     }
   },
   "devDependencies": {
-    "@suluk/shadcn": "workspace:*",
-    "@suluk/zod": "workspace:*",
+    "@suluk/shadcn": "workspace:^",
+    "@suluk/zod": "workspace:^",
     "@types/bun": "latest",
     "playwright-core": "^1.60.0",
     "zod": "^4.4.3"

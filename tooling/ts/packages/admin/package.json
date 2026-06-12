@@ -1,6 +1,6 @@
 {
   "name": "@suluk/admin",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "The /superadmin web admin panel — the same cockpit as the vscode extension (@suluk/cockpit core), rendered as a Hono-served web UI. Superadmin-gated. CANDIDATE tooling.",
   "publishConfig": { "access": "public" },
   "license": "Apache-2.0",
@@ -14,7 +14,7 @@
   "type": "module",
   "main": "src/index.ts",
   "exports": { ".": "./src/index.ts" },
-  "dependencies": { "@suluk/core": "workspace:*", "@suluk/cockpit": "workspace:*" },
+  "dependencies": { "@suluk/core": "workspace:^", "@suluk/cockpit": "workspace:^" },
   "peerDependencies": { "hono": "^4.0.0" },
   "devDependencies": { "@types/bun": "latest", "hono": "^4.0.0" },
   "scripts": { "test": "bun test", "typecheck": "tsc --noEmit -p ." }

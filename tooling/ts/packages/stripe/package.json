@@ -1,6 +1,6 @@
 {
   "name": "@suluk/stripe",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "First-class Stripe via a swappable PaymentProvider: usage-based billing (Billing Meters + meter events), customers, metered prices, subscriptions, webhooks — and a bridge from @suluk/cost to Stripe usage. Other processors follow Stripe. CANDIDATE tooling.",
   "publishConfig": { "access": "public" },
   "license": "Apache-2.0",
@@ -14,7 +14,7 @@
   "type": "module",
   "main": "src/index.ts",
   "exports": { ".": "./src/index.ts" },
-  "dependencies": { "@suluk/cost": "workspace:*" },
+  "dependencies": { "@suluk/cost": "workspace:^" },
   "peerDependencies": { "stripe": "^17.0.0 || ^18.0.0" },
   "peerDependenciesMeta": { "stripe": { "optional": true } },
   "devDependencies": { "@types/bun": "latest" },

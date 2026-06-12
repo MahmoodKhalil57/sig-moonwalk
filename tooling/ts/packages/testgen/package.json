@@ -19,7 +19,7 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@suluk/core": "workspace:*"
+    "@suluk/core": "workspace:^"
   },
   "peerDependencies": {
     "@cfworker/json-schema": "^4.1.1"
@@ -31,7 +31,7 @@
   },
   "devDependencies": {
     "@types/bun": "latest",
-    "@suluk/stripe": "workspace:*"
+    "@suluk/stripe": "workspace:^"
   },
   "scripts": {
     "test": "bun test",

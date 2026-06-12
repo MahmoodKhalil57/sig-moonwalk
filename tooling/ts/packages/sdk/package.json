@@ -19,7 +19,7 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@suluk/core": "workspace:*"
+    "@suluk/core": "workspace:^"
   },
   "peerDependencies": {
     "ofetch": "^1.5.1",

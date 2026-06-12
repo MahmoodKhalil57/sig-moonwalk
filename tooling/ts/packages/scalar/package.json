@@ -1,6 +1,6 @@
 {
   "name": "@suluk/scalar",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Render an OpenAPI v4 'Suluk' document with Scalar API Reference (via the 3.1 downgrade). CANDIDATE tooling.",
   "publishConfig": { "access": "public" },
   "license": "Apache-2.0",
@@ -14,7 +14,7 @@
   "type": "module",
   "main": "src/index.ts",
   "exports": { ".": "./src/index.ts" },
-  "dependencies": { "@suluk/core": "workspace:*", "@suluk/openapi-compat": "workspace:*" },
+  "dependencies": { "@suluk/core": "workspace:^", "@suluk/openapi-compat": "workspace:^" },
   "devDependencies": { "@types/bun": "latest" },
   "scripts": { "test": "bun test", "typecheck": "tsc --noEmit -p ." }
 }
