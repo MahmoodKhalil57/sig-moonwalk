@@ -1,0 +1,18 @@
+# EMPIRICAL witnesses for the C028 D1 gate (reasoning + cite-chain in 0policy-d1.bn). Records an EXECUTABLE
+# regression test as a receipt.observation-grade fact — a methodology DISTINCT from the code-reading, the
+# independent witness mizan_verify_claim asked for. Distinct claim names (not a re-declaration) keep the ledger
+# single-definition.
+#
+# THE TEST: tooling/ts/packages/core/test/policy-d1-invariance.test.ts (bun test, 2026-06-13: 2 pass). It proves
+# buildAda projects identically with vs without a DENY-ALL x-suluk-policy block AND matchRequest resolves every
+# operation identically. A MAINTAINED tripwire: the day the matcher reads a policy field, the ADA stops being
+# invariant and this fails loud. The boundary test (packages/agents/test/core-boundary.test.ts) additionally asserts
+# ada.ts never references x-suluk-policy and core imports nothing from the policy parser (@suluk/agents).
+claim d1_policy_matcher_invariance_test_green: Bool @>=0.6 = True
+falsified_when d1_policy_matcher_invariance_test_green == False
+
+# The monotone-narrowing MEET is empirically witnessed: policy.test.ts proves effective = INTERSECT(operator, agent)
+# narrows scope/model/tier/tools/depth/nesting and NEVER grants (effective scope subset of declared), and the
+# policy-widening guard + scope-escalation class catch any violation. 40 @suluk/agents tests green.
+claim policy_meet_narrows_never_grants_test_green: Bool @>=0.6 = True
+falsified_when policy_meet_narrows_never_grants_test_green == False

@@ -1,0 +1,39 @@
+# C028 (x-suluk-policy) — the D1 SAFETY GATE. Fires BEFORE the ADR lands (council panel wf_b2f1fd82-7a7,
+# sibling-build 8/3). An operator governance overlay is governance-OVER-an-agent-layer that itself leans on D1
+# (ledger-capped 0.139, soft guardrail, STATE.md L68) — originated-on-originated — so the ceiling is held LOW
+# (<=0.52, tracking C027/C028's band) and the matcher-invariance claim carries an independent executable witness
+# (test/policy-d1-invariance.test.ts: buildAda byte-identical with vs without a DENY-ALL x-suluk-policy block).
+
+# THE MAP (structural, mirrors C025/C027 EXACTLY): a top-level `x-suluk-policy` map keyed by OPERATOR/fleet name
+# of SulukPolicy — operator-owned governance that NARROWS agent self-declaration. OPTIONAL, additive,
+# additionalProperties-legal under the [ext: x-${string}] catch-all; a policy-free doc validates byte-identically;
+# NO new normative kind, NO meta-schema change.
+claim policy_toplevel_vendor_map: Bool @>=0.52 = True
+falsified_when policy_toplevel_vendor_map == False
+
+# THE D1 GATE: the DOM->ADA request->operation matcher is UNTOUCHED by policy. buildAda (ada.ts:31-39) iterates
+# doc.paths ONLY — it never reads x-suluk-policy or any x-* sibling; matchRequest (ada.ts:69-85) reads only
+# method + the compiled path-template. NONE of the policy fields (appliesTo, capTier, modelAllowlist, costCeiling,
+# ...) exist on Request or feed the signature. An x-suluk-policy-stripped doc yields a BYTE-IDENTICAL Ada. There is
+# deliberately NO policy field referencing request/DOM/header/body values; appliesTo binds BY AGENT NAME only.
+# WITNESS (independent, executable): test/policy-d1-invariance.test.ts proves the matcher is invariant to a
+# DENY-ALL x-suluk-policy block. Module boundary: the policy parser ships in @suluk/agents, which @suluk/core
+# provably never imports (core-boundary.test.ts).
+claim d1_policy_selector_safe: Bool @>=0.55 = True
+falsified_when d1_policy_selector_safe == False
+
+# MONOTONE-NARROWING is the entire security value: policyConstrain is a total, order-independent MEET reusing
+# intersectScope — effective = INTERSECT(operatorPolicy, agentSelfDeclaration), which NEVER EXCEEDS either input on
+# any axis (scope/tier/model/depth/tools). A widening result is a lint HARD-FAIL (inadmissible, not precedence-
+# resolved) — same class as the shipped scope-escalation lint. (NB the precise claim is MEET/never-exceeds-either,
+# NOT "operator always narrower" — there is no operator node above the root agent today; policy ADDS it.)
+claim policy_monotone_narrowing_meet: Bool @>=0.55 = True
+falsified_when policy_monotone_narrowing_meet == False
+
+# costCeiling is DECLARED, NOT ENFORCED (C026 PROVISIONAL honesty restated at the point of definition): the schema
+# carries cap{amount,unit,basis,enforcedBy} as the operator's third number (cap/estimate/actual on three distinct
+# owners), with `enforcedBy` REQUIRED so no reader mistakes declaration for enforcement. The terminate-at-spend
+# kill-switch needs a live meter (a runtime/adapter obligation) and is RESERVED, built-by-nobody until the reopen-
+# trigger — exactly as C027 reserved recursion-beyond-one-hop. A cap-breaching run is a NAMED conformance failure.
+claim policy_costceiling_declared_not_enforced: Bool @>=0.55 = True
+falsified_when policy_costceiling_declared_not_enforced == False

@@ -11,7 +11,7 @@ export type {
   ParameterSchema, Response, Callback, Components, SecurityRequirement, SecurityScheme,
   Reference, Schema, SchemaOrRef, SulukSource,
   SulukRateLimit, SchemaProperty, PropertyFacets, SulukJob,
-  SulukAgent, SulukSkillRef, SulukRouteRef, SulukAgentRef,
+  SulukAgent, SulukSkillRef, SulukRouteRef, SulukAgentRef, SulukPolicy,
 } from "./types";
 
 export { parseDocument } from "./parse";

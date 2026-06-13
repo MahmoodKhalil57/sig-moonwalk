@@ -40,6 +40,16 @@ export interface OpenAPIv4Document {
    * survive as the ordinary operations they always referenced. Originated, low ceiling (~0.52); pairs with ADR C027.
    */
   ["x-suluk-agents"]?: Record<string, SulukAgent>;
+  /**
+   * POLICY vendor map (C028) — `x-suluk-policy`, keyed by OPERATOR/fleet name (not agent name: the operator owns
+   * it, one policy spans many third-party agents). An operator-owned governance overlay that NARROWS what an agent
+   * self-declares (effective = INTERSECT(operatorPolicy, agentSelfDeclaration); monotone — never grants). Rides the
+   * x-suluk-jobs/x-suluk-agents move EXACTLY: optional, additive, NO new normative kind, NEVER read by the matcher
+   * (D1; see plan/facts/0policy-d1.bn + test/policy-d1-invariance.test.ts). Only the STATIC subset is decidable here;
+   * the `costCeiling` is DECLARED, enforced by a runtime adapter (`enforcedBy`), never by the schema. Originated, low
+   * ceiling (~0.52); pairs with ADR C028.
+   */
+  ["x-suluk-policy"]?: Record<string, SulukPolicy>;
   components?: Components;
   [ext: `x-${string}`]: unknown;
 }
@@ -136,6 +146,41 @@ export interface SulukRouteRef {
   guarantee?: "same-in-same-out" | "idempotent" | "safe";
   scope?: string[];
   // NB: NO `model` field — by construction. A route never carries a model.
+}
+
+/**
+ * An OPERATOR governance policy (C028) — a member of the `x-suluk-policy` map, keyed by operator/fleet name. Every
+ * field is STATIC, locally decidable, and NARROW-ONLY: applying a policy can only REMOVE capability an agent
+ * self-declared (effective = INTERSECT(policy, agent)), never grant. No field may reference request/DOM/header/body
+ * values (D1; the #20 tripwire is declined here too). `appliesTo` binds BY AGENT NAME (`#/x-suluk-agents/<key>`).
+ */
+export interface SulukPolicy {
+  /** by-name refs into x-suluk-agents keys this policy governs (NEVER a request predicate). Empty/absent ⇒ all agents. */
+  appliesTo?: string[];
+  /** operator's max scope ceiling — effective agent scope = INTERSECT(agent.scope, scopeAllowlist). */
+  scopeAllowlist?: string[];
+  /** deny/allow sub-agent keys (an allow-list, when present, is the only permitted set). */
+  agents?: { deny?: string[]; allow?: string[] };
+  /** deny/allow route (tool) keys. */
+  tools?: { deny?: string[]; allow?: string[] };
+  /** deny/allow the retrieval/untrusted tier's tools specifically (its non-deterministic blast radius). */
+  retrievalTools?: { deny?: string[]; allow?: string[] };
+  /** pin the MAX tier — a cold-tail skill under `capTier: resident` is downgraded (and flagged). */
+  capTier?: "resident" | "cold-tail";
+  /** the only model ids permitted — effective skill model[] = INTERSECT(skill.model, modelAllowlist). */
+  modelAllowlist?: string[];
+  /** an upper bound on recursion depth — effective maxDepth = min(agent.maxDepth, maxDepthCap). */
+  maxDepthCap?: number;
+  /** forbid sub-agents entirely (⇒ effective maxDepth 0). */
+  forbidNesting?: boolean;
+  /**
+   * The operator's DECLARED cost cap — the third of cap/estimate/actual (estimate = the agent's own x-suluk-cost,
+   * actual = the C026 reconciled charge). The SCHEMA DECLARES this number; it does NOT enforce it — `enforcedBy`
+   * names who does (a runtime admission-gate / adapter). Required so a reader can never mistake declaration for
+   * enforcement (C026 PROVISIONAL honesty).
+   */
+  costCeiling?: { amount: number; amountUnit: "micro-usd" | "cents" | "usd"; basis?: string; enforcedBy: "adapter" | "runtime" };
+  [ext: `x-${string}`]: unknown;
 }
 
 export interface Info {
