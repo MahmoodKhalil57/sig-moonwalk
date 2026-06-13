@@ -91,6 +91,7 @@ Waves 1 (17 convergent) and 2A (8 contested) are done. **Next:**
 
 - Open questions → [plan/frontier.md](./frontier.md)
 - Horizon plan → [plan/HORIZONS.md](./HORIZONS.md)
+- **Agent track** (the `x-suluk-agents` layer: C027 composition · C028 governance · C029 thinking · `@suluk/{agents,models}` · cockpit · context-intelligence) → **[plan/AGENT-TRACK.md](./AGENT-TRACK.md)** — complete checkbox roadmap (✅ shipped + ☐ remaining w/ reopen-triggers), the resumable plan for this layer.
 - **Product track** (the extension as cockpit + modules + marketplace) → [plan/EXTENSION-ROADMAP.md](./EXTENSION-ROADMAP.md) — decided 2026-06-10 by a 6-lens council ([C020](../doc/architecture/decisions/C020-extension-cockpit-charter.md) charter, [C021](../doc/architecture/decisions/C021-modules-contract-merge-marketplace.md) modules). **COMPLETE — nothing left.** S1·S2·M2·M1·M3·L1 + signed-registries·L2·converge·D2(ext/app/docs)·component-confidence·L3 ship-readiness·**live role-preview** all built, adversarially reviewed (72 findings fixed), and shipped (npm + Marketplace; vscode `0.1.14`). The originated L3 AND the last optional item (role-preview) are both done.
 - Burhan ledger → [plan/facts/](./facts/) · spine claims → [plan/MAIN.bn](./MAIN.bn)
 - Narrative receipts → `daftar query "<topic>" --project=/home/mk/apps/suluk`
