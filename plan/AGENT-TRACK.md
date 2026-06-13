@@ -83,11 +83,12 @@ becomes a hard filter the model selector uses → an agent declares *needs*, not
   did NOT route through `@suluk/agents` `intersectScope` — the inline intersection is equivalent + avoids a dep cycle.)_
 
 ### B. The weekly fetcher — the data-eng spine (specified in REFRESH.md)
-- [ ] **Class-A weekly fetcher**: OpenRouter `/models` + `/endpoints` → cost/context/caps/gov/ops NUMBER+BOOL+ENUM
-  cells. Our own signal: week-over-week snapshot diff → `priceVolatile` + `status` deprecation delta. Output a
-  content-addressed `ModelCatalog` (snapshotHash), committed/versioned.
-- [ ] **`bucketing-rules.json`** — the documented, committed rule (which leaderboard snapshot → which tier boundary)
-  per INTEL axis. **REQUIRED** or the tiers are un-auditable / not maintainable (minimalist red-line).
+- [x] **Class-A facts transform** — `normalizeOpenRouter` (`normalize.ts`): OpenRouter `/models` → cost/context/caps/
+  modalities/recency cells, `snapshotHash`/`catalogFrom` (content-addressed). `fetchOpenRouterCatalog` (`fetch.ts`) is
+  the thin live wrapper. Unit-tested. _(Remaining: RUN it weekly in CI + commit the ~200-row catalog; the snapshot-diff
+  `priceVolatile`/deprecation-delta is stubbed.)_
+- [x] **`BUCKETING_RULES` + `applyBucketing`** (`bucketing.ts`) — the documented, committed, cited tier-boundary rule
+  per INTEL axis (the red-line). Unit-tested. _(Boundaries are tunable at review; the value is the explicit mapping.)_
 - [ ] **Class-B periodic tier pass** (lower cadence, human-reviewable): BFCL/τ-bench, IFEval/LMArena, GPQA/AIME,
   SWE-bench-Verified, RULER, MMLU-Pro → coarse tiers; cross-witness frontier claims (≥2 sources). Most rows stay
   `unknown` on agentic + long-context — surface, never impute.

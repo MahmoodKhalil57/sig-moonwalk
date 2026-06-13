@@ -22,13 +22,21 @@ The naive "everything weekly from public data" is false. Derivability splits in 
 
 Key a row by **model** or by **(model, provider-endpoint)**? Governance/price/region attach to the *endpoint actually served* (structurally sounder), but that 3–5×'s the row count and the author UX. To resolve with a receipt + ceiling before hardening. The seed catalog currently keys by model with a single `provider`.
 
-## Pipeline (to build)
+## Pipeline
 
 ```
-weekly:   OpenRouter /models + /endpoints  ──▶  (A) facts cells  ─┐
-periodic: leaderboard snapshots + bucketing-rules.json ─▶ (B) tier cells ─┤
-                                                                          ▼
-                                              normalize ▶ ModelRecord rows ▶ snapshotHash ▶ ModelCatalog (committed, versioned)
+weekly:   OpenRouter /models  ──▶  normalizeOpenRouter (A) facts cells  ─┐   [BUILT: normalize.ts + fetch.ts]
+periodic: leaderboard snapshots + BUCKETING_RULES ─▶ applyBucketing (B) tier cells ─┤  [BUILT: bucketing.ts; the live overlay is TODO]
+                                                                                   ▼
+                                              catalogFrom ▶ ModelRecord rows ▶ snapshotHash ▶ ModelCatalog (committed, versioned)
 ```
 
-The selector (`selectModel`) and the agent seam (`deriveRequirements`, replacing `SulukSkillRef.model[]` + the analyzer's `DEFAULT_WINDOWS`) are already built against the schema and the seed; the fetcher just fills the rows.
+**BUILT (no-network spine, unit-tested):** `bucketing.ts` (`BUCKETING_RULES` + `applyBucketing` — the committed,
+cited tier-boundary rules per axis, the red-line), `normalize.ts` (`normalizeOpenRouterModel`/`normalizeOpenRouter` —
+the OpenRouter `/models` → fact-cells transform; `snapshotHash`/`catalogFrom` — content-addressed catalog), and
+`fetch.ts` (`fetchOpenRouterCatalog` — the thin live wrapper). The selector (`selectModel`) and the agent seam
+(`deriveRequirements`/`resolveSkillModels`, having replaced `SulukSkillRef.model[]` + the analyzer's `DEFAULT_WINDOWS`)
+are wired against these.
+
+**TODO:** run `fetchOpenRouterCatalog` weekly (CI) to commit the ~200-row fact catalog; build the Class-B overlay that
+maps leaderboard snapshots through `applyBucketing` onto `intel.*` (human-reviewed, lower cadence); then retire the seed.

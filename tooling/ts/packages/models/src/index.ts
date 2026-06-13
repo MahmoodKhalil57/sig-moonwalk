@@ -12,3 +12,7 @@ export type {
 export { SEED_CATALOG } from "./catalog";
 export { PROFILES, type ResolvedProfile } from "./profiles";
 export { selectModel, deriveRequirements } from "./select";
+// the weekly fetcher spine: documented tier bucketing rules (red-line) + the pure OpenRouter facts transform + a thin live fetch.
+export { BUCKETING_RULES, applyBucketing, type AxisRule } from "./bucketing";
+export { normalizeOpenRouter, normalizeOpenRouterModel, catalogFrom, snapshotHash, type ORModel } from "./normalize";
+export { fetchOpenRouterCatalog } from "./fetch";
