@@ -80,4 +80,28 @@ describe("C027 cockpit agents view (OBSERVE)", () => {
     expect(empty.present).toBe(false);
     expect(agentsSummary(empty)).toContain("no agents");
   });
+
+  test("operator policy (C028): the OBSERVE diff shows declared vs effective + the cost three-number", () => {
+    const g = structuredClone(doc);
+    g["x-suluk-agents"]!.conin["x-suluk-cost"] = { estimateMicroUsd: 8000 };
+    g["x-suluk-policy"] = {
+      "acme-fleet": {
+        appliesTo: ["#/x-suluk-agents/conin"],
+        tools: { deny: ["generate_deliverable"] },
+        forbidNesting: true,
+        costCeiling: { amount: 5000, amountUnit: "micro-usd", basis: "per-request", enforcedBy: "adapter" },
+      },
+    };
+    const conin = agentsView(g).agents.find((a) => a.name === "conin")!;
+    expect(conin.governed).toBeDefined();
+    expect(conin.governed!.deniedTools).toEqual(["generate_deliverable"]);
+    expect(conin.governed!.nestingForbidden).toBe(true);
+    expect(conin.governed!.cost.cap).toContain("5000 micro-usd");
+    expect(conin.governed!.cost.cap).toContain("enforcedBy adapter"); // never reads as schema-enforced
+    expect(conin.governed!.cost.estimate).toBe("8000 µ$");
+    expect(conin.governed!.cost.actual).toContain("runtime");
+    expect(conin.governed!.narrowings.some((n) => n.axis === "tools")).toBe(true);
+    // an ungoverned agent has no diff
+    expect(agentsView(doc).agents.find((a) => a.name === "conin")!.governed).toBeUndefined();
+  });
 });

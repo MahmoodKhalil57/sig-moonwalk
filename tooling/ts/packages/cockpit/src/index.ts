@@ -27,7 +27,7 @@ export { contractGates, shipSummary, type Gate, type GateStatus } from "./lifecy
 // projection preview — read-only; agent execution + secrets live OUTSIDE the cockpit (C020 no-credentials seam).
 export {
   agentsView, agentsSummary,
-  type AgentsView, type AgentNodeView, type AgentSkillView, type AgentRouteView,
+  type AgentsView, type AgentNodeView, type AgentSkillView, type AgentRouteView, type AgentGovernedView,
 } from "./agents";
 // cost formatting, re-exported so the extension shell can render a live /cost ledger without a direct @suluk/cost dep.
 export { formatMicroUsd, summarize, type CostSummary } from "@suluk/cost";

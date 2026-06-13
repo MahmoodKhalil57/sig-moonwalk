@@ -8,7 +8,8 @@
 import type { OpenAPIv4Document } from "@suluk/core";
 import {
   lintAgents, lintOk, reachableSurface, analyzeScopes, resolveOperationRef,
-  agentMap, subAgentKey, type LintFinding, type Scope,
+  agentMap, subAgentKey, effectiveUnderPolicies, policiesFor, lintPolicy,
+  type LintFinding, type Scope,
 } from "@suluk/agents";
 
 export interface AgentSkillView {
@@ -41,6 +42,19 @@ export interface AgentNodeView {
   reachable: { tools: string[]; agents: string[] };
   /** OBSERVE-only preview of what projection WOULD emit — names, never executed, never credentialed. */
   projection: { pluginFiles: string[]; openRouterTools: string[] };
+  /** operator governance diff (C028) — present only when an x-suluk-policy governs this agent. */
+  governed?: AgentGovernedView;
+}
+/** The agent-declared vs operator-effective diff + the cost three-number (cap / estimate / actual). Read-only. */
+export interface AgentGovernedView {
+  effectiveScope: Scope;
+  effectiveMaxDepth?: number;
+  nestingForbidden: boolean;
+  deniedTools: string[];
+  deniedSubAgents: string[];
+  narrowings: { axis: string; detail: string }[];
+  /** the three distinct owners: cap (operator x-suluk-policy, enforced-by-adapter) / estimate (author) / actual (C026 runtime). */
+  cost: { cap: string | null; estimate: string | null; actual: string };
 }
 export interface AgentsView {
   present: boolean;
@@ -64,12 +78,31 @@ function referencedChildren(doc: OpenAPIv4Document): Set<string> {
   return ref;
 }
 
+/** The operator-governance diff for one agent (declared vs effective + the cost three-number). */
+function governedView(doc: OpenAPIv4Document, agentName: string): AgentGovernedView {
+  const { effective, narrowings } = effectiveUnderPolicies(doc, agentName);
+  const policy = policiesFor(doc, agentName).find((p) => p.costCeiling);
+  const cap = policy?.costCeiling ? `${policy.costCeiling.amount} ${policy.costCeiling.amountUnit} (enforcedBy ${policy.costCeiling.enforcedBy})` : null;
+  const cost = agentMap(doc)[agentName]["x-suluk-cost"] as { estimateMicroUsd?: number; amount?: number } | undefined;
+  const est = cost?.estimateMicroUsd ?? cost?.amount;
+  return {
+    effectiveScope: effective.scope,
+    ...(effective.maxDepth !== undefined ? { effectiveMaxDepth: effective.maxDepth } : {}),
+    nestingForbidden: effective.nestingForbidden,
+    deniedTools: effective.deniedTools,
+    deniedSubAgents: effective.deniedSubAgents,
+    narrowings: narrowings.map((n) => ({ axis: n.axis, detail: n.detail })),
+    // three distinct owners — cap (operator, enforced-by-adapter) / estimate (author) / actual (runtime, C026)
+    cost: { cap, estimate: typeof est === "number" ? `${est} µ$` : null, actual: "reconciled at runtime (C026)" },
+  };
+}
+
 /** Build the OBSERVE view-model for the agent layer of a document. Never throws; tolerates non-installable agents. */
 export function agentsView(doc: OpenAPIv4Document): AgentsView {
   const map = agentMap(doc);
   const names = Object.keys(map).sort((a, b) => a.localeCompare(b));
   const present = names.length > 0;
-  const findings = lintAgents(doc);
+  const findings = [...lintAgents(doc), ...lintPolicy(doc)];
 
   // effective scopes across the whole map: merge a walk from every root (covers every reachable node)
   const referenced = referencedChildren(doc);
@@ -107,6 +140,7 @@ export function agentsView(doc: OpenAPIv4Document): AgentsView {
         pluginFiles: ["plugin.json", ".mcp.json", ...skills.map((s) => `skills/${s.name}/SKILL.md`)],
         openRouterTools: routes.map((r) => r.name),
       },
+      ...(policiesFor(doc, name).length > 0 ? { governed: governedView(doc, name) } : {}),
     };
   });
 
