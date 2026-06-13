@@ -126,10 +126,12 @@ becomes a hard filter the model selector uses → an agent declares *needs*, not
 - [ ] **terminate-at-round enforcement** — RESERVED (same class as C028 costCeiling enforcement).
 
 ### F. Cross-cutting / ops
-- [ ] **npm publish** (blocked — `npm whoami` = ENEEDAUTH in this env). New first-publish packages: `@suluk/agents@0.1.0`,
-  `@suluk/models@0.1.0` (+ concurrent `@suluk/seo`, `@suluk/panel`). `@suluk/core` needs a **version bump**
-  (`0.1.7`→`0.1.8`) for the type additions (thinking, policy, route.tier, new exports). The repo's `release(suluk):
-  publish all packages` flow handles it once a token is present.
+- [x] **npm publish** — token is `NPM_SULUK_TOKEN` in `.env` (Bun auto-loads it; for `npm`, `set -a; . ./.env; set +a`).
+  Published this session: **`@suluk/models@0.1.0`** + **`@suluk/agents@0.1.0`** (new) + **`@suluk/core@0.1.8`** +
+  **`@suluk/cockpit@0.1.16`** (bumped). Use `bun publish` (converts `workspace:^`); publish in dep order
+  models→core→agents→cockpit. _(Gotcha: `bun install` AFTER a version bump before publishing, else the converted
+  caret floor lags — agents shipped `@suluk/core: ^0.1.7`, harmless since it resolves to 0.1.8.)_ `@suluk/seo` +
+  `@suluk/panel` are the concurrent session's to publish.
 - [ ] **`@suluk/agents` → vscode extension SHELL wiring.** The cockpit *core* (`agentsView` etc.) is ready; only the
   extension shell rendering (the webview/tree that displays it) is left.
 - [ ] **Address remaining verification caveats** logged in the council outputs: the projection name-derivation rule
