@@ -19,7 +19,7 @@ export {
   type ClaudePluginOptions, type ClaudePluginArtifacts,
   type OpenRouterOptions, type OpenRouterAgentManifest, type OpenRouterFunctionTool,
 } from "./project";
-export { reachableSurface, assertServedSubset, assertServedSubsetGoverned, verifySkillFreshness, type ConformanceFinding } from "./conformance";
+export { reachableSurface, residentSurface, assertServedSubset, assertServedSubsetGoverned, assertDefaultServedResident, verifySkillFreshness, type ConformanceFinding } from "./conformance";
 export { intersectScope, analyzeScopes, localEscalations, type Scope, type ScopeEscalation } from "./scope";
 export {
   agentManifest, verifyAgentFreshness,

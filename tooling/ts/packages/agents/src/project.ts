@@ -91,11 +91,26 @@ export interface OpenRouterAgentManifest {
   tier?: "resident" | "cold-tail";
   /** a POINTER to the served instructions + the pinned hash — never inlined creds, never the full text by default. */
   instructions: { source?: string; contentHash?: string; version?: string };
-  /** deterministic routes → function-calling tools, keyed by the route map key (the wire id). */
+  /**
+   * The DEFAULT tool surface — RESIDENT routes only, plus a synthetic `discover_tools` when cold-tail routes exist.
+   * This is the tier-trim: the cheap/lower tier carries a SMALLER tool surface (the conditional context reduction).
+   */
   tools: OpenRouterFunctionTool[];
+  /** COLD-TAIL routes — NOT in the default surface; revealed on demand via `discover_tools`. */
+  discoverable: OpenRouterFunctionTool[];
   /** sub-agents → one front-door tool each (dispatched as a NEW completion at the child's tier). */
   subAgents: { name: string; ref: string }[];
 }
+
+/** The synthetic meta-tool that reveals cold-tail tools — present in the default surface only when some exist. */
+const DISCOVER_TOOLS_FN: OpenRouterFunctionTool = {
+  type: "function",
+  function: {
+    name: "discover_tools",
+    description: "Reveal additional cold-tail tools for this agent on demand. They are kept OUT of the default tool list so the resident surface stays small — call this to widen it (reorder/lazy-load, never widen beyond the declared reachable set).",
+    parameters: { type: "object" },
+  },
+};
 
 export interface OpenRouterOptions {
   /** instruction snapshots per skill name; when given for the primary skill, the manifest carries the computed hash. */
@@ -115,13 +130,17 @@ export function projectOpenRouter(doc: OpenAPIv4Document, agentName: string, opt
     version: primSkill?.provenance?.version,
   };
 
-  const tools: OpenRouterFunctionTool[] = Object.entries(agent.routes ?? {}).map(([rk, route]) => {
-    const resolved = resolveOperationRef(doc, route.operationRef); // installable ⇒ non-null
-    const req = resolved?.request;
+  const built = Object.entries(agent.routes ?? {}).map(([rk, route]) => {
+    const req = resolveOperationRef(doc, route.operationRef)?.request; // installable ⇒ non-null
     const parameters: SchemaOrRef = (req?.contentSchema ?? req?.parameterSchema?.body ?? { type: "object" }) as SchemaOrRef;
     const description = req?.summary ?? req?.description ?? `route ${rk} (${route.guarantee ?? "declared"})`;
-    return { type: "function", function: { name: rk, description, parameters } };
+    const fn: OpenRouterFunctionTool = { type: "function", function: { name: rk, description, parameters } };
+    return { tier: route.tier ?? "resident", fn };
   });
+  const residentTools = built.filter((b) => b.tier !== "cold-tail").map((b) => b.fn);
+  const discoverable = built.filter((b) => b.tier === "cold-tail").map((b) => b.fn);
+  // the default surface is resident-only; expose `discover_tools` ONLY when there is something to discover
+  const tools = discoverable.length ? [...residentTools, DISCOVER_TOOLS_FN] : residentTools;
 
   const subAgents = Object.entries(agent.agents ?? {}).map(([local, r]) => ({ name: local, ref: r.ref }));
 
@@ -131,6 +150,7 @@ export function projectOpenRouter(doc: OpenAPIv4Document, agentName: string, opt
     ...(primSkill?.tier ? { tier: primSkill.tier } : {}),
     instructions,
     tools,
+    discoverable,
     subAgents,
   };
 }

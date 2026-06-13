@@ -1,5 +1,5 @@
 import { test, expect, describe } from "bun:test";
-import { projectClaudePlugin, projectOpenRouter, contentHash } from "../src/index";
+import { projectClaudePlugin, projectOpenRouter, contentHash, residentSurface, assertDefaultServedResident } from "../src/index";
 import { coninDoc, coninInstructions, coninDayOne } from "./fixtures/conin";
 
 describe("C027 Claude-plugin projection", () => {
@@ -69,6 +69,29 @@ describe("C027 OpenRouter projection", () => {
 
   test("deterministic — twice equal", () => {
     expect(projectOpenRouter(coninDoc, "conin", { instructions: coninInstructions })).toEqual(m);
+  });
+});
+
+describe("C027 tier-trim — cold-tail routes leave the default served surface (the real context reduction)", () => {
+  const tiered = structuredClone(coninDoc);
+  tiered["x-suluk-agents"]!.conin.routes!.run_core_primitive.tier = "cold-tail";
+  const m = projectOpenRouter(tiered, "conin", { instructions: coninInstructions });
+
+  test("default tools[] = resident + discover_tools; cold-tail moves to discoverable[]", () => {
+    expect(m.tools.map((t) => t.function.name).sort()).toEqual(["discover_tools", "generate_deliverable"]);
+    expect(m.discoverable.map((t) => t.function.name)).toEqual(["run_core_primitive"]);
+  });
+
+  test("no discover_tools meta when there is nothing to discover (all resident)", () => {
+    const allResident = projectOpenRouter(coninDoc, "conin", { instructions: coninInstructions });
+    expect(allResident.tools.some((t) => t.function.name === "discover_tools")).toBe(false);
+    expect(allResident.discoverable).toEqual([]);
+  });
+
+  test("residentSurface + the cold-tail-in-default conformance auditor", () => {
+    expect(residentSurface(tiered, "conin")).toEqual(["generate_deliverable"]);
+    expect(assertDefaultServedResident(tiered, "conin", ["generate_deliverable"])).toEqual([]);
+    expect(assertDefaultServedResident(tiered, "conin", ["generate_deliverable", "run_core_primitive"]).map((f) => f.code)).toEqual(["cold-tail-in-default"]);
   });
 });
 

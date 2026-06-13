@@ -144,6 +144,13 @@ export interface SulukRouteRef {
   operationRef: string;
   /** declared determinism intent (advisory, unverifiable-by-schema); NOT enforced. */
   guarantee?: "same-in-same-out" | "idempotent" | "safe";
+  /**
+   * Static serving partition (C027): `resident` (in the default tool list) vs `cold-tail` (revealed via
+   * `discover_tools` on demand). Absent ⇒ resident. This is what a serving adapter trims to make the cheap/lower
+   * tier carry a SMALLER tool surface — the conditional context reduction the tiering thesis needs (it must be
+   * actively performed by the adapter, never enforced by the schema).
+   */
+  tier?: "resident" | "cold-tail";
   scope?: string[];
   // NB: NO `model` field — by construction. A route never carries a model.
 }

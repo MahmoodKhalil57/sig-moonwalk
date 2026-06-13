@@ -47,6 +47,30 @@ export function assertServedSubset(doc: OpenAPIv4Document, agentName: string, se
 }
 
 /**
+ * The RESIDENT surface of an agent (C027) — its own routes whose `tier` is not `cold-tail` (the default-visible
+ * tool set). Cold-tail routes are revealed via `discover_tools`, never in the default list. This is the set a
+ * conforming serving adapter must trim to for the context-reduction claim to bind.
+ */
+export function residentSurface(doc: OpenAPIv4Document, agentName: string): string[] {
+  const a = agentMap(doc)[agentName];
+  return Object.entries(a?.routes ?? {}).filter(([, r]) => r.tier !== "cold-tail").map(([k]) => k).sort();
+}
+
+/**
+ * TIER-TRIM CONFORMANCE: the DEFAULT served tool set must contain NO cold-tail tool (those belong behind
+ * `discover_tools`). A cold-tail tool in the default list is a silent no-op of the tier label — the reduction the
+ * tiering thesis promises is not actually being delivered on the served path.
+ */
+export function assertDefaultServedResident(doc: OpenAPIv4Document, agentName: string, defaultServedToolNames: string[]): ConformanceFinding[] {
+  const resident = new Set(residentSurface(doc, agentName));
+  const a = agentMap(doc)[agentName];
+  const coldTail = new Set(Object.entries(a?.routes ?? {}).filter(([, r]) => r.tier === "cold-tail").map(([k]) => k));
+  return defaultServedToolNames
+    .filter((t) => coldTail.has(t) && !resident.has(t))
+    .map((t) => ({ code: "cold-tail-in-default", detail: `cold-tail tool "${t}" is in the DEFAULT served set — it must sit behind discover_tools, or the tier-trim (and its context reduction) is a no-op` }));
+}
+
+/**
  * POLICY-AWARE OVER-SERVE (C028): when an operator policy governs the agent, the served tools must be a subset of
  * the POST-POLICY effective surface — a served tool the operator DENIED is a conformance failure (the operator cap
  * must hold on the wire). With no governing policy this is identical to {@link assertServedSubset}.
