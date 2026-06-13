@@ -12,6 +12,7 @@ import type { OpenAPIv4Document } from "@suluk/core";
 import { agentMap } from "./resolve";
 import { reachableSurface, type ConformanceFinding } from "./conformance";
 import { analyzeScopes, type Scope, type ScopeEscalation } from "./scope";
+import { effectiveUnderPolicies, policiesFor } from "./policy";
 import { contentHash } from "./skill";
 
 export interface AgentManifestSkill {
@@ -28,6 +29,15 @@ export interface AgentManifestRoute {
   operationRef: string;
   guarantee?: "same-in-same-out" | "idempotent" | "safe";
 }
+/** The operator-effective surface after x-suluk-policy narrowing (present only when a policy governs the agent). */
+export interface AgentManifestGoverned {
+  scope: Scope;
+  maxDepth?: number;
+  nestingForbidden: boolean;
+  allowedTools: string[];
+  deniedTools: string[];
+  allowedSubAgents: string[];
+}
 export interface AgentManifestNode {
   name: string;
   description: string;
@@ -36,6 +46,8 @@ export interface AgentManifestNode {
   skills: AgentManifestSkill[];
   routes: AgentManifestRoute[];
   subAgents: string[];
+  /** operator-effective surface after x-suluk-policy (C028) — so the C021 signature covers the operator's caps. */
+  governed?: AgentManifestGoverned;
 }
 export interface AgentManifest {
   manifestVersion: 1;
@@ -73,7 +85,19 @@ export function agentManifest(doc: OpenAPIv4Document, agentName: string): AgentM
       Object.entries(a.routes ?? {}).map(([name, r]) => ({ name, operationRef: r.operationRef, ...(r.guarantee ? { guarantee: r.guarantee } : {}) })),
     );
     const subAgents = Object.values(a.agents ?? {}).map((r) => r.ref).sort();
-    return { name: key, description: a.description, effectiveScope: effective[key] ?? null, skills, routes, subAgents };
+    let governed: AgentManifestGoverned | undefined;
+    if (policiesFor(doc, key).length > 0) {
+      const e = effectiveUnderPolicies(doc, key).effective;
+      governed = {
+        scope: e.scope,
+        ...(e.maxDepth !== undefined ? { maxDepth: e.maxDepth } : {}),
+        nestingForbidden: e.nestingForbidden,
+        allowedTools: [...e.allowedTools].sort(),
+        deniedTools: [...e.deniedTools].sort(),
+        allowedSubAgents: [...e.allowedSubAgents].sort(),
+      };
+    }
+    return { name: key, description: a.description, effectiveScope: effective[key] ?? null, skills, routes, subAgents, ...(governed ? { governed } : {}) };
   });
 
   return { manifestVersion: 1, agent: agentName, nodes, reachable: reach, escalations };

@@ -8,6 +8,7 @@
 import type { OpenAPIv4Document } from "@suluk/core";
 import { agentMap, childKeys } from "./resolve";
 import { contentHash } from "./skill";
+import { effectiveUnderPolicies, policiesFor } from "./policy";
 
 export interface ConformanceFinding {
   code: string;
@@ -43,6 +44,21 @@ export function assertServedSubset(doc: OpenAPIv4Document, agentName: string, se
   return servedToolNames
     .filter((t) => !surface.has(t))
     .map((t) => ({ code: "over-serve", detail: `served tool "${t}" is NOT in the declared reachable surface — discover_tools may reorder/lazy-load, never widen` }));
+}
+
+/**
+ * POLICY-AWARE OVER-SERVE (C028): when an operator policy governs the agent, the served tools must be a subset of
+ * the POST-POLICY effective surface — a served tool the operator DENIED is a conformance failure (the operator cap
+ * must hold on the wire). With no governing policy this is identical to {@link assertServedSubset}.
+ */
+export function assertServedSubsetGoverned(doc: OpenAPIv4Document, agentName: string, servedToolNames: string[]): ConformanceFinding[] {
+  if (policiesFor(doc, agentName).length === 0) return assertServedSubset(doc, agentName, servedToolNames);
+  const allowed = new Set(effectiveUnderPolicies(doc, agentName).effective.allowedTools);
+  const surface = new Set(reachableSurface(doc, agentName).tools);
+  return servedToolNames.flatMap((t) =>
+    !surface.has(t) ? [{ code: "over-serve", detail: `served tool "${t}" is NOT in the declared reachable surface` }]
+    : !allowed.has(t) ? [{ code: "policy-denied-served", detail: `served tool "${t}" was DENIED by operator policy but is being served — the operator cap is not holding on the wire` }]
+    : []);
 }
 
 /**

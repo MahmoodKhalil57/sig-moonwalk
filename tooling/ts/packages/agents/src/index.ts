@@ -19,9 +19,15 @@ export {
   type ClaudePluginOptions, type ClaudePluginArtifacts,
   type OpenRouterOptions, type OpenRouterAgentManifest, type OpenRouterFunctionTool,
 } from "./project";
-export { reachableSurface, assertServedSubset, verifySkillFreshness, type ConformanceFinding } from "./conformance";
+export { reachableSurface, assertServedSubset, assertServedSubsetGoverned, verifySkillFreshness, type ConformanceFinding } from "./conformance";
 export { intersectScope, analyzeScopes, localEscalations, type Scope, type ScopeEscalation } from "./scope";
 export {
   agentManifest, verifyAgentFreshness,
-  type AgentManifest, type AgentManifestNode, type AgentManifestSkill, type AgentManifestRoute,
+  type AgentManifest, type AgentManifestNode, type AgentManifestSkill, type AgentManifestRoute, type AgentManifestGoverned,
 } from "./manifest";
+// policy (C028): the operator governance overlay — monotone-narrowing MEET + the static lints. costCeiling is
+// DECLARED, never schema-enforced (enforcedBy names a runtime adapter); enforcement is reserved (build-by-nobody).
+export {
+  policyConstrain, effectiveUnderPolicies, policiesFor, policyAppliesTo, lintPolicy, policyOk,
+  type EffectiveAgent, type EffectiveSkill, type PolicyNarrowing, type PolicyConstrainResult,
+} from "./policy";

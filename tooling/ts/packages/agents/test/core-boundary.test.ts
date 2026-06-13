@@ -28,9 +28,11 @@ describe("C027 module boundary (D1 by build)", () => {
     expect(offenders).toEqual([]);
   });
 
-  test("@suluk/core's matcher source (ada.ts) never references x-suluk-agents", () => {
+  test("@suluk/core's matcher source (ada.ts) never references x-suluk-agents or x-suluk-policy", () => {
     const ada = readFileSync(join(coreSrc, "ada.ts"), "utf8");
     expect(ada.includes("x-suluk-agents")).toBe(false);
+    expect(ada.includes("x-suluk-policy")).toBe(false);
     expect(ada.includes("agents")).toBe(false);
+    expect(ada.includes("policy")).toBe(false);
   });
 });
