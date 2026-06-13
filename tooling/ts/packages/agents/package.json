@@ -1,6 +1,6 @@
 {
   "name": "@suluk/agents",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Suluk Agent composition (C027): lint + project an `x-suluk-agents` map (skills + deterministic routes + by-name sub-agents) to a Claude plugin AND an OpenRouter/OpenAI-compatible manifest — one contract, two artifacts, zero network at generate time. Determinism is DECLARED not enforced; the matcher never reads an agent field. CANDIDATE tooling — NOT official OAS.",
   "publishConfig": { "access": "public" },
   "license": "Apache-2.0",

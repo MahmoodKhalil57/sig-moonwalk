@@ -1,6 +1,6 @@
 {
   "name": "@suluk/core",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "Core library for the OpenAPI v4.0 Suluk candidate: parse, validate, resolve, signature, ADA, match.",
   "publishConfig": { "access": "public" },
   "license": "Apache-2.0",

@@ -1,6 +1,6 @@
 {
   "name": "@suluk/models",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "A weekly, PUBLIC-DATA-ONLY catalog of OpenRouter models + a selector: a suluk skill declares NEEDS (hard filters) + a small PREFERENCE (a named profile), and selectModel picks the best CURRENT model — never a hard-coded id. Decidable OpenRouter facts as numbers; noisy benchmarks as COARSE TIERS with {source, asOf}; no cross-axis composite (blending is the selector's job). CANDIDATE tooling — NOT official OAS.",
   "publishConfig": { "access": "public" },
   "license": "Apache-2.0",
