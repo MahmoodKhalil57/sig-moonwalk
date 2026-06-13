@@ -35,6 +35,7 @@ const AGENTS_BLOCK = {
       skills: {
         operate: {
           model: ["anthropic/claude-opus-4", "google/gemini-2.5-flash"],
+          modelProfile: "tool-reliable", // C027 seam — if the matcher ever read this, invariance breaks
           tier: "cold-tail",
           whenToUse: "Always loaded first; governs deterministic-first grading.",
           provenance: { source: "https://example.com/v1/instructions", contentHash: "sha256-9f2c", version: "2026-06-11" },

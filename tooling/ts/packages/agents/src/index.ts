@@ -38,3 +38,7 @@ export {
   type ContextReport, type AgentContextLoad, type UnflattenSuggestion, type FlattenSuggestion,
   type ModelFit, type ToolContextCost, type ContextOptions,
 } from "./context";
+// model-selection seam (C027 × @suluk/models): a skill declares NEEDS (profile + the analyzer's minWindowRequired +
+// the C028 allowlist MEET) and the catalog picks the best CURRENT model — never a hard-coded id.
+export { resolveSkillModels, skillModels, type SkillModelResolution } from "./model-select";
+export { selectModel, deriveRequirements, SEED_CATALOG, PROFILES, type ModelCatalog, type SelectResult, type Preferences, type HardFilters } from "@suluk/models";

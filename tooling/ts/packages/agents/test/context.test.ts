@@ -1,6 +1,6 @@
 import { test, expect, describe } from "bun:test";
 import type { OpenAPIv4Document } from "@suluk/core";
-import { contextReport, suggestUnflatten } from "../src/index";
+import { contextReport, suggestUnflatten, SEED_CATALOG } from "../src/index";
 
 /** An agent with one resident route (with a schema), one cold-tail route, and a resident skill. */
 function doc1(opts: { budget?: number } = {}): OpenAPIv4Document {
@@ -150,7 +150,8 @@ describe("C029 thinking — round-accretion folds into the load the analyzer che
 
 describe("C027 model fit — which declared models are expected to work", () => {
   test("each candidate model is checked for window fit; minWindowRequired is the load", () => {
-    const load = contextReport(doc1()).loads[0];
+    // windows now come from the catalog (DEFAULT_WINDOWS deleted) — opus is 200k in the seed
+    const load = contextReport(doc1(), { catalog: SEED_CATALOG }).loads[0];
     expect(load.minWindowRequired).toBe(load.totalTokens);
     const fit = load.modelFit.find((f) => f.model === "anthropic/claude-opus-4")!;
     expect(fit.window).toBe(200_000);

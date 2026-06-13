@@ -20,6 +20,7 @@
  * capability intent; the analyzer validates window-fit against it.
  */
 import type { OpenAPIv4Document } from "@suluk/core";
+import type { ModelCatalog } from "@suluk/models";
 import { agentMap, resolveOperationRef, subAgentKey } from "./resolve";
 import type { LintFinding, Severity } from "./lint";
 
@@ -32,15 +33,15 @@ const OVERLOAD_TOOL_COUNT = 12;     // a flat agent with this many resident tool
 const OVERLOAD_FRACTION = 0.5;      // ...or whose resident tool surface eats this share of its target
 const FLATTEN_THIN_TOOLS = 3;       // a leaf sub-agent with <= this many resident tools is a flatten candidate
 
-/** Best-effort model context windows (override per-id via opts.modelWindows). Substring-matched, default null. */
-const DEFAULT_WINDOWS: [RegExp, number][] = [
-  [/gemini.*(2\.5|1\.5|flash|pro)/i, 1_000_000], [/gemini/i, 1_000_000],
-  [/opus|sonnet|haiku|claude/i, 200_000],
-  [/gpt-4o|gpt-4\.1|gpt-5|o1|o3/i, 128_000], [/gpt/i, 128_000],
-  [/llama|mistral|qwen/i, 128_000],
-];
-const windowFor = (id: string, overrides?: Record<string, number>): number | null =>
-  overrides?.[id] ?? DEFAULT_WINDOWS.find(([re]) => re.test(id))?.[1] ?? null;
+/**
+ * A model's context window — read from the @suluk/models CATALOG (the council deleted the old hard-coded
+ * DEFAULT_WINDOWS table: we do not guess windows). Precedence: an explicit `opts.modelWindows` override, then the
+ * catalog row's `context.maxWindow`, else null (UNKNOWN — fail-closed in the hard min-context filter).
+ */
+function windowFor(id: string, opts: ContextOptions): number | null {
+  if (opts.modelWindows?.[id] !== undefined) return opts.modelWindows[id];
+  return opts.catalog?.rows.find((r) => r.id === id)?.context.maxWindow.value ?? null;
+}
 
 export interface ToolContextCost { name: string; tokens: number; tier: "resident" | "cold-tail" }
 /** Per declared candidate model: does its context window hold this agent's load? (window null ⇒ unknown model.) */
@@ -102,6 +103,9 @@ export interface ContextReport {
 
 export interface ContextOptions {
   instructions?: Record<string, string>;
+  /** the model catalog (@suluk/models) — context windows are read from it; replaces the old hard-coded table. */
+  catalog?: ModelCatalog;
+  /** per-id window overrides (takes precedence over the catalog); handy for tests/pins. */
   modelWindows?: Record<string, number>;
 }
 
@@ -155,7 +159,7 @@ export function contextReport(doc: OpenAPIv4Document, opts: ContextOptions = {})
     // model fit: which declared (resident-skill) models can hold this load (the multi-round PEAK)
     const candidateModels = [...new Set(skillEntries.filter(([, s]) => s.tier !== "cold-tail").flatMap(([, s]) => s.model ?? []))];
     const modelFit: ModelFit[] = candidateModels.map((m) => {
-      const window = windowFor(m, opts.modelWindows);
+      const window = windowFor(m, opts);
       return { model: m, window, fits: window === null ? null : peakTokens <= window, headroom: window === null ? null : window - peakTokens };
     });
     const withWindow = modelFit.filter((f) => f.window !== null);

@@ -69,20 +69,18 @@ becomes a hard filter the model selector uses → an agent declares *needs*, not
 
 ## ☐ REMAINING (unchecked = not done; grouped + prioritized)
 
-### A. The model-catalog seam — HIGHEST VALUE, partly specified (do first)
-- [ ] **Replace `SulukSkillRef.model[]` with a requirements+preference declaration.** Add optional
-  `modelProfile?: Profile` + `modelRequire?`/`modelPrefer?` (or a single `model` union of `string[] | {profile,...}`)
-  to `SulukSkillRef` in `core/src/types.ts`. Structural-only (not matcher-relevant → no D1 gate needed, but add the
-  invariance-block field for consistency). Keep `model: string[]` working (back-compat).
-- [ ] **DELETE the hard-coded `DEFAULT_WINDOWS` table** in `@suluk/agents/src/context.ts` (2 occurrences) — read
-  `context.maxWindow` from the catalog instead. This is the concrete composition point the metrics council named.
-- [ ] **Wire `selectModel` to consume the agent.** A `resolveSkillModels(catalog, agent, skillName, load, prefs)`
-  that calls `deriveRequirements({ minWindowRequired: load.minWindowRequired, hasRoutes, needsStructured, modalities,
-  policy })` + `selectModel`. Record the resolved `(id, catalog.snapshotHash, filter-trace)` into the signable
-  `agentManifest` (reproducibility; ties C021/C027 contentHash).
-- [ ] **Use the REAL `intersectScope`** for the allowlist MEET (currently `@suluk/models` reimplements filtering
-  inline to stay dep-free; the C028 `modelAllowlist` MEET should reuse `@suluk/agents` `intersectScope` OR keep
-  inline + add a "widening = error" lint of the scope-escalation class). Decide dep direction.
+### A. The model-catalog seam — ✅ DONE (commit `e9a1` / this session)
+- [x] **`SulukSkillRef` declares NEEDS** — added `modelProfile` + `modelPrefer` + `modelRequire` (structural; `model[]`
+  kept as the back-compat opt-out). `modelProfile` added to the invariance block (matcher still byte-identical).
+- [x] **`DEFAULT_WINDOWS` DELETED** — `context.ts` `windowFor` now reads `context.maxWindow` from `opts.catalog`
+  (precedence: `modelWindows` override → catalog → null/unknown, fail-closed). `@suluk/agents` deps `@suluk/models`.
+- [x] **`resolveSkillModels` / `skillModels` seam** (`@suluk/agents/src/model-select.ts`) — derives requirements
+  (`hasRoutes`⇒tool-calling, the analyzer's `minWindowRequired`, the skill's `modelRequire`) + the C028
+  `modelAllowlist` MEET across governing policies, then runs `selectModel`. `agentManifest(doc, name, { catalog })`
+  folds the per-skill `modelSelection` (ids + `snapshotHash`) into the signable manifest (reproducible pin).
+- [x] **Allowlist MEET** — `effectiveAllowlist` intersects governing policies' allowlists; `selectModel`'s terminal
+  filter applies it (widening is structurally impossible — a filter only narrows). _(Kept `@suluk/models` dep-free;
+  did NOT route through `@suluk/agents` `intersectScope` — the inline intersection is equivalent + avoids a dep cycle.)_
 
 ### B. The weekly fetcher — the data-eng spine (specified in REFRESH.md)
 - [ ] **Class-A weekly fetcher**: OpenRouter `/models` + `/endpoints` → cost/context/caps/gov/ops NUMBER+BOOL+ENUM

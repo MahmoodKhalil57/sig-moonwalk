@@ -129,8 +129,18 @@ export interface SulukAgentRef {
  * projected SKILL.md is GENERATED from it, the content-hash binding making drift tool-detectable and fail-loud.
  */
 export interface SulukSkillRef {
-  /** model preference list (e.g. OpenRouter ids), cheap→capable; a resident tier may use a cheaper model. */
+  /**
+   * EXPLICIT model preference list (OpenRouter ids), cheap→capable — the opt-out path. OR declare NEEDS via
+   * `modelProfile`/`modelPrefer`/`modelRequire` and let `@suluk/models` pick the best CURRENT model (a skill
+   * declares what it needs, not a frozen id). Structural-only — never read by the matcher (C027 seam to @suluk/models).
+   */
   model?: string[];
+  /** a named selection profile resolved against the model catalog (@suluk/models). */
+  modelProfile?: "tool-reliable" | "cheap-fast" | "balanced" | "max-reasoning" | "long-context" | "vision";
+  /** escape-hatch preference weights (0-3) over the 4 author-facing axes. */
+  modelPrefer?: { intelligence?: 0 | 1 | 2 | 3; cost?: 0 | 1 | 2 | 3; speed?: 0 | 1 | 2 | 3; context?: 0 | 1 | 2 | 3 };
+  /** explicit hard requirements the author adds (beyond what's derived from the agent + the context analyzer). */
+  modelRequire?: { needsStructured?: boolean; inputModalities?: string[]; minContext?: number };
   /** static serving partition: `resident` (default tools/list) vs `cold-tail` (revealed via discover_tools). */
   tier?: "resident" | "cold-tail";
   /** routing-oriented precondition prose (runtime-advisory; never a request-value selector — D1). */

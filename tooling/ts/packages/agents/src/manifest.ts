@@ -9,10 +9,13 @@
  * Pure + crypto-free: the signing/verifying lives in @suluk/builder; this package only produces what gets signed.
  */
 import type { OpenAPIv4Document } from "@suluk/core";
+import type { ModelCatalog } from "@suluk/models";
 import { agentMap } from "./resolve";
 import { reachableSurface, type ConformanceFinding } from "./conformance";
 import { analyzeScopes, type Scope, type ScopeEscalation } from "./scope";
 import { effectiveUnderPolicies, policiesFor } from "./policy";
+import { contextReport } from "./context";
+import { skillModels } from "./model-select";
 import { contentHash } from "./skill";
 
 export interface AgentManifestSkill {
@@ -48,6 +51,9 @@ export interface AgentManifestNode {
   subAgents: string[];
   /** operator-effective surface after x-suluk-policy (C028) — so the C021 signature covers the operator's caps. */
   governed?: AgentManifestGoverned;
+  /** catalog-pinned model selection per skill (present only when agentManifest is given a catalog) — reproducible: the
+   * snapshotHash is signed, so a re-pick week-over-week with no author edit is auditable (C027 contentHash discipline). */
+  modelSelection?: { skill: string; ids: string[]; from: "declared" | "selected"; snapshotHash: string | null }[];
 }
 export interface AgentManifest {
   manifestVersion: 1;
@@ -63,11 +69,14 @@ export interface AgentManifest {
 const byName = <T extends { name: string }>(xs: T[]) => [...xs].sort((a, b) => a.name.localeCompare(b.name));
 
 /** Build the canonical, signable manifest for an agent and its reachable sub-tree. Pure; does not throw. */
-export function agentManifest(doc: OpenAPIv4Document, agentName: string): AgentManifest {
+export function agentManifest(doc: OpenAPIv4Document, agentName: string, opts: { catalog?: ModelCatalog } = {}): AgentManifest {
   const map = agentMap(doc);
   const { effective, escalations } = analyzeScopes(doc, agentName);
   const reach = reachableSurface(doc, agentName);
   const nodeKeys = [agentName, ...reach.agents].filter((k) => map[k]).sort((a, b) => a.localeCompare(b));
+  // per-agent peak load → the hard min-context gate, when a catalog is supplied (drives the model selection fold)
+  const minWinByAgent: Record<string, number> = {};
+  if (opts.catalog) for (const l of contextReport(doc, { catalog: opts.catalog }).loads) minWinByAgent[l.agent] = l.minWindowRequired;
 
   const nodes: AgentManifestNode[] = nodeKeys.map((key) => {
     const a = map[key];
@@ -97,7 +106,14 @@ export function agentManifest(doc: OpenAPIv4Document, agentName: string): AgentM
         allowedSubAgents: [...e.allowedSubAgents].sort(),
       };
     }
-    return { name: key, description: a.description, effectiveScope: effective[key] ?? null, skills, routes, subAgents, ...(governed ? { governed } : {}) };
+    let modelSelection: AgentManifestNode["modelSelection"];
+    if (opts.catalog) {
+      modelSelection = Object.keys(a.skills ?? {}).sort().map((sk) => {
+        const r = skillModels(doc, key, sk, opts.catalog!, minWinByAgent[key]);
+        return { skill: sk, ids: r.ids, from: r.from, snapshotHash: r.snapshotHash };
+      });
+    }
+    return { name: key, description: a.description, effectiveScope: effective[key] ?? null, skills, routes, subAgents, ...(governed ? { governed } : {}), ...(modelSelection ? { modelSelection } : {}) };
   });
 
   return { manifestVersion: 1, agent: agentName, nodes, reachable: reach, escalations };
