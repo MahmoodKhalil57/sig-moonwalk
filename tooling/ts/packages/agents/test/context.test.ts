@@ -44,10 +44,10 @@ describe("C027 context-budget analyzer", () => {
     expect(measured.findings.some((f) => f.code === "unmeasured-instructions")).toBe(false);
   });
 
-  test("over-window: a tiny model window flags context-over-window + an unflatten suggestion", () => {
+  test("over-window: a tiny model window flags no-fitting-model + an unflatten suggestion", () => {
     const r = contextReport(doc1(), { modelWindows: { "anthropic/claude-opus-4": 200 } });
     expect(r.loads[0].modelWindow).toBe(200);
-    expect(r.findings.some((f) => f.code === "context-over-window")).toBe(true); // overhead alone > 200
+    expect(r.findings.some((f) => f.code === "no-fitting-model")).toBe(true); // overhead alone > 200
     const sug = r.suggestions.find((s) => s.agent === "one")!;
     expect(sug).toBeDefined();
     expect(sug.moveToColdTail).toContain("tool_a");
@@ -76,5 +76,61 @@ describe("C027 context-budget analyzer", () => {
     expect(s.moveToColdTail.length).toBeGreaterThan(0);
     expect(s.wouldSaveTokens).toBeGreaterThan(0);
     expect(suggestUnflatten(load, 1_000_000)).toBeNull(); // not over a generous target
+  });
+});
+
+/** A parent with no own work delegating to one small leaf — the flatten cases. */
+function layered(): OpenAPIv4Document {
+  return {
+    openapi: "4.0.0-candidate",
+    info: { title: "x", version: "0" },
+    paths: { "v1/s": { requests: { search: { method: "get", responses: { ok: { status: 200 } } } } } },
+    "x-suluk-agents": {
+      top: { description: "orchestrator with no own tools", maxDepth: 1, agents: { leaf: { ref: "#/x-suluk-agents/worker" } } },
+      worker: { description: "a thin leaf", maxDepth: 0, skills: { go: { model: ["google/gemini-2.5-flash"] } }, routes: { search: { operationRef: "#/paths/v1~1s/requests/search" } }, agents: {} },
+    },
+  } as OpenAPIv4Document;
+}
+
+describe("C027 flatten (the dual of unflatten) — collapse a thin/redundant layer up", () => {
+  test("a passthrough agent (no own work, one child) is flagged", () => {
+    const r = contextReport(layered());
+    expect(r.findings.some((f) => f.code === "passthrough-agent" && f.agent === "top")).toBe(true);
+  });
+
+  test("a thin leaf reached by one parent, merging within budget, is a flatten candidate", () => {
+    const r = contextReport(layered());
+    const flat = r.flatten.find((f) => f.parent === "top" && f.child === "worker");
+    expect(flat).toBeDefined();
+    expect(flat!.fitsTarget).toBe(true);
+    expect(flat!.savedHopOverhead).toBeGreaterThan(0);
+    expect(r.findings.some((f) => f.code === "flattenable-layer")).toBe(true);
+  });
+
+  test("NOT flattenable when merging would blow the parent's target (the layer earns its keep)", () => {
+    const d = layered();
+    // give the worker a big resident tool so inlining it would exceed a tight parent budget
+    d.paths["v1/big"] = { requests: { bigOp: { method: "post", responses: { ok: { status: 200 } }, contentSchema: { type: "object", properties: Object.fromEntries(Array.from({ length: 25 }, (_, i) => [`p${i}`, { type: "string", description: "a descriptive field" }])) } } } };
+    d["x-suluk-agents"]!.worker.routes!.big = { operationRef: "#/paths/v1~1big/requests/bigOp" };
+    d["x-suluk-agents"]!.top.contextBudget = { tokens: 500, basis: "estimate" }; // top (460) fits; merged (>600) does not
+    const r = contextReport(d);
+    expect(r.flatten.some((f) => f.parent === "top")).toBe(false);
+  });
+});
+
+describe("C027 model fit — which declared models are expected to work", () => {
+  test("each candidate model is checked for window fit; minWindowRequired is the load", () => {
+    const load = contextReport(doc1()).loads[0];
+    expect(load.minWindowRequired).toBe(load.totalTokens);
+    const fit = load.modelFit.find((f) => f.model === "anthropic/claude-opus-4")!;
+    expect(fit.window).toBe(200_000);
+    expect(fit.fits).toBe(true);
+    expect(fit.headroom).toBe(200_000 - load.totalTokens);
+  });
+
+  test("model-too-small names a declared model that cannot hold the agent", () => {
+    const r = contextReport(doc1(), { modelWindows: { "anthropic/claude-opus-4": 100 } });
+    expect(r.findings.some((f) => f.code === "no-fitting-model" && f.agent === "one")).toBe(true);
+    expect(r.loads[0].modelFit[0].fits).toBe(false);
   });
 });

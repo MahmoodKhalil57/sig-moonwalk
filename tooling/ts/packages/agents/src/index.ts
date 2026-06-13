@@ -35,5 +35,6 @@ export {
 // budget + smallest model window, and say what to unflatten when overloaded. Estimates, not a tokenizer.
 export {
   contextReport, suggestUnflatten,
-  type ContextReport, type AgentContextLoad, type UnflattenSuggestion, type ToolContextCost, type ContextOptions,
+  type ContextReport, type AgentContextLoad, type UnflattenSuggestion, type FlattenSuggestion,
+  type ModelFit, type ToolContextCost, type ContextOptions,
 } from "./context";

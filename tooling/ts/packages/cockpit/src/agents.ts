@@ -9,7 +9,7 @@ import type { OpenAPIv4Document } from "@suluk/core";
 import {
   lintAgents, lintOk, reachableSurface, analyzeScopes, resolveOperationRef,
   agentMap, subAgentKey, effectiveUnderPolicies, policiesFor, lintPolicy, contextReport,
-  type LintFinding, type Scope, type AgentContextLoad, type UnflattenSuggestion,
+  type LintFinding, type Scope, type AgentContextLoad, type UnflattenSuggestion, type FlattenSuggestion,
 } from "@suluk/agents";
 
 export interface AgentSkillView {
@@ -68,10 +68,12 @@ export interface AgentsView {
   findings: LintFinding[];
   /** true ⇒ no error-severity findings across the whole map (the gate). */
   installable: boolean;
-  /** context-budget findings (over-window / over-budget / overloaded / empty-layer) — the "add more layers?" check. */
+  /** context-budget findings (model-fit / over-budget / overloaded / empty-layer / passthrough / flattenable) — the right-sizing check. */
   contextFindings: LintFinding[];
-  /** for every over-target agent: what to move to cold-tail or extract into a sub-agent. */
+  /** for every over-target agent: what to move to cold-tail or extract into a sub-agent (split DOWN). */
   unflatten: UnflattenSuggestion[];
+  /** for every thin/redundant layer: what to collapse up (the dual — merge UP). */
+  flatten: FlattenSuggestion[];
 }
 
 /** Agents referenced as a sub-agent by someone else (so the complement is the set of roots). */
@@ -158,7 +160,7 @@ export function agentsView(doc: OpenAPIv4Document): AgentsView {
     };
   });
 
-  return { present, agents, roots, findings, installable: lintOk(findings), contextFindings: cr.findings, unflatten: cr.suggestions };
+  return { present, agents, roots, findings, installable: lintOk(findings), contextFindings: cr.findings, unflatten: cr.suggestions, flatten: cr.flatten };
 }
 
 /** A one-line ship-readiness summary for the agent layer (mirrors the cockpit's other *Summary helpers). */
@@ -168,5 +170,6 @@ export function agentsSummary(view: AgentsView): string {
   const warns = view.findings.filter((f) => f.severity === "warning").length;
   const verdict = view.installable ? "✓ installable" : `✕ ${errs} blocking`;
   const unflatten = view.unflatten.length ? `, ${view.unflatten.length} to unflatten` : "";
-  return `${view.agents.length} agent(s), ${view.roots.length} root(s) — ${verdict}${warns ? `, ${warns} warning(s)` : ""}${unflatten}`;
+  const flatten = view.flatten.length ? `, ${view.flatten.length} to flatten` : "";
+  return `${view.agents.length} agent(s), ${view.roots.length} root(s) — ${verdict}${warns ? `, ${warns} warning(s)` : ""}${unflatten}${flatten}`;
 }

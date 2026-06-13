@@ -1,29 +1,36 @@
 /**
- * Context-budget analysis (C027) — the "do I need to unflatten?" check. No one engineers the perfect agent first
- * try: you declare tools + agents, then MEASURE where a single inference is carrying too much, and decompose.
+ * CONTEXT INTELLIGENCE (C027) — the agent layer's self-knowledge about its own context economics. No one engineers
+ * the perfect agent first try: you declare tools + agents, then MEASURE and let the analyzer right-size the layering.
+ * It answers three questions per agent, statically and honestly:
  *
- * This estimates the context an inference AT an agent must hold BY DEFAULT — its resident skill instructions + its
- * resident tool surface (each tool is a name+description+schema blob that sits in the window) + a fixed framing
- * overhead — and compares it to (a) the agent's declared `contextBudget` and (b) the SMALLEST context window among
- * its candidate models (the agent must fit the cheapest model it might run on). Cold-tail tools and sub-agent
- * INTERNALS are NOT counted — they are behind `discover_tools` / front-door re-entry (that is the whole point of the
- * tiering). When overloaded, {@link suggestUnflatten} says exactly what to move to cold-tail or extract into a
- * sub-agent.
+ *  1. LOAD — how much context a single inference AT this agent must hold by default: resident skill instructions
+ *     (when a snapshot is supplied) + the resident tool surface (name+description+schema per tool, +1 dispatch tool
+ *     per sub-agent, +discover_tools when cold-tail exists) + framing overhead. Cold-tail tools and sub-agent
+ *     INTERNALS are NOT counted — that is the whole point of the tiering.
+ *  2. RIGHT-SIZING (the flatten/unflatten DUALITY) — too big (over budget/window, heavy resident surface) ⇒
+ *     UNFLATTEN (move tools to cold-tail / extract a sub-agent). Too small or redundant (a thin leaf, or a
+ *     passthrough that just delegates) ⇒ FLATTEN (collapse the layer up), because every layer COSTS a dispatch tool
+ *     + a fresh framing overhead per front-door hop — an unearned layer can cost more than one flat call.
+ *  3. MODEL FIT — which of an agent's DECLARED candidate models can actually hold its load, and the minimum context
+ *     window it needs. "Which models are expected to work with this agent" is then a computed, checkable fact.
  *
  * HONESTY: token counts are ESTIMATES (~4 chars/token, no real tokenizer) and instruction sizes are only known when
- * a snapshot is supplied — every report says so. This sizes the SHAPE, not the bill.
+ * a snapshot is supplied — every report says so. This sizes the SHAPE + the window need, not the bill, and it does
+ * NOT judge a model's REASONING capability (only whether the context fits) — the declared model[] is the author's
+ * capability intent; the analyzer validates window-fit against it.
  */
 import type { OpenAPIv4Document } from "@suluk/core";
-import { agentMap, resolveOperationRef } from "./resolve";
+import { agentMap, resolveOperationRef, subAgentKey } from "./resolve";
 import type { LintFinding, Severity } from "./lint";
 
 const CHARS_PER_TOKEN = 4;
 const estTokens = (s: string) => Math.ceil(s.length / CHARS_PER_TOKEN);
-const BASE_OVERHEAD = 400;          // function-calling framing / system scaffolding
+const BASE_OVERHEAD = 400;          // function-calling framing / system scaffolding (paid once per inference hop)
 const SUBAGENT_DISPATCH = 60;       // one front-door dispatch tool per sub-agent (name + short desc)
 const DISCOVER_TOOLS = 60;          // the discover_tools meta-tool, present when cold-tail routes exist
 const OVERLOAD_TOOL_COUNT = 12;     // a flat agent with this many resident tools is an unflatten candidate
 const OVERLOAD_FRACTION = 0.5;      // ...or whose resident tool surface eats this share of its target
+const FLATTEN_THIN_TOOLS = 3;       // a leaf sub-agent with <= this many resident tools is a flatten candidate
 
 /** Best-effort model context windows (override per-id via opts.modelWindows). Substring-matched, default null. */
 const DEFAULT_WINDOWS: [RegExp, number][] = [
@@ -36,56 +43,63 @@ const windowFor = (id: string, overrides?: Record<string, number>): number | nul
   overrides?.[id] ?? DEFAULT_WINDOWS.find(([re]) => re.test(id))?.[1] ?? null;
 
 export interface ToolContextCost { name: string; tokens: number; tier: "resident" | "cold-tail" }
+/** Per declared candidate model: does its context window hold this agent's load? (window null ⇒ unknown model.) */
+export interface ModelFit { model: string; window: number | null; fits: boolean | null; headroom: number | null }
 export interface AgentContextLoad {
   agent: string;
-  /** resident skill instruction tokens (measured from a supplied snapshot; 0 + `instructionsMeasured:false` otherwise). */
   instructionsTokens: number;
   instructionsMeasured: boolean;
-  /** the default tool surface that sits in the window: resident routes + one dispatch tool per sub-agent. */
   residentToolTokens: number;
-  /** fixed framing overhead. */
   overheadTokens: number;
-  /** the total a single default inference must hold. */
   totalTokens: number;
-  /** cold-tail routes (NOT loaded by default — behind discover_tools); reported for transparency, not counted. */
   coldTailTokens: number;
   tools: ToolContextCost[];
   subAgentCount: number;
-  /** the agent's declared `contextBudget.tokens`, if any. */
+  /** the minimum context window a model needs to run this agent (= the default load). */
+  minWindowRequired: number;
+  /** which DECLARED models are expected to work (window ≥ load) and which can't hold it. */
+  modelFit: ModelFit[];
   budget?: number;
-  /** the smallest window among the agent's candidate models (the cheapest model must fit), if resolvable. */
+  /** the smallest declared model window (the binding window constraint), if any model is known. */
   modelWindow?: number;
-  /** the binding target = min(budget, modelWindow) when known. */
   target?: number;
-  /** total / target (>1 ⇒ over). */
   utilization?: number;
 }
 
 export interface UnflattenSuggestion {
   agent: string;
   reason: string;
-  /** resident tools to move to cold-tail (behind discover_tools) — the cheapest decomposition. */
   moveToColdTail: string[];
   wouldSaveTokens: number;
-  /** the structural alternative when moving tools isn't enough. */
   alsoConsider: string;
+}
+
+/** The dual of unflatten: a thin/redundant layer worth collapsing UP into its parent. */
+export interface FlattenSuggestion {
+  parent: string;
+  child: string;
+  reason: string;
+  /** the parent's load if the child's resident tools+instructions were inlined. */
+  mergedParentTokens: number;
+  fitsTarget: boolean;
+  /** per-hop overhead removed by collapsing (the child's framing + its dispatch tool). */
+  savedHopOverhead: number;
 }
 
 export interface ContextReport {
   loads: AgentContextLoad[];
   findings: LintFinding[];
-  /** unflatten suggestions for every over-target agent. */
+  /** unflatten suggestions for over-target agents (split DOWN). */
   suggestions: UnflattenSuggestion[];
+  /** flatten suggestions for thin/redundant layers (collapse UP). */
+  flatten: FlattenSuggestion[];
 }
 
 export interface ContextOptions {
-  /** instruction snapshots keyed "<agentKey>/<skillName>" (the served text, pinned) — enables instruction sizing. */
   instructions?: Record<string, string>;
-  /** exact model-id → context window overrides (takes precedence over the built-in table). */
   modelWindows?: Record<string, number>;
 }
 
-/** Estimate one route's tool-definition cost (name + description + parameter schema), tier-tagged. */
 function routeCost(doc: OpenAPIv4Document, name: string, operationRef: string, tier: "resident" | "cold-tail"): ToolContextCost {
   const req = resolveOperationRef(doc, operationRef)?.request;
   const desc = req?.summary ?? req?.description ?? "";
@@ -94,7 +108,7 @@ function routeCost(doc: OpenAPIv4Document, name: string, operationRef: string, t
   return { name, tokens, tier };
 }
 
-/** Compute the context load + findings for every agent in the document. */
+/** Compute the context-intelligence report (load + right-sizing + model fit) for every agent in the document. */
 export function contextReport(doc: OpenAPIv4Document, opts: ContextOptions = {}): ContextReport {
   const map = agentMap(doc);
   const loads: AgentContextLoad[] = [];
@@ -106,7 +120,6 @@ export function contextReport(doc: OpenAPIv4Document, opts: ContextOptions = {})
     const skillEntries = Object.entries(agent.skills ?? {});
     const routeEntries = Object.entries(agent.routes ?? {});
 
-    // resident skill instructions (cold-tail skills are deferred); measured only when a snapshot is supplied
     let instructionsTokens = 0; let anyResidentSkill = false; let anyUnmeasured = false;
     for (const [sk, s] of skillEntries) {
       if (s.tier === "cold-tail") continue;
@@ -127,16 +140,22 @@ export function contextReport(doc: OpenAPIv4Document, opts: ContextOptions = {})
     const overheadTokens = BASE_OVERHEAD;
     const totalTokens = instructionsTokens + residentToolTokens + overheadTokens;
 
+    // model fit: which declared (resident-skill) models can hold this load
+    const candidateModels = [...new Set(skillEntries.filter(([, s]) => s.tier !== "cold-tail").flatMap(([, s]) => s.model ?? []))];
+    const modelFit: ModelFit[] = candidateModels.map((m) => {
+      const window = windowFor(m, opts.modelWindows);
+      return { model: m, window, fits: window === null ? null : totalTokens <= window, headroom: window === null ? null : window - totalTokens };
+    });
+    const withWindow = modelFit.filter((f) => f.window !== null);
+    const modelWindow = withWindow.length ? Math.min(...withWindow.map((f) => f.window!)) : undefined;
+
     const budget = agent.contextBudget?.tokens;
-    const models = skillEntries.find(([, s]) => s.tier !== "cold-tail" && s.model?.length)?.[1].model ?? [];
-    const windows = models.map((m) => windowFor(m, opts.modelWindows)).filter((w): w is number => w !== null);
-    const modelWindow = windows.length ? Math.min(...windows) : undefined;
     const target = budget !== undefined && modelWindow !== undefined ? Math.min(budget, modelWindow) : budget ?? modelWindow;
     const utilization = target ? totalTokens / target : undefined;
 
     const load: AgentContextLoad = {
       agent: name, instructionsTokens, instructionsMeasured, residentToolTokens, overheadTokens, totalTokens,
-      coldTailTokens, tools, subAgentCount,
+      coldTailTokens, tools, subAgentCount, minWindowRequired: totalTokens, modelFit,
       ...(budget !== undefined ? { budget } : {}), ...(modelWindow !== undefined ? { modelWindow } : {}),
       ...(target !== undefined ? { target } : {}), ...(utilization !== undefined ? { utilization } : {}),
     };
@@ -147,8 +166,14 @@ export function contextReport(doc: OpenAPIv4Document, opts: ContextOptions = {})
       add("info", "empty-layer", name, "agent declares no skills and no routes — a reserved layer to fill");
     if (anyResidentSkill && anyUnmeasured)
       add("info", "unmeasured-instructions", name, "no instruction snapshot supplied — totalTokens is a LOWER BOUND (tools+overhead only)");
-    if (modelWindow !== undefined && totalTokens > modelWindow)
-      add("error", "context-over-window", name, `estimated load ${totalTokens} tok exceeds the smallest model window ${modelWindow} — this agent cannot fit; unflatten it`);
+
+    // model-fit findings (replaces a bare over-window check — names WHICH models work)
+    const tooSmall = withWindow.filter((f) => !f.fits);
+    if (withWindow.length > 0 && tooSmall.length === withWindow.length)
+      add("error", "no-fitting-model", name, `estimated load ${totalTokens} tok exceeds EVERY declared model window (smallest ${modelWindow}) — unflatten or declare a larger-context model`);
+    else if (tooSmall.length > 0)
+      add("warning", "model-too-small", name, `declared model(s) ${tooSmall.map((f) => f.model).join(", ")} cannot hold this agent (needs ≥${totalTokens} tok window) — they are listed but will not work`);
+
     if (budget !== undefined && totalTokens > budget)
       add("warning", "context-over-budget", name, `estimated load ${totalTokens} tok exceeds declared contextBudget ${budget}`);
     const overloadByFraction = target !== undefined && residentToolTokens > OVERLOAD_FRACTION * target;
@@ -159,7 +184,34 @@ export function contextReport(doc: OpenAPIv4Document, opts: ContextOptions = {})
     if (s) suggestions.push(s);
   }
 
-  return { loads, findings, suggestions };
+  // ── FLATTEN pass (the dual): a thin leaf reached by exactly one parent, whose merge still fits, is gratuitous ──
+  const loadBy = new Map(loads.map((l) => [l.agent, l]));
+  const refCount = new Map<string, number>();
+  for (const a of Object.values(map)) for (const r of Object.values(a.agents ?? {})) { const k = subAgentKey(r.ref); if (k) refCount.set(k, (refCount.get(k) ?? 0) + 1); }
+  const flatten: FlattenSuggestion[] = [];
+  for (const [pname, agent] of Object.entries(map)) {
+    const childKeys = Object.values(agent.agents ?? {}).map((r) => subAgentKey(r.ref)).filter((k): k is string => !!k && !!map[k]);
+    const ownRoutes = Object.keys(agent.routes ?? {}).length;
+    const ownResidentSkills = Object.values(agent.skills ?? {}).filter((s) => s.tier !== "cold-tail").length;
+    if (ownRoutes === 0 && ownResidentSkills === 0 && childKeys.length === 1)
+      add("warning", "passthrough-agent", pname, `delegates to "${childKeys[0]}" with no own tools or resident instructions — pure indirection; collapse the two`);
+    for (const ck of childKeys) {
+      const child = map[ck];
+      const childIsLeaf = Object.keys(child.agents ?? {}).length === 0;
+      if (!childIsLeaf || (refCount.get(ck) ?? 0) !== 1) continue; // only a leaf reached by exactly one parent
+      const pl = loadBy.get(pname)!; const cl = loadBy.get(ck)!;
+      const inlinedTools = cl.tools.filter((t) => t.tier === "resident").reduce((n, t) => n + t.tokens, 0);
+      const childResidentToolCount = cl.tools.filter((t) => t.tier === "resident").length;
+      const merged = pl.totalTokens - SUBAGENT_DISPATCH + inlinedTools + cl.instructionsTokens;
+      const fitsTarget = pl.target === undefined || merged <= pl.target;
+      if (childResidentToolCount <= FLATTEN_THIN_TOOLS && fitsTarget) {
+        flatten.push({ parent: pname, child: ck, reason: `thin leaf (${childResidentToolCount} resident tool(s)); merged load ${merged}${pl.target !== undefined ? ` ≤ target ${pl.target}` : " (no target)"}`, mergedParentTokens: merged, fitsTarget, savedHopOverhead: BASE_OVERHEAD + SUBAGENT_DISPATCH });
+        add("info", "flattenable-layer", pname, `sub-agent "${ck}" is a thin leaf that merges within budget — the layer costs ~${BASE_OVERHEAD + SUBAGENT_DISPATCH} tok/hop it does not earn; consider flattening`);
+      }
+    }
+  }
+
+  return { loads, findings, suggestions, flatten };
 }
 
 /** When an agent is over its target, the cheapest decomposition: which resident tools to push to cold-tail. */
