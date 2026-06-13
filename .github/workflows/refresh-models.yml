@@ -1,0 +1,42 @@
+# Weekly refresh of the @suluk/models OpenRouter catalog (AGENT-TRACK §B). Runs scripts/refresh.ts, and commits
+# ONLY when the content-addressed snapshotHash changes (so asOf-only churn never produces a noise commit).
+name: Refresh model catalog (@suluk/models)
+
+on:
+  schedule:
+    - cron: "0 6 * * 1" # Mondays 06:00 UTC
+  workflow_dispatch: {} # manual run from the Actions tab
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-models
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - name: Fetch + normalize OpenRouter /models
+        working-directory: tooling/ts/packages/models
+        run: bun scripts/refresh.ts "$(date -u +%F)"
+      - name: Commit only if the snapshot (facts+tiers) changed
+        working-directory: tooling/ts/packages/models
+        run: |
+          CAT=src/openrouter-catalog.json
+          NEW=$(jq -r .snapshotHash "$CAT")
+          OLD=$(git show HEAD:tooling/ts/packages/models/"$CAT" 2>/dev/null | jq -r .snapshotHash || echo "")
+          if [ "$NEW" != "$OLD" ]; then
+            echo "snapshot changed: $OLD -> $NEW"
+            git config user.name "suluk-bot"
+            git config user.email "bot@saastemly.com"
+            git add "$CAT"
+            git commit -m "chore(models): weekly OpenRouter catalog refresh ($NEW)"
+            git push
+          else
+            echo "snapshot unchanged ($NEW) — reverting asOf-only churn, no commit"
+            git checkout -- "$CAT"
+          fi
