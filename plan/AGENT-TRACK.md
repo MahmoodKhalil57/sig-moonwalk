@@ -83,16 +83,18 @@ becomes a hard filter the model selector uses → an agent declares *needs*, not
   did NOT route through `@suluk/agents` `intersectScope` — the inline intersection is equivalent + avoids a dep cycle.)_
 
 ### B. The weekly fetcher — the data-eng spine (specified in REFRESH.md)
-- [x] **Class-A facts transform** — `normalizeOpenRouter` (`normalize.ts`): OpenRouter `/models` → cost/context/caps/
-  modalities/recency cells, `snapshotHash`/`catalogFrom` (content-addressed). `fetchOpenRouterCatalog` (`fetch.ts`) is
-  the thin live wrapper. Unit-tested. _(Remaining: RUN it weekly in CI + commit the ~200-row catalog; the snapshot-diff
-  `priceVolatile`/deprecation-delta is stubbed.)_
+- [x] **Class-A facts transform + LIVE RUN** — `normalizeOpenRouter` (`normalize.ts`) + `fetchOpenRouterCatalog`
+  (`fetch.ts`) + `scripts/refresh.ts`. **Ran it live: committed `src/openrouter-catalog.json` = 337 real OpenRouter
+  models** (real price/context/caps; benchmark tiers UNKNOWN), exported as `OPENROUTER_CATALOG` (747K compact,
+  content-addressed `sha256-d2e7d94f…`). _(Remaining: a weekly CI cron to re-run + the snapshot-diff
+  `priceVolatile`/deprecation-delta — currently stubbed.)_
 - [x] **`BUCKETING_RULES` + `applyBucketing`** (`bucketing.ts`) — the documented, committed, cited tier-boundary rule
   per INTEL axis (the red-line). Unit-tested. _(Boundaries are tunable at review; the value is the explicit mapping.)_
 - [ ] **Class-B periodic tier pass** (lower cadence, human-reviewable): BFCL/τ-bench, IFEval/LMArena, GPQA/AIME,
   SWE-bench-Verified, RULER, MMLU-Pro → coarse tiers; cross-witness frontier claims (≥2 sources). Most rows stay
   `unknown` on agentic + long-context — surface, never impute.
-- [ ] **Grow the seed → ~200 rows** (via the fetcher; the seed in `catalog.ts` is illustrative only).
+- [x] **Real catalog committed** — `OPENROUTER_CATALOG` (337 rows) replaces the need to grow the seed; `SEED_CATALOG`
+  is retained as the small illustrative fixture for tests. (The Class-B tier overlay still fills `intel.*`.)
 - [x] **Cockpit OBSERVE surface for model selection** — `agentsView(doc, { catalog })` folds a per-skill
   `modelSelection` (declared vs selected, top ids, deciding preference, UNKNOWN-coverage gaps) so an operator can
   audit "why this model". Read-only (C020). _(Remaining polish: surface staleness/`asOf` once the fetcher stamps it.)_
