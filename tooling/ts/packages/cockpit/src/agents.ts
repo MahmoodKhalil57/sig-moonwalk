@@ -24,6 +24,8 @@ export interface AgentRouteView {
   name: string;
   operationRef: string;
   guarantee?: string;
+  /** serving partition: resident (default tool list) vs cold-tail (behind discover_tools). Absent ⇒ resident. */
+  tier?: "resident" | "cold-tail";
   /** does the operationRef resolve to a real operation? (false ⇒ a dangling ref, like Conin's MCP-only primitive). */
   resolves: boolean;
 }
@@ -41,7 +43,7 @@ export interface AgentNodeView {
   /** worst-case statically-enumerable reach (tools + transitively-reachable sub-agents). */
   reachable: { tools: string[]; agents: string[] };
   /** OBSERVE-only preview of what projection WOULD emit — names, never executed, never credentialed. */
-  projection: { pluginFiles: string[]; openRouterTools: string[] };
+  projection: { pluginFiles: string[]; openRouterTools: string[]; residentTools: string[]; discoverableTools: string[] };
   /** operator governance diff (C028) — present only when an x-suluk-policy governs this agent. */
   governed?: AgentGovernedView;
 }
@@ -124,6 +126,7 @@ export function agentsView(doc: OpenAPIv4Document): AgentsView {
       name: rk,
       operationRef: r.operationRef,
       ...(r.guarantee ? { guarantee: r.guarantee } : {}),
+      ...(r.tier ? { tier: r.tier } : {}),
       resolves: !!resolveOperationRef(doc, r.operationRef),
     })).sort((x, y) => x.name.localeCompare(y.name));
     return {
@@ -139,6 +142,9 @@ export function agentsView(doc: OpenAPIv4Document): AgentsView {
       projection: {
         pluginFiles: ["plugin.json", ".mcp.json", ...skills.map((s) => `skills/${s.name}/SKILL.md`)],
         openRouterTools: routes.map((r) => r.name),
+        // the tier-trim: only resident tools are in the default surface; cold-tail sits behind discover_tools
+        residentTools: routes.filter((r) => r.tier !== "cold-tail").map((r) => r.name),
+        discoverableTools: routes.filter((r) => r.tier === "cold-tail").map((r) => r.name),
       },
       ...(policiesFor(doc, name).length > 0 ? { governed: governedView(doc, name) } : {}),
     };

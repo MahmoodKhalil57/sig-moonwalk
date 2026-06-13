@@ -60,6 +60,15 @@ describe("C027 cockpit agents view (OBSERVE)", () => {
     expect(conin.projection.openRouterTools).toEqual(["generate_deliverable"]);
   });
 
+  test("tier-trim is visible in the projection preview (resident vs discoverable)", () => {
+    const t = structuredClone(doc);
+    t["x-suluk-agents"]!.coninRetrieval.routes!.search_library.tier = "cold-tail";
+    const retr = agentsView(t).agents.find((a) => a.name === "coninRetrieval")!;
+    expect(retr.projection.discoverableTools).toEqual(["search_library"]);
+    expect(retr.projection.residentTools).not.toContain("search_library");
+    expect(retr.routes.find((r) => r.name === "search_library")!.tier).toBe("cold-tail");
+  });
+
   test("installable + summary when the gate is clean", () => {
     expect(v.installable).toBe(true);
     expect(agentsSummary(v)).toContain("✓ installable");
