@@ -148,8 +148,10 @@ becomes a hard filter the model selector uses → an agent declares *needs*, not
   models→core→agents→cockpit. _(Gotcha: `bun install` AFTER a version bump before publishing, else the converted
   caret floor lags — agents shipped `@suluk/core: ^0.1.7`, harmless since it resolves to 0.1.8.)_ `@suluk/seo` +
   `@suluk/panel` are the concurrent session's to publish.
-- [ ] **`@suluk/agents` → vscode extension SHELL wiring.** The cockpit *core* (`agentsView` etc.) is ready; only the
-  extension shell rendering (the webview/tree that displays it) is left.
+- [x] **`@suluk/agents` → vscode extension SHELL wiring** — `suluk.agents` command + `agentsHtml` host-rendered webview
+  (`tooling/ts/packages/vscode`, v0.1.15): tier tree · scope · context/right-sizing · gate findings · per-skill model
+  selection (resolve mode: pin/router/latest), against `OPENROUTER_CATALOG`. tsc-clean. _(Publish step: VS Code
+  Marketplace via `vsce publish` — a separate token from npm; committed but not Marketplace-published from here.)_
 - [ ] **Address remaining verification caveats** logged in the council outputs: the projection name-derivation rule
   (C-above), the tier-trim mandate (C-above); the two metrics reframes are already encoded in REFRESH.md.
 

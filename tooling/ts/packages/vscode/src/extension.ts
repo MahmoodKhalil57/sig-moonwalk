@@ -22,12 +22,14 @@ import {
   contractToD2, diagramViews, type DiagramView,
   componentReport, approveComponents, primitiveCss, type ComponentReport, type Baseline,
   contractGates, shipSummary, type Gate,
+  agentsView, agentsSummary, type AgentsView,
   PROVIDER_CATALOG, readProviders, swapProvider,
   parseRegistry, type RegistrySource,
   verifyRegistrySignature, isSignedEnvelope, generateSigningKeypair, signRegistry,
   composeModules, STACK_TEMPLATES, resolveTemplate, type ComposeResult, type StackTemplate,
 } from "@suluk/cockpit";
 import { parseDocument } from "@suluk/core";
+import { OPENROUTER_CATALOG } from "@suluk/models";
 import { SAMPLE_V4 } from "./sample";
 
 const SUPPORTED = new Set(["yaml", "json", "yml"]);
@@ -390,6 +392,40 @@ function componentsHtml(report: ComponentReport): string {
   const body = `<style>${primitiveCss()}</style><p class="sum">${esc(summary)} — verify each primitive ONCE; confidence is then decided by content-hash, no re-screenshotting.</p><div class="g"><h3>primitives</h3>${prims}</div><div class="g"><h3>entities (form/table)</h3>${ents}</div>`;
   return htmlPage("Component pixel-confidence", body);
 }
+function agentsHtml(view: AgentsView): string {
+  if (!view.present) return htmlPage("Suluk — agents", `<p class="sum">No <span class="k">x-suluk-agents</span> in this document.</p>`);
+  const j = (a: string[] | null | undefined) => (a && a.length ? a.map(esc).join(", ") : "—");
+  const sevClass = (s: string) => (s === "error" ? "rem" : s === "warning" ? "chg" : "d");
+  const agents = view.agents.map((a) => {
+    const c = a.context;
+    const over = c.target !== undefined && c.peakTokens > c.target;
+    const skills = Object.values(a.skills).length
+      ? a.skills.map((s) => `${esc(s.name)}${s.tier ? ` [${s.tier}]` : ""}${s.pinned ? " ✓" : ""}${s.model.length ? ` · ${esc(s.model.join("/"))}` : ""}`).join("<br>")
+      : `<span class="d">none</span>`;
+    const routes = a.routes.length
+      ? a.routes.map((r) => `${esc(r.name)}${r.tier === "cold-tail" ? " [cold-tail]" : ""}${r.resolves ? "" : ` <span class="rem">⚠ dangling</span>`}`).join("<br>")
+      : `<span class="d">none</span>`;
+    const models = (a.modelSelection ?? []).map((m) =>
+      m.error ? `${esc(m.skill)}: <span class="rem">${esc(m.error)}</span>`
+        : `${esc(m.skill)}: <span class="k">${esc((m.ids ?? [])[0] ?? "—")}</span> <span class="d">(${esc(m.resolve ?? m.from ?? "")}${m.pickPinned === false ? ", pick-not-pinned" : ""}${m.decidingPreference ? `, ${esc(m.decidingPreference)}` : ""})</span>${m.coverageGaps?.length ? ` <span class="chg">gaps: ${j(m.coverageGaps)}</span>` : ""}`,
+    ).join("<br>");
+    const gov = a.governed ? `<tr><td>governed</td><td class="d">denied: ${j(a.governed.deniedTools)} · cap ${esc(a.governed.cost.cap ?? "—")}</td></tr>` : "";
+    return `<div class="g"><h3>${esc(a.name)} <span class="d">${a.kind}${a.maxDepth !== undefined ? ` · maxDepth ${a.maxDepth}` : ""}</span></h3><table>
+      <tr><td>scope</td><td class="k">${a.effectiveScope ? j(a.effectiveScope) : "unconstrained"}</td></tr>
+      <tr><td>skills</td><td>${skills}</td></tr>
+      <tr><td>routes</td><td>${routes}</td></tr>
+      <tr><td>context</td><td>~${c.totalTokens} tok${c.peakTokens !== c.totalTokens ? ` (peak ${c.peakTokens}${c.maxRounds ? `, ${c.maxRounds} rounds` : ""})` : ""}${c.target !== undefined ? ` / ${c.target}` : ""} <span class="${over ? "rem" : "add"}">${over ? "OVER" : "ok"}</span></td></tr>
+      ${models ? `<tr><td>models</td><td>${models}</td></tr>` : ""}${gov}</table></div>`;
+  }).join("");
+  const all = [...view.findings, ...view.contextFindings];
+  const findings = all.length ? all.map((f) => `<div class="row"><span class="${sevClass(f.severity)}">${esc(f.severity)}</span> <span class="k">${esc(f.code)}</span> <span class="d">${esc(f.agent)}: ${esc(f.detail)}</span></div>`).join("") : `<div class="row add">no findings</div>`;
+  const sizing = [
+    ...view.unflatten.map((u) => `<div class="row chg">unflatten <span class="k">${esc(u.agent)}</span> → cold-tail ${j(u.moveToColdTail)} (~${u.wouldSaveTokens} tok)</div>`),
+    ...view.flatten.map((f) => `<div class="row d">flatten <span class="k">${esc(f.parent)}</span> ← ${esc(f.child)} (thin leaf; ~${f.savedHopOverhead} tok/hop)</div>`),
+  ].join("");
+  return htmlPage("Suluk — agents", `<p class="sum">${esc(agentsSummary(view))} — the x-suluk-agents OBSERVE view (tier tree · scope · context · model selection). Read-only.</p>${agents}<div class="g"><h3>findings</h3>${findings}</div>${sizing ? `<div class="g"><h3>right-sizing</h3>${sizing}</div>` : ""}`);
+}
+
 function convergeHtml(report: ConvergeReport): string {
   return htmlPage("Contract converge", `<p class="sum">a coherence audit over the whole contract — the contradictions a clean merge can still leave behind.</p>${convergeBody(report)}`);
 }
@@ -671,6 +707,16 @@ export function activate(context: vscode.ExtensionContext): void {
   });
 
   // converge: a coherence audit over the whole contract — the contradictions a clean merge can leave behind
+  reg("suluk.agents", () => {
+    const src = activeV4Source();
+    if (!src) { void vscode.window.showWarningMessage("Suluk: open a v4 contract first."); return; }
+    try {
+      const view = agentsView(parseDocument(src), { catalog: OPENROUTER_CATALOG });
+      const panel = vscode.window.createWebviewPanel("suluk.agents", "Suluk — agents", vscode.ViewColumn.Beside, {});
+      panel.webview.html = agentsHtml(view);
+    } catch (e) { void vscode.window.showErrorMessage(`Suluk: ${e instanceof Error ? e.message : String(e)}`); }
+  });
+
   reg("suluk.convergeContract", () => {
     const src = activeV4Source();
     if (!src) { void vscode.window.showWarningMessage("Suluk: open a v4 contract first."); return; }
