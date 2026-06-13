@@ -92,9 +92,9 @@ becomes a hard filter the model selector uses → an agent declares *needs*, not
   SWE-bench-Verified, RULER, MMLU-Pro → coarse tiers; cross-witness frontier claims (≥2 sources). Most rows stay
   `unknown` on agentic + long-context — surface, never impute.
 - [ ] **Grow the seed → ~200 rows** (via the fetcher; the seed in `catalog.ts` is illustrative only).
-- [ ] **Cockpit OBSERVE surface for model selection** (read-only, C020 seam): per-agent selected model + filter
-  trace + tier-by-axis + staleness flags + UNKNOWN-coverage warnings — so an operator can audit "why this model on
-  date X".
+- [x] **Cockpit OBSERVE surface for model selection** — `agentsView(doc, { catalog })` folds a per-skill
+  `modelSelection` (declared vs selected, top ids, deciding preference, UNKNOWN-coverage gaps) so an operator can
+  audit "why this model". Read-only (C020). _(Remaining polish: surface staleness/`asOf` once the fetcher stamps it.)_
 - [ ] **Micro-panel (contested):** key a catalog row by **model** vs **(model, provider-endpoint)** —
   governance/price attach to the endpoint (sounder) but 3–5× rows + author-UX cost. Resolve with a receipt + ceiling
   before hardening. (Seed currently keys by model.)

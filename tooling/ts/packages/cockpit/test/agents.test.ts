@@ -1,6 +1,7 @@
 import { test, expect, describe } from "bun:test";
 import type { OpenAPIv4Document, HttpMethod, Request } from "@suluk/core";
 import { agentsView, agentsSummary } from "../src/index";
+import { SEED_CATALOG } from "@suluk/agents";
 
 const req = (method: HttpMethod): Request => ({ method, responses: { ok: { status: 200 } } });
 
@@ -92,6 +93,23 @@ describe("C027 cockpit agents view (OBSERVE)", () => {
     expect(v2.contextFindings.some((f) => f.code === "context-over-budget")).toBe(true);
     expect(v2.unflatten.some((u) => u.agent === "conin")).toBe(true);
     expect(agentsSummary(v2)).toContain("unflatten");
+  });
+
+  test("model selection surfaces 'why this model' when a catalog is supplied (C027 × @suluk/models)", () => {
+    const view = agentsView(doc, { catalog: SEED_CATALOG });
+    const conin = view.agents.find((a) => a.name === "conin")!;
+    expect(conin.modelSelection).toBeDefined();
+    const operate = conin.modelSelection!.find((m) => m.skill === "operate")!;
+    expect(operate.from).toBe("declared"); // operate has an explicit model[] → opt-out
+    expect(operate.ids).toEqual(["anthropic/claude-opus-4"]);
+    expect(agentsView(doc).agents[0].modelSelection).toBeUndefined(); // no catalog ⇒ no surface (back-compat)
+
+    const d = structuredClone(doc);
+    d["x-suluk-agents"]!.conin.skills!.operate = { modelProfile: "cheap-fast" };
+    const sel = agentsView(d, { catalog: SEED_CATALOG }).agents.find((a) => a.name === "conin")!.modelSelection!.find((m) => m.skill === "operate")!;
+    expect(sel.from).toBe("selected");
+    expect(sel.ids.length).toBeGreaterThan(0);
+    expect(sel.decidingPreference).toBeTruthy();
   });
 
   test("absent agent layer is handled", () => {

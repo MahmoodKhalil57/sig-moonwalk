@@ -8,8 +8,8 @@
 import type { OpenAPIv4Document } from "@suluk/core";
 import {
   lintAgents, lintOk, reachableSurface, analyzeScopes, resolveOperationRef,
-  agentMap, subAgentKey, effectiveUnderPolicies, policiesFor, lintPolicy, contextReport,
-  type LintFinding, type Scope, type AgentContextLoad, type UnflattenSuggestion, type FlattenSuggestion,
+  agentMap, subAgentKey, effectiveUnderPolicies, policiesFor, lintPolicy, contextReport, skillModels,
+  type LintFinding, type Scope, type AgentContextLoad, type UnflattenSuggestion, type FlattenSuggestion, type ModelCatalog,
 } from "@suluk/agents";
 
 export interface AgentSkillView {
@@ -48,6 +48,9 @@ export interface AgentNodeView {
   governed?: AgentGovernedView;
   /** estimated default context load (resident instructions+tools+overhead) vs budget/window — the unflatten check (C027). */
   context: AgentContextLoad;
+  /** per-skill model pick (C027 × @suluk/models) — present only when agentsView is given a catalog. OBSERVE-only:
+   * "why this model" (declared vs selected, top ids, deciding preference, UNKNOWN-coverage gaps). Never executes. */
+  modelSelection?: { skill: string; from: "declared" | "selected"; ids: string[]; decidingPreference?: string; coverageGaps?: string[] }[];
 }
 /** The agent-declared vs operator-effective diff + the cost three-number (cap / estimate / actual). Read-only. */
 export interface AgentGovernedView {
@@ -108,12 +111,12 @@ function governedView(doc: OpenAPIv4Document, agentName: string): AgentGovernedV
 }
 
 /** Build the OBSERVE view-model for the agent layer of a document. Never throws; tolerates non-installable agents. */
-export function agentsView(doc: OpenAPIv4Document): AgentsView {
+export function agentsView(doc: OpenAPIv4Document, opts: { catalog?: ModelCatalog } = {}): AgentsView {
   const map = agentMap(doc);
   const names = Object.keys(map).sort((a, b) => a.localeCompare(b));
   const present = names.length > 0;
   const findings = [...lintAgents(doc), ...lintPolicy(doc)];
-  const cr = contextReport(doc); // static load (no instruction snapshots ⇒ tools+overhead, a lower bound)
+  const cr = contextReport(doc, opts.catalog ? { catalog: opts.catalog } : {}); // static load (no snapshots ⇒ a lower bound)
 
   // effective scopes across the whole map: merge a walk from every root (covers every reachable node)
   const referenced = referencedChildren(doc);
@@ -157,6 +160,17 @@ export function agentsView(doc: OpenAPIv4Document): AgentsView {
       },
       ...(policiesFor(doc, name).length > 0 ? { governed: governedView(doc, name) } : {}),
       context: cr.loads.find((l) => l.agent === name)!,
+      ...(opts.catalog ? {
+        modelSelection: Object.keys(a.skills ?? {}).sort().map((sk) => {
+          const minWin = cr.loads.find((l) => l.agent === name)?.minWindowRequired;
+          const r = skillModels(doc, name, sk, opts.catalog!, minWin);
+          return {
+            skill: sk, from: r.from, ids: r.ids.slice(0, 3),
+            ...(r.selection?.ranked[0] ? { decidingPreference: r.selection.ranked[0].why.decidingPreference } : {}),
+            ...(r.selection ? { coverageGaps: r.selection.coverageGaps } : {}),
+          };
+        }),
+      } : {}),
     };
   });
 
