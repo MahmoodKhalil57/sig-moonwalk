@@ -68,9 +68,10 @@ export function normalizeOpenRouter(models: ORModel[], asOf: string): ModelRecor
   return models.map((m) => normalizeOpenRouterModel(m, asOf)).sort((a, b) => a.id.localeCompare(b.id));
 }
 
-/** A content-addressed hash over the rows' load-bearing FACT cells (reproducible pin; ties C027 contentHash). */
+/** A content-addressed hash over the rows' load-bearing SELECTION inputs — facts AND intel tiers (a re-pick under a
+ * different catalog must differ; reproducible pin; ties C027 contentHash). */
 export function snapshotHash(rows: ModelRecord[]): string {
-  const facts = rows.map((r) => [r.id, r.cost.inputPerMtok.value, r.cost.outputPerMtok.value, r.context.maxWindow.value, r.caps.toolCalling.value]);
+  const facts = rows.map((r) => [r.id, r.cost.inputPerMtok.value, r.cost.outputPerMtok.value, r.context.maxWindow.value, r.caps.toolCalling.value, ...Object.values(r.intel).map((c) => c.value)]);
   return "sha256-" + createHash("sha256").update(JSON.stringify(facts), "utf8").digest("hex").slice(0, 16);
 }
 

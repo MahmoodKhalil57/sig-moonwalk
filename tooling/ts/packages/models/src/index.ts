@@ -21,3 +21,4 @@ export { selectModel, deriveRequirements } from "./select";
 export { BUCKETING_RULES, applyBucketing, type AxisRule } from "./bucketing";
 export { normalizeOpenRouter, normalizeOpenRouterModel, catalogFrom, snapshotHash, type ORModel } from "./normalize";
 export { fetchOpenRouterCatalog } from "./fetch";
+export { applyTierOverlay, KNOWN_TIERS, type IntelAxis } from "./overlay";

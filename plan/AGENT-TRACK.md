@@ -90,9 +90,11 @@ becomes a hard filter the model selector uses → an agent declares *needs*, not
   `priceVolatile`/deprecation-delta — currently stubbed.)_
 - [x] **`BUCKETING_RULES` + `applyBucketing`** (`bucketing.ts`) — the documented, committed, cited tier-boundary rule
   per INTEL axis (the red-line). Unit-tested. _(Boundaries are tunable at review; the value is the explicit mapping.)_
-- [ ] **Class-B periodic tier pass** (lower cadence, human-reviewable): BFCL/τ-bench, IFEval/LMArena, GPQA/AIME,
-  SWE-bench-Verified, RULER, MMLU-Pro → coarse tiers; cross-witness frontier claims (≥2 sources). Most rows stay
-  `unknown` on agentic + long-context — surface, never impute.
+- [x] **Class-B tier overlay (mechanism + bootstrap)** — `applyTierOverlay` + `KNOWN_TIERS` (`overlay.ts`): patches
+  CITED coarse `intel.*` tiers onto the facts catalog (`snapshotHash` now covers tiers). Bootstrapped **9 frontier
+  models** from public-consensus standings (source-stamped, low ceiling); the long tail stays `unknown`. _(Remaining:
+  the full human-reviewed curation from BFCL/IFEval/SWE-bench/GPQA/RULER/MMLU-Pro/LMArena snapshots, ≥2-source
+  cross-witness — the council honesty rule.)_
 - [x] **Real catalog committed** — `OPENROUTER_CATALOG` (337 rows) replaces the need to grow the seed; `SEED_CATALOG`
   is retained as the small illustrative fixture for tests. (The Class-B tier overlay still fills `intel.*`.)
 - [x] **Cockpit OBSERVE surface for model selection** — `agentsView(doc, { catalog })` folds a per-skill
