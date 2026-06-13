@@ -118,6 +118,36 @@ describe("C027 flatten (the dual of unflatten) — collapse a thin/redundant lay
   });
 });
 
+describe("C029 thinking — round-accretion folds into the load the analyzer checks", () => {
+  test("a multi-round PEAK can exceed a window the single-shot base fits (the fixed blindspot)", () => {
+    const d = doc1();
+    d["x-suluk-agents"]!.one.thinking = { maxRounds: 6 };
+    const r = contextReport(d, { modelWindows: { "anthropic/claude-opus-4": 600 } });
+    const load = r.loads[0];
+    expect(load.maxRounds).toBe(6);
+    expect(load.peakTokens).toBeGreaterThan(load.totalTokens);
+    expect(load.totalTokens).toBeLessThan(600);    // single-shot fits
+    expect(load.peakTokens).toBeGreaterThan(600);  // the 6-round peak does not
+    expect(load.minWindowRequired).toBe(load.peakTokens);
+    expect(r.findings.some((f) => f.code === "no-fitting-model")).toBe(true);
+    expect(r.findings.some((f) => f.code === "thinking-context-growth")).toBe(true);
+  });
+
+  test("an explicit thinking budget is used as the accretion", () => {
+    const d = doc1();
+    d["x-suluk-agents"]!.one.thinking = { maxRounds: 3, budget: { tokens: 5000, basis: "estimate" } };
+    const load = contextReport(d).loads[0];
+    expect(load.thinkingBudget).toBe(5000);
+    expect(load.peakTokens).toBe(load.totalTokens + 5000);
+  });
+
+  test("no thinking ⇒ peak equals single-shot (backward-compatible)", () => {
+    const load = contextReport(doc1()).loads[0];
+    expect(load.peakTokens).toBe(load.totalTokens);
+    expect(load.maxRounds).toBeUndefined();
+  });
+});
+
 describe("C027 model fit — which declared models are expected to work", () => {
   test("each candidate model is checked for window fit; minWindowRequired is the load", () => {
     const load = contextReport(doc1()).loads[0];

@@ -55,8 +55,13 @@ export interface AgentContextLoad {
   coldTailTokens: number;
   tools: ToolContextCost[];
   subAgentCount: number;
-  /** the minimum context window a model needs to run this agent (= the default load). */
+  /** the minimum context window a model needs to run this agent (= the multi-round PEAK load). */
   minWindowRequired: number;
+  /** within-agent thinking cap (C029), if declared. */
+  maxRounds?: number;
+  thinkingBudget?: number;
+  /** worst-case load accounting for thinking round-accretion (= totalTokens when no thinking). Fit checks use THIS. */
+  peakTokens: number;
   /** which DECLARED models are expected to work (window ≥ load) and which can't hold it. */
   modelFit: ModelFit[];
   budget?: number;
@@ -140,22 +145,30 @@ export function contextReport(doc: OpenAPIv4Document, opts: ContextOptions = {})
     const overheadTokens = BASE_OVERHEAD;
     const totalTokens = instructionsTokens + residentToolTokens + overheadTokens;
 
-    // model fit: which declared (resident-skill) models can hold this load
+    // thinking round-accretion (C029): a multi-round agent's PEAK load exceeds the single-shot base. Estimate the
+    // accretion as the declared thinking budget, else each extra round re-accumulates ~the resident tool surface.
+    const maxRounds = agent.thinking?.maxRounds;
+    const thinkingBudget = agent.thinking?.budget?.tokens;
+    const accretion = agent.thinking ? (thinkingBudget ?? Math.max(0, (maxRounds ?? 1) - 1) * residentToolTokens) : 0;
+    const peakTokens = totalTokens + accretion;
+
+    // model fit: which declared (resident-skill) models can hold this load (the multi-round PEAK)
     const candidateModels = [...new Set(skillEntries.filter(([, s]) => s.tier !== "cold-tail").flatMap(([, s]) => s.model ?? []))];
     const modelFit: ModelFit[] = candidateModels.map((m) => {
       const window = windowFor(m, opts.modelWindows);
-      return { model: m, window, fits: window === null ? null : totalTokens <= window, headroom: window === null ? null : window - totalTokens };
+      return { model: m, window, fits: window === null ? null : peakTokens <= window, headroom: window === null ? null : window - peakTokens };
     });
     const withWindow = modelFit.filter((f) => f.window !== null);
     const modelWindow = withWindow.length ? Math.min(...withWindow.map((f) => f.window!)) : undefined;
 
     const budget = agent.contextBudget?.tokens;
     const target = budget !== undefined && modelWindow !== undefined ? Math.min(budget, modelWindow) : budget ?? modelWindow;
-    const utilization = target ? totalTokens / target : undefined;
+    const utilization = target ? peakTokens / target : undefined;
 
     const load: AgentContextLoad = {
       agent: name, instructionsTokens, instructionsMeasured, residentToolTokens, overheadTokens, totalTokens,
-      coldTailTokens, tools, subAgentCount, minWindowRequired: totalTokens, modelFit,
+      coldTailTokens, tools, subAgentCount, minWindowRequired: peakTokens, modelFit, peakTokens,
+      ...(maxRounds !== undefined ? { maxRounds } : {}), ...(thinkingBudget !== undefined ? { thinkingBudget } : {}),
       ...(budget !== undefined ? { budget } : {}), ...(modelWindow !== undefined ? { modelWindow } : {}),
       ...(target !== undefined ? { target } : {}), ...(utilization !== undefined ? { utilization } : {}),
     };
@@ -167,15 +180,19 @@ export function contextReport(doc: OpenAPIv4Document, opts: ContextOptions = {})
     if (anyResidentSkill && anyUnmeasured)
       add("info", "unmeasured-instructions", name, "no instruction snapshot supplied — totalTokens is a LOWER BOUND (tools+overhead only)");
 
-    // model-fit findings (replaces a bare over-window check — names WHICH models work)
+    // thinking round-accretion (C029): the multi-round peak, fixing the single-shot blindspot
+    if (agent.thinking && accretion > 0)
+      add("info", "thinking-context-growth", name, `thinking (maxRounds ${maxRounds ?? 1}) accretes ~${accretion} tok over the ${totalTokens}-tok single-shot base → peak ~${peakTokens}; fit checks use the peak`);
+
+    // model-fit findings (replaces a bare over-window check — names WHICH models work; basis = the PEAK)
     const tooSmall = withWindow.filter((f) => !f.fits);
     if (withWindow.length > 0 && tooSmall.length === withWindow.length)
-      add("error", "no-fitting-model", name, `estimated load ${totalTokens} tok exceeds EVERY declared model window (smallest ${modelWindow}) — unflatten or declare a larger-context model`);
+      add("error", "no-fitting-model", name, `estimated peak load ${peakTokens} tok exceeds EVERY declared model window (smallest ${modelWindow}) — unflatten${agent.thinking ? ", lower maxRounds," : ""} or declare a larger-context model`);
     else if (tooSmall.length > 0)
-      add("warning", "model-too-small", name, `declared model(s) ${tooSmall.map((f) => f.model).join(", ")} cannot hold this agent (needs ≥${totalTokens} tok window) — they are listed but will not work`);
+      add("warning", "model-too-small", name, `declared model(s) ${tooSmall.map((f) => f.model).join(", ")} cannot hold this agent (needs ≥${peakTokens} tok window) — they are listed but will not work`);
 
-    if (budget !== undefined && totalTokens > budget)
-      add("warning", "context-over-budget", name, `estimated load ${totalTokens} tok exceeds declared contextBudget ${budget}`);
+    if (budget !== undefined && peakTokens > budget)
+      add("warning", "context-over-budget", name, `estimated peak load ${peakTokens} tok exceeds declared contextBudget ${budget}`);
     const overloadByFraction = target !== undefined && residentToolTokens > OVERLOAD_FRACTION * target;
     if (residentTools.length >= OVERLOAD_TOOL_COUNT || overloadByFraction)
       add("warning", "flat-agent-overloaded", name, `resident surface is heavy (${residentTools.length} tools, ${residentToolTokens} tok) — candidate to unflatten (move tools to cold-tail or extract a sub-agent)`);
@@ -216,16 +233,16 @@ export function contextReport(doc: OpenAPIv4Document, opts: ContextOptions = {})
 
 /** When an agent is over its target, the cheapest decomposition: which resident tools to push to cold-tail. */
 export function suggestUnflatten(load: AgentContextLoad, target = load.target): UnflattenSuggestion | null {
-  if (target === undefined || load.totalTokens <= target) return null;
+  if (target === undefined || load.peakTokens <= target) return null;
   const resident = load.tools.filter((t) => t.tier === "resident").sort((a, b) => b.tokens - a.tokens);
   const move: string[] = []; let saved = 0;
   for (const t of resident) {
-    if (load.totalTokens - saved <= target) break;
+    if (load.peakTokens - saved <= target) break;
     move.push(t.name); saved += t.tokens;
   }
   return {
     agent: load.agent,
-    reason: `load ${load.totalTokens} tok over target ${target} (${Math.round((load.utilization ?? 0) * 100)}%)`,
+    reason: `peak load ${load.peakTokens} tok over target ${target} (${Math.round((load.utilization ?? 0) * 100)}%)`,
     moveToColdTail: move,
     wouldSaveTokens: saved,
     alsoConsider: move.length >= 3

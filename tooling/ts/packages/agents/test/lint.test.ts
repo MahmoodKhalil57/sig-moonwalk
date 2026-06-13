@@ -35,4 +35,28 @@ describe("C027 agent lint", () => {
     (d["x-suluk-agents"]!.conin.routes!.generate_deliverable as unknown as Record<string, unknown>).model = ["x"];
     expect(codes(d)).toContain("route-has-model");
   });
+
+  test("C029: thinking present without maxRounds is rejected", () => {
+    const d = structuredClone(coninDoc);
+    d["x-suluk-agents"]!.conin.thinking = {} as { maxRounds: number };
+    expect(codes(d)).toContain("missing-max-rounds");
+  });
+
+  test("C029: maxRounds < 1 is rejected", () => {
+    const d = structuredClone(coninDoc);
+    d["x-suluk-agents"]!.conin.thinking = { maxRounds: 0 };
+    expect(codes(d)).toContain("invalid-max-rounds");
+  });
+
+  test("C029: a stopCondition-shaped member is forbidden (declare the bound, not the process)", () => {
+    const d = structuredClone(coninDoc);
+    d["x-suluk-agents"]!.conin.thinking = { maxRounds: 3, stopCondition: "final-answer" } as unknown as { maxRounds: number };
+    expect(codes(d)).toContain("thinking-process-declared");
+  });
+
+  test("C029: a valid thinking bound lints clean", () => {
+    const d = structuredClone(coninDoc);
+    d["x-suluk-agents"]!.conin.thinking = { maxRounds: 6, budget: { tokens: 40000, basis: "estimate" } };
+    expect(lintAgents(d).filter((f) => f.severity === "error")).toEqual([]);
+  });
 });

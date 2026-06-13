@@ -1,0 +1,47 @@
+# C029 (x-suluk-agents thinking bound) — the D1 SAFETY GATE. Fires BEFORE the ADR lands (council panel
+# wf_5aa6a747-cbe, UNANIMOUS 11/11 bound-only). The thinking ENVELOPE is a static cap on within-agent iteration;
+# like every agent field it must be invisible to the matcher. Ceiling held LOW (<=0.52, tracking C027/C028; one
+# real cowpath = Conin's hand-rolled 6-round cap, zero second looped agent), above the 0.139 D1 floor via an
+# independent executable witness (test/agents-d1-invariance.test.ts now carries a thinking-bearing AGENTS_BLOCK).
+
+# THE FIELD (structural, mirrors contextBudget/maxDepth EXACTLY): an optional `thinking { maxRounds, budget? }` on
+# SulukAgent — maxRounds REQUIRED when thinking present; budget reuses the contextBudget/C024 vocab verbatim. NO new
+# normative kind, additive, additionalProperties-legal; a thinking-free doc validates byte-identically.
+claim thinking_bound_static_field: Bool @>=0.52 = True
+falsified_when thinking_bound_static_field == False
+
+# THE D1 GATE: maxRounds + budget are pure literals on the SulukAgent — buildAda (ada.ts:31-54) iterates doc.paths
+# ONLY; matchRequest (ada.ts:69-85) reads only method + the compiled path-template; computeSignature reads only
+# method/contentType/contentSchema/uriTemplate. NONE of the thinking fields exist on Request or feed the signature.
+# A thinking-stripped doc yields a BYTE-IDENTICAL Ada. There is deliberately NO stopCondition / loop-process / per-
+# round descriptor, and no thinking field references request/DOM/header/body values.
+# WITNESS (independent, executable): test/agents-d1-invariance.test.ts — buildAda/matchRequest byte-identical with vs
+# without a thinking-bearing block. Module boundary: the field is parsed by @suluk/agents, which @suluk/core never
+# imports (core-boundary.test.ts).
+claim d1_thinking_bound_safe: Bool @>=0.55 = True
+falsified_when d1_thinking_bound_safe == False
+
+# DECLARE THE BOUND, FORBID THE PROCESS (the unanimous seam): maxRounds is a number a tool ACTS on (loop-guard,
+# terminator hint, context multiplier); a stopCondition enum (final-answer|tool-exhausted|budget) names RUNTIME
+# predicates over model output + tool traces a generator can only ECHO — the #20 parameterSchema tripwire in an enum
+# costume, D1-FORBIDDEN not precedence-resolved. So the schema carries the integer cap and NOTHING of the loop
+# trajectory; the iteration stays runtime-opaque (matching Strands / Claude Agent SDK / OpenAI Agents).
+claim thinking_declares_bound_forbids_process: Bool @>=0.55 = True
+falsified_when thinking_declares_bound_forbids_process == False
+
+# NOT REDUNDANT WITH RECURSION (category-distinct, code-grounded): a self-delegating sub-agent + maxDepth is
+# delegation-DOWN (a NEW completion, scope INTERSECTED via intersectScope, context RESET per front-door hop, bounds
+# call-graph nesting DEPTH) and would TRIP the cycle-linter; thinking is the INVERSE (the SAME completion, context
+# ACCRETES per round, no scope change, bounds within-agent iteration BREADTH at fixed depth — Conin's 6 rounds are
+# at depth 0). Orthogonal bounds, like depth vs fan-out. The integer adds a genuinely NEW static cap.
+claim thinking_orthogonal_to_recursion: Bool @>=0.58 = True
+falsified_when thinking_orthogonal_to_recursion == False
+
+# DECLARED, NOT ENFORCED (C026/C027/C028 honesty restated): maxRounds caps re-entries, it does NOT enforce
+# termination or determinism (sibling to C028 costCeiling{enforcedBy} + C027 guarantee:same-in-same-out); only the
+# serving adapter (Conin's existing 6-round loop) clamps to it; budget.basis 'estimate' is never laundered as a bill.
+# JUSTIFIED ONLY BY CONSUMPTION: the field exists because the context analyzer reads it (worst-case load = base +
+# round-accretion, fixing context.ts's single-shot blindspot that under-counts a multi-round agent) + a linter
+# (maxRounds present-and-positive); an unconsumed field would be the decoration the panel rejected.
+claim thinking_declared_not_enforced_consumed_by_analyzer: Bool @>=0.55 = True
+falsified_when thinking_declared_not_enforced_consumed_by_analyzer == False

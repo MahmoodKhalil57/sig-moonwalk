@@ -1,0 +1,11 @@
+# SECOND, INDEPENDENT witness for `d1_thinking_bound_safe` (primary reasoning + cite-chain in 0thinking-bound.bn).
+# Distinct methodology: an EXECUTABLE regression test run green, not a code-reading — the witness mizan_verify_claim
+# asks for to lift the sole-witness floor. Distinct claim name keeps the ledger single-definition.
+#
+# THE TEST: tooling/ts/packages/core/test/agents-d1-invariance.test.ts now carries `thinking: { maxRounds: 6,
+# budget: { tokens: 40000, basis: estimate } }` inside its AGENTS_BLOCK and asserts buildAda(docWithAgents) projects
+# identically to buildAda(docWithoutAgents) AND matchRequest resolves every operation identically — so the matcher
+# is empirically blind to the thinking bound too. A maintained tripwire: the day the matcher reads a thinking field,
+# the ADA stops being invariant and this fails loud.
+claim d1_thinking_invariance_test_green: Bool @>=0.6 = True
+falsified_when d1_thinking_invariance_test_green == False

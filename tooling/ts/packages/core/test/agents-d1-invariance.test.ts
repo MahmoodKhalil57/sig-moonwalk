@@ -31,6 +31,7 @@ const AGENTS_BLOCK = {
       description: "Construction-intelligence orchestrator (routing-oriented).",
       scope: ["project:read", "deliverable:write"],
       maxDepth: 1,
+      thinking: { maxRounds: 6, budget: { tokens: 40000, basis: "estimate" } }, // C029 — if the matcher ever read this, invariance breaks
       skills: {
         operate: {
           model: ["anthropic/claude-opus-4", "google/gemini-2.5-flash"],

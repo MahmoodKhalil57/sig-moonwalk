@@ -102,6 +102,16 @@ export interface SulukAgent {
   trustBoundary?: "untrusted";
   /** advisory per-tier context budget (basis: estimate); fail-loud, never silent-zero. */
   contextBudget?: { tokens: number; basis: "estimate" };
+  /**
+   * THINKING ENVELOPE (C029) — a static cap on WITHIN-agent iteration (reason→tool→reason in the SAME completion,
+   * context accreting), orthogonal to `maxDepth` (which bounds cross-agent nesting depth, a fresh context per hop).
+   * `maxRounds` is REQUIRED when `thinking` is present. DECLARED-not-enforced: it bounds re-entries and is consumed
+   * by the context analyzer (round-accretion) + the linter; it NEVER enforces termination, and is NEVER read by the
+   * matcher. The loop TRAJECTORY (when/why each round stops) stays runtime-opaque (matching Strands / the Claude
+   * Agent SDK / OpenAI Agents). There is deliberately NO stopCondition vocabulary — that would model runtime control
+   * flow a generator could only echo. Absent ⇒ opaque single pass (zero-migration default). Conin's 6-round loop.
+   */
+  thinking?: { maxRounds: number; budget?: { tokens: number; basis: "estimate" } };
   /** any other vendor facet — notably `x-suluk-cost` (an agent/skill boundary's declared cost; PROVISIONAL per C026). */
   [ext: `x-${string}`]: unknown;
 }

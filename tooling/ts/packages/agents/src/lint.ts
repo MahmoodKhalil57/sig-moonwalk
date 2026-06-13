@@ -78,6 +78,17 @@ export function lintAgents(doc: OpenAPIv4Document): LintFinding[] {
     for (const esc of localEscalations(doc, name)) {
       add("error", "scope-escalation", name, `sub-agent "${esc.childLocal}" (${esc.child}) declares scope its caller does not grant: ${esc.perms.join(", ")} — a child's effective scope is INTERSECTION(child, caller), never union`, `agents.${esc.childLocal}`);
     }
+
+    // --- thinking bound (C029): maxRounds REQUIRED + positive when `thinking` present; no loop-process / stopCondition ---
+    if (agent.thinking) {
+      const mr = agent.thinking.maxRounds;
+      if (mr === undefined) add("error", "missing-max-rounds", name, "thinking present but no maxRounds — a thinking envelope MUST declare its round cap (mirrors maxDepth-required-when-agents)", "thinking");
+      else if (!(typeof mr === "number" && mr >= 1 && Number.isInteger(mr))) add("error", "invalid-max-rounds", name, `maxRounds must be an integer >= 1 (got ${mr})`, "thinking.maxRounds");
+      // any stopCondition-shaped member is forbidden — the loop trajectory stays runtime-opaque (declare the bound, not the process)
+      for (const k of Object.keys(agent.thinking as Record<string, unknown>))
+        if (/^(stopCondition|stopConditionKind|steps?|loop|process|until|while)$/i.test(k))
+          add("error", "thinking-process-declared", name, `thinking.${k} models the loop PROCESS — forbidden (declare the bound maxRounds/budget, never the trajectory; it stays runtime-opaque)`, `thinking.${k}`);
+    }
     if (children.length > 0) {
       const cycle = findCycle(map, name);
       if (cycle) add("error", "agent-cycle", name, `recursion cycle: ${cycle.join(" → ")}`);
