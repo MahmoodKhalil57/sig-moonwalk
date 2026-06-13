@@ -31,3 +31,9 @@ export {
   policyConstrain, effectiveUnderPolicies, policiesFor, policyAppliesTo, lintPolicy, policyOk,
   type EffectiveAgent, type EffectiveSkill, type PolicyNarrowing, type PolicyConstrainResult,
 } from "./policy";
+// context budget (C027): estimate each agent's default context load (resident instructions + tool surface) vs its
+// budget + smallest model window, and say what to unflatten when overloaded. Estimates, not a tokenizer.
+export {
+  contextReport, suggestUnflatten,
+  type ContextReport, type AgentContextLoad, type UnflattenSuggestion, type ToolContextCost, type ContextOptions,
+} from "./context";
