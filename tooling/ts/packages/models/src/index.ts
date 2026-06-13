@@ -1,0 +1,14 @@
+/**
+ * @suluk/models — a weekly, PUBLIC-DATA-ONLY OpenRouter model catalog + a selector. A suluk skill declares NEEDS
+ * (hard filters) + a small PREFERENCE (a named profile), and selectModel picks the best CURRENT model — never a
+ * hard-coded id. Decidable OpenRouter facts are numbers; noisy benchmarks are coarse TIERS with {source, asOf};
+ * UNKNOWN is honest (never imputed to worst); no cross-axis composite is stored (blending is the selector's job).
+ * Council wf_729cde52-cc7. CANDIDATE tooling — NOT official OAS. The live weekly fetcher is specified in REFRESH.md
+ * (this package ships the schema + selector + a SEED catalog; the 200-row generated catalog is the data-eng spine).
+ */
+export type {
+  Tier, Cell, DataRetention, ModelRecord, ModelCatalog, HardFilters, Profile, Preferences, RankedModel, SelectResult,
+} from "./types";
+export { SEED_CATALOG } from "./catalog";
+export { PROFILES, type ResolvedProfile } from "./profiles";
+export { selectModel, deriveRequirements } from "./select";
