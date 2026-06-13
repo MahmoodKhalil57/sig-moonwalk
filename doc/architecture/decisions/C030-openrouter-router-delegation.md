@@ -76,7 +76,14 @@ link out, do not absorb). `latest-resolution` is the opt-in above. `pareto` is a
 
 - The **`endpoints[]`** sub-list — build when a real fleet needs per-endpoint **region** governance OpenRouter can't
   express, AND we have endpoint gov data.
-- The **governed-router path** (`provider.zdr` for retention) — reopen when OpenRouter docs confirm provider-prefs
-  combine with `openrouter/auto`.
+- The **governed-router path** (`provider.zdr` for retention). _(Verified 2026-06-13 against OpenRouter's
+  provider-routing doc: the `provider` object exposes `zdr` (a real hard "restrict to ZDR endpoints" constraint),
+  `data_collection`, `only`/`ignore`/`order`, `quantizations` — but **NO region/residency field** (so region-governed
+  selection MUST pin, permanently — this strengthens the gate), and the docs do **NOT** state `provider:{zdr:true}`
+  combines with `model:"openrouter/auto"` (the auto-router uses a separate `plugins.allowed_models`). With no
+  OpenRouter API key available to test it empirically, the combination stays UNVERIFIED → **force-pin all governed**
+  remains correct.)_ **Sharpened reopen-trigger:** a LIVE empirical request confirming `provider:{zdr:true}` +
+  `model:"openrouter/auto"` routes only to ZDR endpoints — then retention-governed (ZDR-only) skills may delegate
+  with `provider:{zdr:true}` on the target; region/license-governed still pin.
 - The full **Class-B tier curation** — superseded as a *ranker* input; revisit only if tiers are wanted as filter
   floors at scale.

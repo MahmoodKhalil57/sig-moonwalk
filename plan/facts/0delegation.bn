@@ -43,3 +43,14 @@ falsified_when delegation_keying_endpoints_reserved_no_representative_region == 
 # policy router target (governance-blind); free/bodybuilder = link-out niche. None is ever a default profile.
 claim delegation_other_routers_orthogonal_or_niche: Bool @>=0.7 = True
 falsified_when delegation_other_routers_orthogonal_or_niche == False
+
+# VERIFIED 2026-06-13 against OpenRouter's provider-routing doc (the reopen-trigger probe): the `provider` object
+# exposes zdr (a real HARD "restrict to ZDR endpoints" constraint), data_collection, only/ignore/order, quantizations
+# — but NO region/residency field, so region-governed selection MUST pin permanently (strengthens the gate). The docs
+# do NOT state provider:{zdr:true} combines with model:openrouter/auto (auto uses a separate plugins.allowed_models),
+# and no OpenRouter API key is available to test empirically. So the auto+zdr combination stays UNVERIFIED ->
+# force-pin-ALL-governed remains correct (the shipped C030 code is already on the safe side; this finding VALIDATES
+# it). Sharpened reopen: a LIVE request confirming provider:{zdr:true}+model:openrouter/auto routes only to ZDR
+# endpoints -> then retention(ZDR)-governed skills may delegate with provider.zdr; region/license-governed still pin.
+claim delegation_zdr_field_exists_region_absent_combination_unverified: Bool @>=0.7 = True
+falsified_when delegation_zdr_field_exists_region_absent_combination_unverified == False

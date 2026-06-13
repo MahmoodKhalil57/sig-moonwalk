@@ -113,7 +113,7 @@ becomes a hard filter the model selector uses → an agent declares *needs*, not
   `~-latest`); **governance-gated** (a policied skill declaring `router` fails loud); `pickPinned` marks set-pinned-but-
   pick-not-pinned; manifest + cockpit fold it. `fusion`→sub-agent/C029 docs, `pareto`→future coding target,
   `free`/`bodybuilder`→link-out. Verified: core 36 / models 16 / agents 71 / cockpit 125 tests, tsc clean.
-- [ ] _Reopen-gated:_ the governed-router `provider.zdr` path (verify OpenRouter combines provider-prefs with
+- [ ] _Reopen-gated:_ the governed-router `provider.zdr` path — VERIFIED 2026-06-13: ZDR field exists but NO region field + the auto+zdr combination is undocumented + no API key to test → stays gated on a LIVE test (region-governed pins permanently). (orig: verify OpenRouter combines provider-prefs with
   `openrouter/auto`); the `endpoints[]` build (a fleet needing per-endpoint region governance).
 
 ### C. C027 deferred items (each gated by a reopen-trigger — do NOT build ahead)
