@@ -69,7 +69,7 @@ becomes a hard filter the model selector uses → an agent declares *needs*, not
 
 ## ☐ REMAINING (unchecked = not done; grouped + prioritized)
 
-### A. The model-catalog seam — ✅ DONE (commit `e9a1` / this session)
+### A. The model-catalog seam — ✅ DONE (commit `59ed4fd`)
 - [x] **`SulukSkillRef` declares NEEDS** — added `modelProfile` + `modelPrefer` + `modelRequire` (structural; `model[]`
   kept as the back-compat opt-out). `modelProfile` added to the invariance block (matcher still byte-identical).
 - [x] **`DEFAULT_WINDOWS` DELETED** — `context.ts` `windowFor` now reads `context.maxWindow` from `opts.catalog`
