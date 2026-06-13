@@ -23,6 +23,12 @@ export { componentReport, approveComponents, type ComponentReport } from "./visu
 export { type Baseline, primitiveCss } from "@suluk/visual";
 // lifecycle / ship-readiness (L3): the round-trip loop as one checklist — authored → coherent → confident → generated → deployed.
 export { contractGates, shipSummary, type Gate, type GateStatus } from "./lifecycle";
+// agents (C027, OBSERVE): the x-suluk-agents tier tree, effective scope, gate findings, reachable surface + a
+// projection preview — read-only; agent execution + secrets live OUTSIDE the cockpit (C020 no-credentials seam).
+export {
+  agentsView, agentsSummary,
+  type AgentsView, type AgentNodeView, type AgentSkillView, type AgentRouteView,
+} from "./agents";
 // cost formatting, re-exported so the extension shell can render a live /cost ledger without a direct @suluk/cost dep.
 export { formatMicroUsd, summarize, type CostSummary } from "@suluk/cost";
 // modules (C021): install a contract fragment into the hub doc — the cockpit then re-projects it for free.

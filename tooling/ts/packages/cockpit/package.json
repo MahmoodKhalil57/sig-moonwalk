@@ -25,7 +25,8 @@
     "@suluk/builder": "workspace:^",
     "@suluk/deploy": "workspace:^",
     "@suluk/cost": "workspace:^",
-    "@suluk/visual": "workspace:^"
+    "@suluk/visual": "workspace:^",
+    "@suluk/agents": "workspace:^"
   },
   "devDependencies": {
     "@types/bun": "latest"
