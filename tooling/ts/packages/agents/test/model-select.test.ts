@@ -1,6 +1,6 @@
 import { test, expect, describe } from "bun:test";
 import type { OpenAPIv4Document } from "@suluk/core";
-import { skillModels, resolveSkillModels, SEED_CATALOG } from "../src/index";
+import { skillModels, resolveSkillModels, deriveCQT, SEED_CATALOG } from "../src/index";
 
 /** An agent with routes (⇒ needs tool-calling) and two skills: a needs-based one + an explicit opt-out. */
 function doc(): OpenAPIv4Document {
@@ -52,5 +52,47 @@ describe("C027 × @suluk/models — the model-selection seam", () => {
     d["x-suluk-policy"] = { fleet: { appliesTo: ["#/x-suluk-agents/conin"], modelAllowlist: ["google/gemini-2.5-flash"] } };
     const r = skillModels(d, "conin", "operate", SEED_CATALOG);
     expect(r.ids).toEqual(["google/gemini-2.5-flash"]); // even though cheap-fast might prefer gpt-4o-mini
+  });
+});
+
+describe("C030 resolution target — pin (default) / router (delegate) / latest, governance-gated", () => {
+  test("default is a REPRODUCIBLE pin", () => {
+    const r = skillModels(doc(), "conin", "operate", SEED_CATALOG);
+    expect(r.target).toEqual({ kind: "pinned", model: r.ids[0] });
+    expect(r.pickPinned).toBe(true);
+  });
+
+  test("modelResolve:'router' (ungoverned) delegates to openrouter/auto with an ENUMERATED survivor allowlist", () => {
+    const d = doc();
+    d["x-suluk-agents"]!.conin.skills!.operate = { modelProfile: "cheap-fast", modelResolve: "router" };
+    const r = skillModels(d, "conin", "operate", SEED_CATALOG);
+    expect(r.target.kind).toBe("router");
+    if (r.target.kind === "router") {
+      expect(r.target.model).toBe("openrouter/auto");
+      expect(r.target.allowedModels).toEqual(r.ids); // enumerated survivor ids — NEVER a wildcard
+      expect(r.target.costQualityTradeoff).toBeGreaterThan(5); // cheap-fast leans cost
+    }
+    expect(r.pickPinned).toBe(false);
+  });
+
+  test("a GOVERNED skill declaring 'router' FAILS LOUD (must pin — reproducible + endpoint-bindable)", () => {
+    const d = doc();
+    d["x-suluk-policy"] = { fleet: { appliesTo: ["#/x-suluk-agents/conin"], modelAllowlist: ["google/gemini-2.5-flash"] } };
+    d["x-suluk-agents"]!.conin.skills!.operate = { modelProfile: "balanced", modelResolve: "router" };
+    expect(() => skillModels(d, "conin", "operate", SEED_CATALOG)).toThrow(/GOVERNED|pinned/);
+  });
+
+  test("modelResolve:'latest' emits a ~-latest alias (non-reproducible, recorded)", () => {
+    const d = doc();
+    d["x-suluk-agents"]!.conin.skills!.operate = { modelProfile: "max-reasoning", modelResolve: "latest" };
+    const r = skillModels(d, "conin", "operate", SEED_CATALOG);
+    expect(r.target.kind).toBe("latest");
+    if (r.target.kind === "latest") expect(r.target.model.startsWith("~")).toBe(true);
+    expect(r.pickPinned).toBe(false);
+  });
+
+  test("deriveCQT is mechanical: cheap-fast leans cost (>5), max-reasoning leans quality (0)", () => {
+    expect(deriveCQT({ modelProfile: "cheap-fast" })).toBeGreaterThan(5);
+    expect(deriveCQT({ modelProfile: "max-reasoning" })).toBe(0);
   });
 });

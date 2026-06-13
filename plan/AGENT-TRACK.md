@@ -92,17 +92,29 @@ becomes a hard filter the model selector uses → an agent declares *needs*, not
   per INTEL axis (the red-line). Unit-tested. _(Boundaries are tunable at review; the value is the explicit mapping.)_
 - [x] **Class-B tier overlay (mechanism + bootstrap)** — `applyTierOverlay` + `KNOWN_TIERS` (`overlay.ts`): patches
   CITED coarse `intel.*` tiers onto the facts catalog (`snapshotHash` now covers tiers). Bootstrapped **9 frontier
-  models** from public-consensus standings (source-stamped, low ceiling); the long tail stays `unknown`. _(Remaining:
-  the full human-reviewed curation from BFCL/IFEval/SWE-bench/GPQA/RULER/MMLU-Pro/LMArena snapshots, ≥2-source
-  cross-witness — the council honesty rule.)_
+  models** from public-consensus standings (source-stamped, low ceiling); the long tail stays `unknown`. _(The full
+  weekly curation is **SUPERSEDED as a RANKER input by C030** — our coarse-tier ranker is a prompt-blind worse copy of
+  `openrouter/auto`; tiers are kept only as optional filter floors + the bootstrap. Do NOT build the Class-B treadmill.)_
 - [x] **Real catalog committed** — `OPENROUTER_CATALOG` (337 rows) replaces the need to grow the seed; `SEED_CATALOG`
   is retained as the small illustrative fixture for tests. (The Class-B tier overlay still fills `intel.*`.)
 - [x] **Cockpit OBSERVE surface for model selection** — `agentsView(doc, { catalog })` folds a per-skill
   `modelSelection` (declared vs selected, top ids, deciding preference, UNKNOWN-coverage gaps) so an operator can
   audit "why this model". Read-only (C020). _(Remaining polish: surface staleness/`asOf` once the fetcher stamps it.)_
-- [ ] **Micro-panel (contested):** key a catalog row by **model** vs **(model, provider-endpoint)** —
-  governance/price attach to the endpoint (sounder) but 3–5× rows + author-UX cost. Resolve with a receipt + ceiling
-  before hardening. (Seed currently keys by model.)
+- [x] **Keying micro-panel — RESOLVED** (`wf_27de1bec-a42`, 7/8 @0.6): **model-keyed HYBRID** — per-endpoint axes
+  (price/region/retention/latency) belong in a future optional `endpoints[]` sub-list, **RESERVED not built**
+  (OpenRouter routes endpoints + honors ZDR at runtime; zero fleets). Caught + fixed a real bug: a "representative"
+  `gov.region` would degrade fail-closed→fail-OPEN (the `types.ts` header is corrected; no representative region). See C030.
+
+### G. OpenRouter routers (C030 — strategic, RESOLVED + shipped)
+- [x] **Delegate the per-request PICK to OpenRouter, keep the moat** — strategy council `wf_75f87ab6-b1b` (**unanimous
+  10/10 hybrid** @0.76). ADR [C030](../doc/architecture/decisions/C030-openrouter-router-delegation.md);
+  [`0delegation.bn`](./facts/0delegation.bn). `SulukSkillRef.modelResolve` (`pinned`|`router`|`latest`, default
+  `pinned`); `skillModels` emits a `ResolvedTarget` (pin / `openrouter/auto`+enumerated `allowed_models`+`deriveCQT` /
+  `~-latest`); **governance-gated** (a policied skill declaring `router` fails loud); `pickPinned` marks set-pinned-but-
+  pick-not-pinned; manifest + cockpit fold it. `fusion`→sub-agent/C029 docs, `pareto`→future coding target,
+  `free`/`bodybuilder`→link-out. Verified: core 36 / models 16 / agents 71 / cockpit 125 tests, tsc clean.
+- [ ] _Reopen-gated:_ the governed-router `provider.zdr` path (verify OpenRouter combines provider-prefs with
+  `openrouter/auto`); the `endpoints[]` build (a fleet needing per-endpoint region governance).
 
 ### C. C027 deferred items (each gated by a reopen-trigger — do NOT build ahead)
 - [ ] **Recursion machinery beyond one hop.** Reopen-trigger: a **2nd real nested or non-Conin agent**. (Today:

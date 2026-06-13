@@ -50,7 +50,7 @@ export interface AgentNodeView {
   context: AgentContextLoad;
   /** per-skill model pick (C027 × @suluk/models) — present only when agentsView is given a catalog. OBSERVE-only:
    * "why this model" (declared vs selected, top ids, deciding preference, UNKNOWN-coverage gaps). Never executes. */
-  modelSelection?: { skill: string; from: "declared" | "selected"; ids: string[]; decidingPreference?: string; coverageGaps?: string[] }[];
+  modelSelection?: { skill: string; from?: "declared" | "selected"; ids?: string[]; resolve?: "pinned" | "router" | "latest"; pickPinned?: boolean; decidingPreference?: string; coverageGaps?: string[]; error?: string }[];
 }
 /** The agent-declared vs operator-effective diff + the cost three-number (cap / estimate / actual). Read-only. */
 export interface AgentGovernedView {
@@ -163,12 +163,14 @@ export function agentsView(doc: OpenAPIv4Document, opts: { catalog?: ModelCatalo
       ...(opts.catalog ? {
         modelSelection: Object.keys(a.skills ?? {}).sort().map((sk) => {
           const minWin = cr.loads.find((l) => l.agent === name)?.minWindowRequired;
-          const r = skillModels(doc, name, sk, opts.catalog!, minWin);
-          return {
-            skill: sk, from: r.from, ids: r.ids.slice(0, 3),
-            ...(r.selection?.ranked[0] ? { decidingPreference: r.selection.ranked[0].why.decidingPreference } : {}),
-            ...(r.selection ? { coverageGaps: r.selection.coverageGaps } : {}),
-          };
+          try {
+            const r = skillModels(doc, name, sk, opts.catalog!, minWin);
+            return {
+              skill: sk, from: r.from, ids: r.ids.slice(0, 3), resolve: r.target.kind, pickPinned: r.pickPinned,
+              ...(r.selection?.ranked[0] ? { decidingPreference: r.selection.ranked[0].why.decidingPreference } : {}),
+              ...(r.selection ? { coverageGaps: r.selection.coverageGaps } : {}),
+            };
+          } catch (e) { return { skill: sk, error: e instanceof Error ? e.message : String(e) }; } // governed + router ⇒ fail-loud, surfaced
         }),
       } : {}),
     };

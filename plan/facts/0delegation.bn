@@ -1,0 +1,45 @@
+# C030 — delegate the per-request model PICK to OpenRouter; keep the governance+audit moat. Two councils:
+# strategy wf_75f87ab6-b1b (UNANIMOUS 10/10 hybrid, Class-A 0.70-0.78) + keying micro-panel wf_27de1bec-a42
+# (7/8 model-keyed hybrid @0.6). NO D1 gate — modelResolve is skill metadata, never read by the matcher.
+# Honest ceiling ~0.76: the unverified auto+provider-preference combination + declared-not-verified gov facts cap it.
+
+# HYBRID: keep the survivor SET (checkFilters governance FAIL-CLOSED + C028 modelAllowlist terminal MEET + analyzer
+# minWindowRequired + caps), the facts catalog + normalizeOpenRouter + snapshotHash pin + the why-explainer; DELEGATE
+# the per-request cost/quality/capability PICK within the fenced set to openrouter/auto + allowed_models=ENUMERATED
+# survivor ids (never wildcard; MEET stays terminal, widening inadmissible) + cost_quality_tradeoff=deriveCQT(profile)
+# set explicitly. Our coarse-tier RANKER is a prompt-blind worse re-implementation of auto-router (intel.* mostly
+# UNKNOWN=1.5) — so the Class-B tier curation treadmill is RETIRED as a ranker input (tiers kept only as filter floors;
+# facts/pin KEPT, the filters depend on them).
+claim delegation_hybrid_keep_set_delegate_pick: Bool @>=0.76 = True
+falsified_when delegation_hybrid_keep_set_delegate_pick == False
+
+# GOVERNANCE GATE (mechanical, not a free author toggle): modelResolve pinned(default)|router|latest. A skill GOVERNED
+# by any operator policy MUST pin (router/latest fail loud at contract time) — a runtime pick cannot bind an endpoint
+# region/retention and is non-reproducible across dates; default pinned for replayable agent loops + forced-tool-choice.
+# The verifier REFUTED the strong governance-sound claim (provider.zdr+auto UNVERIFIED, region has NO OpenRouter
+# endpoint knob, allowed_models fences the MODEL id not the served ENDPOINT) -> folded in as force-pin-all-governed; the
+# governed-router+ZDR path is NOT shipped (reopen when OpenRouter confirms provider-prefs combine with openrouter/auto).
+claim delegation_governance_gate_force_pin: Bool @>=0.7 = True
+falsified_when delegation_governance_gate_force_pin == False
+
+# REPRODUCIBILITY is DOWNGRADED-not-preserved on the router/latest path: snapshotHash pins the survivor SET + the CQT
+# knob; pickPinned=false marks the served id logged-not-pinned. Never launder "auditable fence" as "reproducible
+# selection" — a region-residency / SOC2 "which concrete model on date X" audit is answered by PIN (which is exactly
+# why the gate forces governed skills to pin).
+claim delegation_reproducibility_downgraded_honest: Bool @>=0.7 = True
+falsified_when delegation_reproducibility_downgraded_honest == False
+
+# KEYING: the catalog stays MODEL-keyed; per-endpoint axes (price/region/retention/latency) belong in a future
+# optional endpoints[] sub-list — RESERVED, NOT BUILT (OpenRouter routes endpoints at runtime + honors ZDR via a
+# request flag; zero fleets need per-endpoint region governance; value is latent). The keying micro-panel found a real
+# bug: a "representative" gov.region cell would degrade fail-closed -> fail-OPEN at the endpoint layer (forged
+# in-region attestation). FIX: gov.region/dataRetention stay per-model UNKNOWN/fail-closed; the false types.ts header
+# "one model+provider endpoint" is corrected; no representative region is ever populated.
+claim delegation_keying_endpoints_reserved_no_representative_region: Bool @>=0.6 = True
+falsified_when delegation_keying_endpoints_reserved_no_representative_region == False
+
+# fusion (ensemble, adjacent to suluk sub-agents + C029 thinking) IGNORED for selection (link out, do not absorb);
+# latest-resolution = the opt-in ~-latest modelResolve (non-reproducible, recorded); pareto = a future coding+empty-
+# policy router target (governance-blind); free/bodybuilder = link-out niche. None is ever a default profile.
+claim delegation_other_routers_orthogonal_or_niche: Bool @>=0.7 = True
+falsified_when delegation_other_routers_orthogonal_or_niche == False

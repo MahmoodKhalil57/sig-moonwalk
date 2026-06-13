@@ -108,7 +108,9 @@ describe("C027 cockpit agents view (OBSERVE)", () => {
     d["x-suluk-agents"]!.conin.skills!.operate = { modelProfile: "cheap-fast" };
     const sel = agentsView(d, { catalog: SEED_CATALOG }).agents.find((a) => a.name === "conin")!.modelSelection!.find((m) => m.skill === "operate")!;
     expect(sel.from).toBe("selected");
-    expect(sel.ids.length).toBeGreaterThan(0);
+    expect(sel.ids!.length).toBeGreaterThan(0);
+    expect(sel.resolve).toBe("pinned"); // C030 default, ungoverned
+    expect(sel.pickPinned).toBe(true);
     expect(sel.decidingPreference).toBeTruthy();
   });
 

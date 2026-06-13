@@ -141,6 +141,14 @@ export interface SulukSkillRef {
   modelPrefer?: { intelligence?: 0 | 1 | 2 | 3; cost?: 0 | 1 | 2 | 3; speed?: 0 | 1 | 2 | 3; context?: 0 | 1 | 2 | 3 };
   /** explicit hard requirements the author adds (beyond what's derived from the agent + the context analyzer). */
   modelRequire?: { needsStructured?: boolean; inputModalities?: string[]; minContext?: number };
+  /**
+   * How the model is RESOLVED from the survivor set (C030): `pinned` (default) — a concrete reproducible id; `router`
+   * — delegate the per-request pick to OpenRouter's auto-router fenced by our enumerated survivor allowlist (opt-in,
+   * UNGOVERNED skills only — a governed skill declaring `router` fails loud at contract time); `latest` — a ~-latest
+   * alias (defers the version to request time; NOT reproducible). The switch is governance-gated: an operator-policied
+   * agent force-pins for reproducible, auditable behavior. Author surface only; never read by the matcher.
+   */
+  modelResolve?: "pinned" | "router" | "latest";
   /** static serving partition: `resident` (default tools/list) vs `cold-tail` (revealed via discover_tools). */
   tier?: "resident" | "cold-tail";
   /** routing-oriented precondition prose (runtime-advisory; never a request-value selector — D1). */

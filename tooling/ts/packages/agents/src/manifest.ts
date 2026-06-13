@@ -52,8 +52,9 @@ export interface AgentManifestNode {
   /** operator-effective surface after x-suluk-policy (C028) — so the C021 signature covers the operator's caps. */
   governed?: AgentManifestGoverned;
   /** catalog-pinned model selection per skill (present only when agentManifest is given a catalog) — reproducible: the
-   * snapshotHash is signed, so a re-pick week-over-week with no author edit is auditable (C027 contentHash discipline). */
-  modelSelection?: { skill: string; ids: string[]; from: "declared" | "selected"; snapshotHash: string | null }[];
+   * snapshotHash is signed (the SURVIVOR SET), so a re-pick week-over-week with no author edit is auditable. `resolve`
+   * is the C030 mode; `pickPinned` false ⇒ set-pinned but the served id is NOT reproducible (router/latest). */
+  modelSelection?: { skill: string; ids: string[]; from: "declared" | "selected"; snapshotHash: string | null; resolve: "pinned" | "router" | "latest"; pickPinned: boolean }[];
 }
 export interface AgentManifest {
   manifestVersion: 1;
@@ -110,7 +111,7 @@ export function agentManifest(doc: OpenAPIv4Document, agentName: string, opts: {
     if (opts.catalog) {
       modelSelection = Object.keys(a.skills ?? {}).sort().map((sk) => {
         const r = skillModels(doc, key, sk, opts.catalog!, minWinByAgent[key]);
-        return { skill: sk, ids: r.ids, from: r.from, snapshotHash: r.snapshotHash };
+        return { skill: sk, ids: r.ids, from: r.from, snapshotHash: r.snapshotHash, resolve: r.target.kind, pickPinned: r.pickPinned };
       });
     }
     return { name: key, description: a.description, effectiveScope: effective[key] ?? null, skills, routes, subAgents, ...(governed ? { governed } : {}), ...(modelSelection ? { modelSelection } : {}) };
