@@ -84,6 +84,16 @@ describe("C027 cockpit agents view (OBSERVE)", () => {
     expect(agentsSummary(bv)).toContain("blocking");
   });
 
+  test("context-budget load is attached, and unflatten surfaces when an agent is over budget (the add-a-layer check)", () => {
+    expect(v.agents.find((a) => a.name === "conin")!.context.totalTokens).toBeGreaterThan(0);
+    const tiny = structuredClone(doc);
+    tiny["x-suluk-agents"]!.conin.contextBudget = { tokens: 50, basis: "estimate" };
+    const v2 = agentsView(tiny);
+    expect(v2.contextFindings.some((f) => f.code === "context-over-budget")).toBe(true);
+    expect(v2.unflatten.some((u) => u.agent === "conin")).toBe(true);
+    expect(agentsSummary(v2)).toContain("unflatten");
+  });
+
   test("absent agent layer is handled", () => {
     const empty = agentsView({ openapi: "4.0.0-candidate", info: { title: "x", version: "0" }, paths: {} });
     expect(empty.present).toBe(false);

@@ -8,8 +8,8 @@
 import type { OpenAPIv4Document } from "@suluk/core";
 import {
   lintAgents, lintOk, reachableSurface, analyzeScopes, resolveOperationRef,
-  agentMap, subAgentKey, effectiveUnderPolicies, policiesFor, lintPolicy,
-  type LintFinding, type Scope,
+  agentMap, subAgentKey, effectiveUnderPolicies, policiesFor, lintPolicy, contextReport,
+  type LintFinding, type Scope, type AgentContextLoad, type UnflattenSuggestion,
 } from "@suluk/agents";
 
 export interface AgentSkillView {
@@ -46,6 +46,8 @@ export interface AgentNodeView {
   projection: { pluginFiles: string[]; openRouterTools: string[]; residentTools: string[]; discoverableTools: string[] };
   /** operator governance diff (C028) — present only when an x-suluk-policy governs this agent. */
   governed?: AgentGovernedView;
+  /** estimated default context load (resident instructions+tools+overhead) vs budget/window — the unflatten check (C027). */
+  context: AgentContextLoad;
 }
 /** The agent-declared vs operator-effective diff + the cost three-number (cap / estimate / actual). Read-only. */
 export interface AgentGovernedView {
@@ -66,6 +68,10 @@ export interface AgentsView {
   findings: LintFinding[];
   /** true ⇒ no error-severity findings across the whole map (the gate). */
   installable: boolean;
+  /** context-budget findings (over-window / over-budget / overloaded / empty-layer) — the "add more layers?" check. */
+  contextFindings: LintFinding[];
+  /** for every over-target agent: what to move to cold-tail or extract into a sub-agent. */
+  unflatten: UnflattenSuggestion[];
 }
 
 /** Agents referenced as a sub-agent by someone else (so the complement is the set of roots). */
@@ -105,6 +111,7 @@ export function agentsView(doc: OpenAPIv4Document): AgentsView {
   const names = Object.keys(map).sort((a, b) => a.localeCompare(b));
   const present = names.length > 0;
   const findings = [...lintAgents(doc), ...lintPolicy(doc)];
+  const cr = contextReport(doc); // static load (no instruction snapshots ⇒ tools+overhead, a lower bound)
 
   // effective scopes across the whole map: merge a walk from every root (covers every reachable node)
   const referenced = referencedChildren(doc);
@@ -147,10 +154,11 @@ export function agentsView(doc: OpenAPIv4Document): AgentsView {
         discoverableTools: routes.filter((r) => r.tier === "cold-tail").map((r) => r.name),
       },
       ...(policiesFor(doc, name).length > 0 ? { governed: governedView(doc, name) } : {}),
+      context: cr.loads.find((l) => l.agent === name)!,
     };
   });
 
-  return { present, agents, roots, findings, installable: lintOk(findings) };
+  return { present, agents, roots, findings, installable: lintOk(findings), contextFindings: cr.findings, unflatten: cr.suggestions };
 }
 
 /** A one-line ship-readiness summary for the agent layer (mirrors the cockpit's other *Summary helpers). */
@@ -159,5 +167,6 @@ export function agentsSummary(view: AgentsView): string {
   const errs = view.findings.filter((f) => f.severity === "error").length;
   const warns = view.findings.filter((f) => f.severity === "warning").length;
   const verdict = view.installable ? "✓ installable" : `✕ ${errs} blocking`;
-  return `${view.agents.length} agent(s), ${view.roots.length} root(s) — ${verdict}${warns ? `, ${warns} warning(s)` : ""}`;
+  const unflatten = view.unflatten.length ? `, ${view.unflatten.length} to unflatten` : "";
+  return `${view.agents.length} agent(s), ${view.roots.length} root(s) — ${verdict}${warns ? `, ${warns} warning(s)` : ""}${unflatten}`;
 }
