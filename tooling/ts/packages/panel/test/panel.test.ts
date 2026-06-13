@@ -13,6 +13,7 @@ const productSchema = {
     priceCents: { type: "integer" },
     categoryId: { anyOf: [{ type: "integer" }, { type: "null" }] },
     status: { type: "string", enum: ["draft", "published"] },
+    priority: { type: "integer", enum: [1, 2, 3] },
     imageUrl: { anyOf: [{ type: "string" }, { type: "null" }] },
     isActive: { type: "boolean" },
     createdAt: { type: "integer" },
@@ -31,6 +32,10 @@ describe("field-type inference", () => {
     expect(by("priceCents").type).toBe("number");
     expect(by("status").type).toBe("select");
     expect(by("status").options).toEqual(["draft", "published"]);
+    expect(by("status").optionType).toBe("string");
+    expect(by("priority").type).toBe("select"); // a NUMERIC enum is still a select…
+    expect(by("priority").options).toEqual(["1", "2", "3"]);
+    expect(by("priority").optionType).toBe("number"); // …but carries its scalar type so the form submits numbers, not "1"
     expect(by("isActive").type).toBe("boolean");
     expect(by("imageUrl").type).toBe("url");
     expect(by("contactEmail").type).toBe("email");
@@ -80,13 +85,18 @@ describe("renderers produce HTML", () => {
     expect(renderInput(fields.find((f) => f.name === "isActive")!)).toContain("pf-switch");
     expect(renderInput(fields.find((f) => f.name === "status")!)).toContain("<option value=\"draft\"");
     expect(renderInput(fields.find((f) => f.name === "categoryId")!)).toContain('data-rel="Category"');
-    expect(renderInput(fields.find((f) => f.name === "body")!)).toContain("pf-rich");
+    const rt = renderInput(fields.find((f) => f.name === "body")!);
+    expect(rt).toContain("data-rt");                 // the markdown editor wrapper
+    expect(rt).toContain('data-md="bold"');           // toolbar
+    expect(rt).toContain('data-rt-tab="preview"');    // Write/Preview
+    expect(rt).toContain('name="body"');              // the textarea is still the form input
   });
   const model = entityModels({ components: { schemas: { Product: productSchema } }, paths: { product: { requests: { listProduct: {}, createProduct: {}, updateProduct: {}, deleteProduct: {} } } } } as never)[0];
   test("form + list + shell render without throwing", () => {
     const form = renderForm(model, { basePath: "/panel", relPaths: { Category: "/category" }, canDelete: true });
     expect(form).toContain('id="pf-form"');
     expect(form).toContain("pf-meta");
+    expect(form).toContain("data-rt"); // Product has a rich-text `body` → the editor is present + its init script runs
     const lst = renderList(model, { basePath: "/panel" });
     expect(lst).toContain("pf-table");
     expect(lst).toContain("+ New Product");

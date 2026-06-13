@@ -1,6 +1,7 @@
 /** The panel chrome — a Payload-style two-pane shell (collections sidebar + content), themed with the host site's
  *  CSS-var vocabulary. Ships a light default + OS-following dark so it works standalone; pass `headHtml` (e.g. a
  *  color-scheme sheet + no-flash stamper) to make it obey the host app's theme + scheme. */
+import { RICHTEXT_CSS } from "./richtext";
 const esc = (s: unknown): string => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
 
 export interface ShellOptions {
@@ -47,6 +48,9 @@ export const PANEL_CSS = `
   .pf-thumb{width:34px;height:34px;border-radius:7px;object-fit:cover;vertical-align:middle;border:1px solid var(--line)}
   .pf-pill{background:var(--bg-soft);border:1px solid var(--line);border-radius:999px;padding:1px 9px;font-size:12px}
   .pf-yes{color:var(--ok);font-weight:700}.pf-no{color:var(--muted)}.pf-muted{color:var(--muted)}
+  .pf-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+  .pf-table th[data-col]:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+  .pf-btn:disabled{opacity:.45;cursor:not-allowed}
   .pf-pager{display:flex;align-items:center;gap:12px;justify-content:flex-end;margin-top:12px}
   .pf-form{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px 24px;box-shadow:var(--shadow)}
   .pf-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px 20px}
@@ -76,7 +80,7 @@ export function renderShell(o: ShellOptions): string {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
 ${o.headHtml ?? ""}
 <title>${esc(o.heading)} — ${esc(o.brand)}</title>
-<style>${PANEL_CSS}</style></head>
+<style>${PANEL_CSS}${RICHTEXT_CSS}</style></head>
 <body><div class="pf-app">
   <aside class="pf-side">
     <a class="pf-brand" href="${esc(o.basePath)}"><span class="pf-dot">${esc(o.brand.charAt(0))}</span> ${esc(o.brand)}</a>

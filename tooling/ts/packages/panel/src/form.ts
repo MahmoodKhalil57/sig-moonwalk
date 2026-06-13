@@ -3,12 +3,13 @@
  *  to the entity's REST endpoint. Pure projection — the panel never touches the DB; it drives the contract's CRUD. */
 import type { EntityModel } from "./model";
 import { renderFieldRow } from "./widgets";
+import { richtextScript } from "./richtext";
 
 export interface FormOptions { basePath: string; relPaths: Record<string, string>; canDelete: boolean }
 
 export function renderForm(model: EntityModel, opts: FormOptions): string {
   const rows = model.fields.map((f) => renderFieldRow(f)).join("\n");
-  const meta = model.fields.map((f) => ({ name: f.name, type: f.type, ro: f.readOnly, rel: f.relationTo, relLabel: f.relationLabelField, nullable: f.nullable }));
+  const meta = model.fields.map((f) => ({ name: f.name, type: f.type, ro: f.readOnly, rel: f.relationTo, relLabel: f.relationLabelField, nullable: f.nullable, opt: f.optionType }));
   return `<form id="pf-form" class="pf-form">
   <div class="pf-grid">${rows}</div>
   <div class="pf-actions">
@@ -19,7 +20,8 @@ export function renderForm(model: EntityModel, opts: FormOptions): string {
   <p id="pf-msg" class="pf-msg" role="status"></p>
 </form>
 <script type="application/json" id="pf-meta">${JSON.stringify(meta).replace(/</g, "\\u003c")}</script>
-<script>${formScript(model, opts)}</script>`;
+<script>${formScript(model, opts)}</script>
+${model.fields.some((f) => f.type === "richtext") ? `<script>${richtextScript()}</script>` : ""}`;
 }
 
 function formScript(model: EntityModel, opts: FormOptions): string {
@@ -35,7 +37,7 @@ function formScript(model: EntityModel, opts: FormOptions): string {
     fetch(rp,{credentials:"same-origin"}).then(function(r){return r.json();}).then(function(rows){
       (Array.isArray(rows)?rows:[]).forEach(function(row){var o=document.createElement("option");o.value=row.id;o.textContent=(row[m.relLabel]||row.name||row.title||("#"+row.id));sel.appendChild(o);});
       if(sel.dataset.val!=null) sel.value=sel.dataset.val;
-    }).catch(function(){});
+    }).catch(function(){ if(sel.options[0]) sel.options[0].textContent="— could not load "+m.rel+" —"; });
   });
   if(id){
     fetch(path+"/"+encodeURIComponent(id),{credentials:"same-origin"}).then(function(r){return r.json();}).then(function(rec){
@@ -54,6 +56,7 @@ function formScript(model: EntityModel, opts: FormOptions): string {
     meta.forEach(function(m){ if(m.ro) return; var e=el(m.name); if(!e) return; var v;
       if(m.type==="boolean"){v=e.checked;}
       else if(m.type==="number"||m.rel){v=e.value===""?null:Number(e.value);}
+      else if(m.type==="select"){v=e.value===""?(m.nullable?null:""):(m.opt==="number"?Number(e.value):m.opt==="boolean"?e.value==="true":e.value);}
       else if(m.type==="json"){ if(!e.value){v=null;} else { try{v=JSON.parse(e.value);}catch(x){msg.textContent="Invalid JSON in "+m.name;bad=true;return;} } }
       else{v=e.value===""?(m.nullable?null:""):e.value;}
       if(v!==null||m.nullable) payload[m.name]=v;

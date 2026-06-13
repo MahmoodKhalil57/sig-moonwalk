@@ -1,6 +1,7 @@
 /** Widget rendering — one input per inferred field type. Server-renders empty (the form's client JS fills values
  *  on edit + coerces on submit). Classes are `.pf-*`, themed by the panel shell's CSS (the host site's vars). */
 import type { Field } from "./fields";
+import { richtextEditor } from "./richtext";
 
 const esc = (s: unknown): string => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
 
@@ -21,7 +22,7 @@ export function renderInput(f: Field, value: unknown = ""): string {
   const a = `id="pf-${esc(f.name)}" name="${esc(f.name)}"${f.required ? " required" : ""}${f.readOnly ? " readonly disabled" : ""}`;
   switch (f.type) {
     case "textarea": return `<textarea class="pf-input" rows="4" ${a}>${esc(v)}</textarea>`;
-    case "richtext": return `<textarea class="pf-input pf-rich" rows="9" ${a}>${esc(v)}</textarea>`;
+    case "richtext": return richtextEditor(f.name, v, `${f.required ? " required" : ""}${f.readOnly ? " readonly disabled" : ""}`);
     case "json": return `<textarea class="pf-input pf-mono" rows="6" ${a}>${typeof v === "object" && v ? esc(JSON.stringify(v, null, 2)) : esc(v)}</textarea>`;
     case "number": return `<input type="number" step="any" class="pf-input" value="${esc(v)}" ${a}/>`;
     case "boolean": return `<label class="pf-switch"><input type="checkbox"${v ? " checked" : ""} ${a}/><span class="pf-track"><span class="pf-thumb"></span></span></label>`;

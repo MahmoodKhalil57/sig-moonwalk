@@ -12,4 +12,5 @@ export { renderInput, renderFieldRow } from "./widgets";
 export { renderList, type ListOptions } from "./list";
 export { renderForm, type FormOptions } from "./form";
 export { renderShell, PANEL_CSS, type ShellOptions } from "./shell";
+export { richtextEditor, richtextScript, RICHTEXT_CSS } from "./richtext";
 export { panelApp, type PanelOptions } from "./app";

@@ -1,6 +1,6 @@
 {
   "name": "@suluk/panel",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Contract-first admin panels, in the spirit of Payload but projected from one OpenAPI v4 document. Infers Payload-style field types from the contract, renders shadcn/theme-aware forms + data tables, and mounts a role-aware superadmin (and per-role dashboards) — no config DSL, no framework lock-in. CANDIDATE tooling.",
   "publishConfig": { "access": "public" },
   "license": "Apache-2.0",

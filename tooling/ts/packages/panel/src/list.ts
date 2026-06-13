@@ -22,15 +22,15 @@ export interface ListOptions { basePath: string }
 export function renderList(model: EntityModel, opts: ListOptions): string {
   const cols = columns(model);
   const meta = cols.map((f) => ({ name: f.name, label: f.label, type: f.type }));
-  const head = cols.map((f) => `<th data-col="${esc(f.name)}">${esc(f.label)}</th>`).join("") + "<th></th>";
+  const head = cols.map((f) => `<th data-col="${esc(f.name)}" tabindex="0" role="columnheader" aria-sort="none" scope="col" title="Sort by ${esc(f.label)}">${esc(f.label)}</th>`).join("") + '<th scope="col"><span class="pf-sr">Actions</span></th>';
   return `<div class="pf-listbar">
-    <input id="pf-search" class="pf-input" type="search" placeholder="Search ${esc(model.name)}…" aria-label="Search" />
-    <span id="pf-count" class="pf-muted"></span>
+    <input id="pf-search" class="pf-input" type="search" placeholder="Search ${esc(model.name)}…" aria-label="Search ${esc(model.name)}" />
+    <span id="pf-count" class="pf-muted" role="status" aria-live="polite"></span>
     <span style="flex:1"></span>
     ${model.access.create ? `<a class="pf-btn pf-primary" href="${opts.basePath}/${model.name}/new">+ New ${esc(model.name)}</a>` : ""}
   </div>
   <div class="pf-tablewrap"><table class="pf-table"><thead><tr>${head}</tr></thead><tbody id="pf-rows"><tr><td colspan="${cols.length + 1}" class="pf-muted">Loading…</td></tr></tbody></table></div>
-  <div class="pf-pager"><button id="pf-prev" class="pf-btn">‹ Prev</button><span id="pf-page" class="pf-muted"></span><button id="pf-next" class="pf-btn">Next ›</button></div>
+  <div class="pf-pager"><button id="pf-prev" class="pf-btn">‹ Prev</button><span id="pf-page" class="pf-muted" role="status" aria-live="polite"></span><button id="pf-next" class="pf-btn">Next ›</button></div>
   <script type="application/json" id="pf-cols">${JSON.stringify(meta).replace(/</g, "\\u003c")}</script>
   <script>${listScript(model, opts)}</script>`;
 }
@@ -39,30 +39,33 @@ function listScript(model: EntityModel, opts: ListOptions): string {
   return `(function(){
   var path=${JSON.stringify(model.path)}, base=${JSON.stringify(opts.basePath)}, ent=${JSON.stringify(model.name)}, title=${JSON.stringify(model.title)}, canEdit=${model.access.update ? "true" : "false"}, canDel=${model.access.delete ? "true" : "false"};
   var cols=JSON.parse(document.getElementById("pf-cols").textContent);
-  var tbody=document.getElementById("pf-rows"), search=document.getElementById("pf-search"), countEl=document.getElementById("pf-count"), pageEl=document.getElementById("pf-page");
+  var tbody=document.getElementById("pf-rows"), search=document.getElementById("pf-search"), countEl=document.getElementById("pf-count"), pageEl=document.getElementById("pf-page"), prevBtn=document.getElementById("pf-prev"), nextBtn=document.getElementById("pf-next");
   var all=[], q="", sortCol="id", sortDir=1, page=0, PER=20;
   function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return({"&":"&amp;","<":"&lt;",">":"&gt;","\\"":"&quot;"})[c];});}
   function fmt(v,t){ if(v==null||v==="")return '<span class="pf-muted">—</span>';
     if(t==="boolean")return v?'<span class="pf-yes">✓</span>':'<span class="pf-no">✕</span>';
     if(t==="date"||t==="datetime"){var d=(typeof v==="number"||/^\\d+$/.test(String(v)))?new Date(Number(v)):new Date(v);return isNaN(d)?esc(v):d.toLocaleDateString();}
     if(t==="select")return '<span class="pf-pill">'+esc(v)+'</span>';
-    if(t==="url"){var s=String(v);return /\\.(png|jpe?g|svg|webp|gif)/i.test(s)?'<img src="'+esc(s)+'" class="pf-thumb" alt=""/>':'<a href="'+esc(s)+'" target="_blank" rel="noopener">'+esc(s.slice(0,40))+'</a>';}
+    if(t==="url"){var s=String(v);return /\\.(png|jpe?g|svg|webp|gif)/i.test(s)?'<img src="'+esc(s)+'" class="pf-thumb" alt="Thumbnail" loading="lazy"/>':'<a href="'+esc(s)+'" target="_blank" rel="noopener">'+esc(s.slice(0,40))+'</a>';}
     var str=String(v); return esc(str.length>60?str.slice(0,60)+"…":str);
   }
   function render(){
     var rows=all.filter(function(r){ if(!q)return true; var hay=String(r[title]==null?"":r[title])+" "+String(r.id); return hay.toLowerCase().indexOf(q)>=0; });
     rows.sort(function(a,b){var x=a[sortCol],y=b[sortCol]; if(x==null)return 1; if(y==null)return -1; return (x>y?1:x<y?-1:0)*sortDir;});
     countEl.textContent=rows.length+" "+(rows.length===1?"row":"rows");
-    var pages=Math.max(1,Math.ceil(rows.length/PER)); if(page>=pages)page=pages-1; pageEl.textContent="Page "+(page+1)+" / "+pages;
+    var pages=Math.max(1,Math.ceil(rows.length/PER)); if(page>=pages)page=pages-1; if(page<0)page=0; pageEl.textContent="Page "+(page+1)+" / "+pages;
+    prevBtn.disabled=page<=0; nextBtn.disabled=page>=pages-1;
     var slice=rows.slice(page*PER,page*PER+PER);
     tbody.innerHTML=slice.length?slice.map(function(r){
       var tds=cols.map(function(c){return "<td"+(c.name==="id"?' class="pf-muted"':"")+">"+fmt(r[c.name],c.type)+"</td>";}).join("");
-      var act='<td class="pf-rowact">'+(canEdit?'<a href="'+base+"/"+ent+"/edit?id="+encodeURIComponent(r.id)+'">Edit</a>':"")+(canDel?' <button data-del="'+esc(r.id)+'" class="pf-link-danger">Delete</button>':"")+'</td>';
+      var rn=esc(r[title]!=null?r[title]:("#"+r.id));
+      var act='<td class="pf-rowact">'+(canEdit?'<a href="'+base+"/"+ent+"/edit?id="+encodeURIComponent(r.id)+'" aria-label="Edit '+rn+'">Edit</a>':"")+(canDel?' <button data-del="'+esc(r.id)+'" class="pf-link-danger" aria-label="Delete '+rn+'">Delete</button>':"")+'</td>';
       return "<tr>"+tds+act+"</tr>";
     }).join(""):'<tr><td colspan="'+(cols.length+1)+'" class="pf-muted">No '+ent+' yet.</td></tr>';
     tbody.querySelectorAll("[data-del]").forEach(function(b){b.addEventListener("click",function(){ if(!confirm("Delete this "+ent+"?"))return; fetch(path+"/"+encodeURIComponent(b.dataset.del),{method:"DELETE",credentials:"same-origin"}).then(function(rs){if(rs.ok){all=all.filter(function(x){return String(x.id)!==String(b.dataset.del);});render();}});});});
   }
-  document.querySelectorAll("th[data-col]").forEach(function(th){th.style.cursor="pointer";th.addEventListener("click",function(){var c=th.dataset.col;if(sortCol===c)sortDir=-sortDir;else{sortCol=c;sortDir=1;}render();});});
+  function doSort(c){if(sortCol===c)sortDir=-sortDir;else{sortCol=c;sortDir=1;} document.querySelectorAll("th[data-col]").forEach(function(h){h.setAttribute("aria-sort",h.dataset.col===sortCol?(sortDir>0?"ascending":"descending"):"none");}); render();}
+  document.querySelectorAll("th[data-col]").forEach(function(th){th.style.cursor="pointer";th.addEventListener("click",function(){doSort(th.dataset.col);});th.addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();doSort(th.dataset.col);}});});
   search.addEventListener("input",function(){q=search.value.toLowerCase();page=0;render();});
   document.getElementById("pf-prev").addEventListener("click",function(){if(page>0){page--;render();}});
   document.getElementById("pf-next").addEventListener("click",function(){page++;render();});

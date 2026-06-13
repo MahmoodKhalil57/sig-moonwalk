@@ -18,6 +18,7 @@ export interface Field {
   readOnly: boolean;
   description?: string;
   options?: string[];          // select
+  optionType?: "string" | "number" | "boolean"; // the enum's scalar type (so the form coerces select values back)
   relationTo?: string;         // relationship → entity name
   relationLabelField?: string; // which field of the related entity to show
 }
@@ -44,9 +45,14 @@ export function humanize(name: string): string {
     .replace(/\burl\b/i, "URL").trim().replace(/^\w/, (c) => c.toUpperCase());
 }
 
-function widgetOf(name: string, s: Schema, entities: Set<string>): { type: FieldType; relationTo?: string; options?: string[] } {
+function widgetOf(name: string, s: Schema, entities: Set<string>): { type: FieldType; relationTo?: string; options?: string[]; optionType?: "string" | "number" | "boolean" } {
   const enumVals = s.enum as unknown[] | undefined;
-  if (Array.isArray(enumVals) && enumVals.length) return { type: "select", options: enumVals.map(String) };
+  if (Array.isArray(enumVals) && enumVals.length) {
+    const t = s.type as string | undefined;
+    const optionType = t === "integer" || t === "number" || typeof enumVals[0] === "number" ? "number"
+      : t === "boolean" || typeof enumVals[0] === "boolean" ? "boolean" : "string";
+    return { type: "select", options: enumVals.map(String), optionType };
+  }
   const t = s.type as string | undefined;
   const rel = /^(.*)Id$/.exec(name);
   if (rel && (t === "integer" || t === "number")) {
@@ -82,7 +88,7 @@ export function fieldsOf(schema: Schema, entities: Set<string> = new Set(), opts
     const { schema: s, nullable } = unwrap(raw);
     const w = widgetOf(name, s, entities);
     out.push({
-      name, label: humanize(name), type: w.type, options: w.options, relationTo: w.relationTo,
+      name, label: humanize(name), type: w.type, options: w.options, optionType: w.optionType, relationTo: w.relationTo,
       relationLabelField: w.relationTo ? "name" : undefined,
       required: required.has(name) && !nullable, nullable, readOnly: readOnly.has(name),
       description: typeof s.description === "string" ? s.description : undefined,
